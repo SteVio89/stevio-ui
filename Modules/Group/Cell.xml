@@ -1,0 +1,10 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<!-- The secure group header can only instantiate XML templates, so this thin shell hands over to Lua.
+	     The size is declared here because cells may be created in combat, where Lua can't resize them. -->
+	<Button name="StevioUIGroupCellTemplate" inherits="SecureUnitButtonTemplate" virtual="true">
+		<Size x="80" y="50"/>
+		<Scripts>
+			<OnLoad>StevioUI.InitGroupCell(self)</OnLoad>
+		</Scripts>
+	</Button>
+</Ui>

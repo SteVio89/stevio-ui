@@ -1,0 +1,57 @@
+## Interface: 16001
+## Title: stevio-ui
+## Notes: Minimalist total conversion UI
+## Author: stevio
+## Version: 0.1.0
+## SavedVariables: StevioUIExport, StevioUIDebug
+
+Core\Init.lua
+Core\Config.lua
+Core\Layout.lua
+Core\Util.lua
+Core\EditModeLayout.lua
+
+Modules\Units\Config.lua
+Modules\Units\Units.lua
+Modules\Units\CastBar.lua
+Modules\Units\ClassPower.lua
+
+Modules\ActionBars\Config.lua
+Modules\ActionBars\ActionBars.lua
+Modules\ActionBars\Menubar.lua
+
+Modules\Group\Config.lua
+Modules\Group\Cell.lua
+Modules\Group\Cell.xml
+Modules\Group\Group.lua
+Modules\Group\Preview.lua
+
+Modules\Minimap\Config.lua
+Modules\Minimap\Minimap.lua
+
+Modules\Tooltip\Config.lua
+Modules\Tooltip\Tooltip.lua
+
+Modules\Tracker\Config.lua
+Modules\Tracker\Tracker.lua
+
+Modules\Chat\Config.lua
+Modules\Chat\Chat.lua
+
+Modules\DamageMeter\Config.lua
+Modules\DamageMeter\DamageMeter.lua
+
+Modules\Auras\Config.lua
+Modules\Auras\Auras.lua
+
+Modules\Accessibility\Config.lua
+Modules\Accessibility\QuickJump.lua
+Modules\Accessibility\DialogSources.lua
+Modules\Accessibility\Taxi.lua
+Modules\Accessibility\Panels.lua
+Modules\Accessibility\Accessibility.lua
+
+Modules\Settings\Config.lua
+Modules\Settings\Profile.lua
+Modules\Settings\Export.lua
+Modules\Settings\Settings.lua

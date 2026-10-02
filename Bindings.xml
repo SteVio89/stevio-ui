@@ -1,0 +1,12 @@
+<Bindings>
+	<!-- The header attribute opens a section; following bindings join it and must not repeat it. -->
+	<Binding name="STEVIOUI_TOGGLE_TRACKER" header="STEVIOUI" category="ADDONS">
+		StevioUI.ToggleTracker()
+	</Binding>
+	<Binding name="STEVIOUI_TOGGLE_CHAT" category="ADDONS">
+		StevioUI.ToggleChat()
+	</Binding>
+	<Binding name="STEVIOUI_QUICKJUMP" category="ADDONS">
+		StevioUI.QuickJumpLeader()
+	</Binding>
+</Bindings>
