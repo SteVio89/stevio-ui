@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drawn on a 64-unit grid so the 64 px in-game icon is pixel-exact; Media/Icon.tga and Icon.png are rendered from this file. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" shape-rendering="crispEdges">
+	<defs>
+		<linearGradient id="world" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#262330"/>
+			<stop offset="1" stop-color="#0c0c0e"/>
+		</linearGradient>
+	</defs>
+
+	<!-- Frame and the empty world above the cluster -->
+	<rect x="0" y="0" width="64" height="64" fill="#000"/>
+	<rect x="1" y="1" width="62" height="62" fill="url(#world)"/>
+
+	<!-- Edge badges: chat (hidden) left, tracker (shown) right -->
+	<rect x="2" y="28" width="1" height="8" fill="#4d4d4d"/>
+	<rect x="61" y="28" width="1" height="8" fill="#cccccc"/>
+
+	<!-- "stevio-ui" in a 5x7 pixel font; real type would blur at 64 px -->
+	<g fill="#e6e6e6">
+		<rect x="9" y="15" width="4" height="1"/>
+		<rect x="8" y="16" width="1" height="1"/>
+		<rect x="9" y="17" width="3" height="1"/>
+		<rect x="12" y="18" width="1" height="1"/>
+		<rect x="8" y="19" width="4" height="1"/>
+		<rect x="15" y="13" width="1" height="1"/>
+		<rect x="15" y="14" width="1" height="1"/>
+		<rect x="14" y="15" width="4" height="1"/>
+		<rect x="15" y="16" width="1" height="1"/>
+		<rect x="15" y="17" width="1" height="1"/>
+		<rect x="15" y="18" width="1" height="1"/>
+		<rect x="18" y="18" width="1" height="1"/>
+		<rect x="16" y="19" width="2" height="1"/>
+		<rect x="21" y="15" width="3" height="1"/>
+		<rect x="20" y="16" width="1" height="1"/>
+		<rect x="24" y="16" width="1" height="1"/>
+		<rect x="20" y="17" width="5" height="1"/>
+		<rect x="20" y="18" width="1" height="1"/>
+		<rect x="21" y="19" width="3" height="1"/>
+		<rect x="26" y="15" width="1" height="1"/>
+		<rect x="30" y="15" width="1" height="1"/>
+		<rect x="26" y="16" width="1" height="1"/>
+		<rect x="30" y="16" width="1" height="1"/>
+		<rect x="26" y="17" width="1" height="1"/>
+		<rect x="30" y="17" width="1" height="1"/>
+		<rect x="27" y="18" width="1" height="1"/>
+		<rect x="29" y="18" width="1" height="1"/>
+		<rect x="28" y="19" width="1" height="1"/>
+		<rect x="33" y="13" width="1" height="1"/>
+		<rect x="32" y="15" width="2" height="1"/>
+		<rect x="33" y="16" width="1" height="1"/>
+		<rect x="33" y="17" width="1" height="1"/>
+		<rect x="33" y="18" width="1" height="1"/>
+		<rect x="32" y="19" width="3" height="1"/>
+		<rect x="37" y="15" width="3" height="1"/>
+		<rect x="36" y="16" width="1" height="1"/>
+		<rect x="40" y="16" width="1" height="1"/>
+		<rect x="36" y="17" width="1" height="1"/>
+		<rect x="40" y="17" width="1" height="1"/>
+		<rect x="36" y="18" width="1" height="1"/>
+		<rect x="40" y="18" width="1" height="1"/>
+		<rect x="37" y="19" width="3" height="1"/>
+	</g>
+	<rect x="42" y="17" width="4" height="1" fill="#808080"/>
+	<g fill="#b34dff">
+		<rect x="47" y="15" width="1" height="1"/>
+		<rect x="51" y="15" width="1" height="1"/>
+		<rect x="47" y="16" width="1" height="1"/>
+		<rect x="51" y="16" width="1" height="1"/>
+		<rect x="47" y="17" width="1" height="1"/>
+		<rect x="51" y="17" width="1" height="1"/>
+		<rect x="47" y="18" width="1" height="1"/>
+		<rect x="50" y="18" width="2" height="1"/>
+		<rect x="48" y="19" width="2" height="1"/>
+		<rect x="51" y="19" width="1" height="1"/>
+		<rect x="54" y="13" width="1" height="1"/>
+		<rect x="53" y="15" width="2" height="1"/>
+		<rect x="54" y="16" width="1" height="1"/>
+		<rect x="54" y="17" width="1" height="1"/>
+		<rect x="54" y="18" width="1" height="1"/>
+		<rect x="53" y="19" width="3" height="1"/>
+	</g>
+
+	<!-- Player and target -->
+	<rect x="17" y="35" width="14" height="5" fill="#000"/>
+	<rect x="18" y="36" width="12" height="3" fill="#b34dff"/>
+	<rect x="33" y="35" width="14" height="5" fill="#000"/>
+	<rect x="34" y="36" width="12" height="3" fill="#d9d9d9"/>
+
+	<!-- Action bars, widening towards the bottom edge -->
+	<g fill="#000">
+		<rect x="15" y="43" width="34" height="6"/>
+		<rect x="11" y="50" width="42" height="6"/>
+	</g>
+	<g fill="#5c5c66">
+		<rect x="16" y="44" width="3" height="4"/><rect x="20" y="44" width="3" height="4"/>
+		<rect x="24" y="44" width="3" height="4"/><rect x="28" y="44" width="3" height="4"/>
+		<rect x="33" y="44" width="3" height="4"/><rect x="37" y="44" width="3" height="4"/>
+		<rect x="41" y="44" width="3" height="4"/><rect x="45" y="44" width="3" height="4"/>
+
+		<rect x="12" y="51" width="3" height="4"/><rect x="16" y="51" width="3" height="4"/>
+		<rect x="20" y="51" width="3" height="4"/><rect x="24" y="51" width="3" height="4"/>
+		<rect x="28" y="51" width="3" height="4"/><rect x="33" y="51" width="3" height="4"/>
+		<rect x="37" y="51" width="3" height="4"/><rect x="41" y="51" width="3" height="4"/>
+		<rect x="45" y="51" width="3" height="4"/><rect x="49" y="51" width="3" height="4"/>
+	</g>
+</svg>

@@ -156,6 +156,14 @@ function ns.SetupDialogSources()
 	for _, panel in ipairs({ QuestFrameGreetingPanel, QuestFrameDetailPanel, QuestFrameProgressPanel, QuestFrameRewardPanel }) do
 		panel:HookScript("OnShow", RequestRefresh)
 	end
+	-- A reward picked by label has no mouse over it, so its tooltip is shown as
+	-- if hovered, and the labels come back to compare the next one.
+	hooksecurefunc("QuestInfoItem_OnClick", function(button)
+		if button.type == "choice" and QuestFrameRewardPanel:IsShown() then
+			button:OnEnter()
+			RequestRefresh()
+		end
+	end)
 
 	GossipFrame:HookScript("OnHide", RequestRefresh)
 	hooksecurefunc(GossipFrame, "Update", RequestRefresh)

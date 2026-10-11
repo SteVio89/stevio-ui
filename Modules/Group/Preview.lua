@@ -94,6 +94,9 @@ local function ShowPreview(count)
 	end
 	preview.container:Show()
 	ns.SetLiveGroupAlpha(0)
+	if ns.OnGroupPreviewChanged then
+		ns.OnGroupPreviewChanged(preview.cells, count, mode)
+	end
 end
 
 local function HidePreview()
@@ -101,6 +104,9 @@ local function HidePreview()
 		preview.container:Hide()
 	end
 	ns.SetLiveGroupAlpha(1)
+	if ns.OnGroupPreviewChanged then
+		ns.OnGroupPreviewChanged(nil)
+	end
 end
 
 ns:RegisterSlashCommand("test", function(input)

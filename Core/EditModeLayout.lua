@@ -137,3 +137,30 @@ function ns.ApplyEditModeLayout()
 	systemsReady = true
 	TryApply()
 end
+
+-- Custom layouts are remembered by name because inserting ours shifts their indices.
+function ns.GetActiveEditModeLayout()
+	local saved = C_EditMode.GetLayouts()
+	local numPresets = #EditModePresetLayoutManager:GetCopyOfPresetLayouts()
+	if saved.activeLayout <= numPresets then
+		return { preset = saved.activeLayout }
+	end
+	local layoutInfo = saved.layouts[saved.activeLayout - numPresets]
+	if layoutInfo and layoutInfo.layoutName ~= LAYOUT_NAME then
+		return { name = layoutInfo.layoutName, layoutType = layoutInfo.layoutType }
+	end
+end
+
+function ns.RestoreEditModeLayout(previous)
+	local saved = C_EditMode.GetLayouts()
+	local numPresets = #EditModePresetLayoutManager:GetCopyOfPresetLayouts()
+	local index = previous and previous.preset
+	if previous and previous.name then
+		for customIndex, layoutInfo in ipairs(saved.layouts) do
+			if layoutInfo.layoutName == previous.name and layoutInfo.layoutType == previous.layoutType then
+				index = numPresets + customIndex
+			end
+		end
+	end
+	C_EditMode.SetActiveLayout(index or 1)
+end

@@ -1,0 +1,13 @@
+package-as: stevio-ui
+
+ignore:
+  - .github
+  - .envrc
+  - .direnv
+  - .claude
+  - flake.nix
+  - flake.lock
+  - CLAUDE.md
+  - README.md
+  - Media/Icon.svg
+  - Media/Icon.png

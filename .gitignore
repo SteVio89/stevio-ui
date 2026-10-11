@@ -1,1 +1,6 @@
 .direnv/
+.claude/
+.release/
+.env
+.DS_Store
+CLAUDE.md

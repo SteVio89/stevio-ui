@@ -2,10 +2,13 @@
 ## Title: stevio-ui
 ## Notes: Minimalist total conversion UI
 ## Author: stevio
-## Version: 0.1.0
-## SavedVariables: StevioUIExport, StevioUIDebug
+## Version: @project-version@
+## IconTexture: Interface\AddOns\stevio-ui\Media\Icon
+## X-License: MIT
+## SavedVariables: StevioUIState, StevioUIExport, StevioUIDebug
 
 Core\Init.lua
+Core\Consent.lua
 Core\Config.lua
 Core\Layout.lua
 Core\Util.lua
@@ -26,6 +29,9 @@ Modules\Group\Cell.xml
 Modules\Group\Group.lua
 Modules\Group\Preview.lua
 
+Modules\KeyboardHealing\Config.lua
+Modules\KeyboardHealing\KeyboardHealing.lua
+
 Modules\Minimap\Config.lua
 Modules\Minimap\Minimap.lua
 
@@ -43,6 +49,9 @@ Modules\DamageMeter\DamageMeter.lua
 
 Modules\Auras\Config.lua
 Modules\Auras\Auras.lua
+
+Modules\QuestRewards\Config.lua
+Modules\QuestRewards\QuestRewards.lua
 
 Modules\Accessibility\Config.lua
 Modules\Accessibility\QuickJump.lua

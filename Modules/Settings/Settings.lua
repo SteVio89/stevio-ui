@@ -39,7 +39,8 @@ end
 
 -- Strict: every key not bound in the profile gets unbound, so a fresh client
 -- ends up with exactly the bindings in code.
-local function ApplyBindings(bindings)
+local function ApplyBindings(bindings, bindingSet)
+	bindingSet = bindingSet or Enum.BindingSet.Account
 	local changed = false
 	for index = 1, GetNumBindings() do
 		for _, key in ipairs(ns.GetBindingKeys(index)) do
@@ -55,10 +56,51 @@ local function ApplyBindings(bindings)
 			changed = true
 		end
 	end
-	if changed or GetCurrentBindingSet() ~= Enum.BindingSet.Account then
-		SaveBindings(Enum.BindingSet.Account)
+	if changed or GetCurrentBindingSet() ~= bindingSet then
+		SaveBindings(bindingSet)
 	end
 	return changed
+end
+
+-- Taken once when the player agrees to the takeover, so /sui restore can hand
+-- back exactly what the profile overwrote.
+function ns.CaptureBackup()
+	local backup = {
+		actionBars = {},
+		bindings = {},
+		bindingSet = GetCurrentBindingSet(),
+		cvars = {},
+		editModeLayout = ns.GetActiveEditModeLayout(),
+	}
+	for i = 1, select("#", GetActionBarToggles()) do
+		backup.actionBars[i] = not not select(i, GetActionBarToggles())
+	end
+	for index = 1, GetNumBindings() do
+		local command = GetBinding(index)
+		for _, key in ipairs(ns.GetBindingKeys(index)) do
+			backup.bindings[key] = command
+		end
+	end
+	for name in pairs(config.profile.cvars or {}) do
+		backup.cvars[name] = GetCVar(name)
+	end
+	return backup
+end
+
+local function Restore()
+	local backup = StevioUIState and StevioUIState.backup
+	if not backup then
+		print(("|cff33ff99%s|r: Keine Sicherung vorhanden."):format(addonName))
+		return
+	end
+	ApplyActionBars(backup.actionBars)
+	ApplyCVars(backup.cvars)
+	ApplyBindings(backup.bindings, backup.bindingSet)
+	ns.RestoreEditModeLayout(backup.editModeLayout)
+	-- Forgetting the consent makes a later re-enable ask again and take a fresh backup.
+	StevioUIState = nil
+	C_AddOns.DisableAddOn(addonName)
+	ReloadUI()
 end
 
 local function ApplyProfile()
@@ -79,17 +121,31 @@ local function ApplyProfile()
 end
 
 -- Bindings and account CVars arrive from the server around login; by the
--- first PLAYER_ENTERING_WORLD both are in place.
-local applied = false
-ns:RegisterEvent("PLAYER_ENTERING_WORLD", function()
-	if applied or not config.enabled then
+-- first PLAYER_ENTERING_WORLD both are in place. The module only enables after
+-- the player has agreed to the takeover.
+local enabled, enteredWorld, applied = false, false, false
+
+local function TryApply()
+	if applied or not enabled or not enteredWorld then
 		return
 	end
 	applied = true
 	ns:RunAfterCombat(ApplyProfile)
+end
+
+ns:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+	enteredWorld = true
+	TryApply()
 end)
 
 function Settings:OnEnable()
+	enabled = true
+	TryApply()
+
+	if config.consoleKey then
+		SetConsoleKey(config.consoleKey)
+	end
+
 	ns:RegisterSlashCommand("export", function()
 		local text = ns.BuildProfileExport()
 		StevioUIExport = text
@@ -97,5 +153,8 @@ function Settings:OnEnable()
 	end)
 	ns:RegisterSlashCommand("apply", function()
 		ns:RunAfterCombat(ApplyProfile)
+	end)
+	ns:RegisterSlashCommand("restore", function()
+		ns:RunAfterCombat(Restore)
 	end)
 end

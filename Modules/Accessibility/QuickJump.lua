@@ -114,6 +114,20 @@ local function GetPrefixButton(index)
 	return button
 end
 
+-- Text rows like gossip and quest titles start with an icon that carries
+-- information (quest complete or not), which a badge inside would cover.
+-- Item buttons have no button text, so their icon doesn't count.
+local function GetLeadingIcon(target)
+	local icon = target.Icon
+	if not (icon and icon.IsShown and icon:IsShown() and target.GetFontString and target:GetFontString()) then
+		return nil
+	end
+	local iconLeft, targetLeft = icon:GetLeft(), target:GetLeft()
+	if iconLeft and targetLeft and iconLeft - targetLeft < icon:GetWidth() then
+		return icon
+	end
+end
+
 local function ShowBadge(index, target, label, typed)
 	local badge = GetBadge(index)
 	local remaining = label:sub(#typed + 1)
@@ -127,7 +141,12 @@ local function ShowBadge(index, target, label, typed)
 	badge:SetSize(badge.text:GetStringWidth() + padding * 2, badge.text:GetStringHeight() + padding * 2)
 	badge:ClearAllPoints()
 	-- Inside the button, where the eye already is; outside it got overlooked.
-	badge:SetPoint("LEFT", target, "LEFT", config.badge.inset, 0)
+	local icon = GetLeadingIcon(target)
+	if icon then
+		badge:SetPoint("RIGHT", icon, "LEFT", -config.badge.inset, 0)
+	else
+		badge:SetPoint("LEFT", target, "LEFT", config.badge.inset, 0)
+	end
 	badge:Show()
 end
 

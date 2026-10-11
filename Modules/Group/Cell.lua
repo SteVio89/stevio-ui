@@ -52,11 +52,12 @@ local function UpdateRole(cell)
 	UnitFrameUtil.UpdateUnitFrameRoleIcon(cell)
 end
 
+-- GetUnitAuras can't hand secret auras to addon code and errors instead;
+-- the per-index query returns them with secret fields, which widgets accept.
 local function UpdateIconSide(cell, icons, filter)
 	local unit = cell.unit
-	local auras = C_UnitAuras.GetUnitAuras(unit, filter, #icons)
 	for i, icon in ipairs(icons) do
-		local aura = auras[i]
+		local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, filter)
 		if aura then
 			icon.texture:SetTexture(aura.icon)
 			local id = aura.auraInstanceID

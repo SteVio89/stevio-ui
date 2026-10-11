@@ -8,11 +8,9 @@ ns.config.settings.profile = {
 
 	bindings = {
 		-- Bewegungstasten
+		-- The arrow keys belong to the grid cursor (Modules/KeyboardHealing).
 		["W"] = "MOVEFORWARD",
-		["UP"] = "MOVEFORWARD",
 		["S"] = "MOVEBACKWARD",
-		["DOWN"] = "MOVEBACKWARD",
-		["LEFT"] = "TURNLEFT",
 		["A"] = "TURNLEFT",
 		["D"] = "TURNRIGHT",
 		["SHIFT-A"] = "STRAFELEFT",
@@ -196,11 +194,12 @@ ns.config.settings.profile = {
 		RAIDweatherDensity = "1",
 		RAIDwmoLodDist = "350",
 		SSAO = "2",
+		Sound_EnableErrorSpeech = "0",
 		TerrainLodDiv = "512",
 		accessibilityScreenNarrationEnabled = "0",
 		autoLootDefault = "1",
 		combinedBags = "1",
-		cooldownViewerEnabled = "1",
+		cooldownViewerEnabled = "0",
 		countdownForCooldowns = "1",
 		damageMeterEnabled = "1",
 		damageMeterResetOnNewInstance = "1",

@@ -83,5 +83,9 @@ end
 -- A /reload during combat starts the addon under lockdown, where secure frames
 -- can't be configured; building everything afterwards avoids half-set-up frames.
 ns:RegisterEvent("PLAYER_LOGIN", function()
+	if not (StevioUIState and StevioUIState.consented) then
+		ns.ShowConsent()
+		return
+	end
 	ns:RunAfterCombat(EnableModules)
 end)

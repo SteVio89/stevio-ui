@@ -99,7 +99,7 @@ local function PrecreateCells(header)
 	header:SetAttribute("startingIndex", 1)
 end
 
-local function HighestUsedGroup()
+function ns.GetHighestUsedGroup()
 	if not IsInRaid() then
 		return 1
 	end
@@ -130,11 +130,12 @@ function Group:OnEnable()
 		self.headers[groupIndex] = CreateHeader(groupIndex)
 		PrecreateCells(self.headers[groupIndex])
 	end
+	ns.groupHeaders = self.headers
 
 	-- Secure headers can't be re-anchored in combat; a roster change mid-fight
 	-- switches the layout once combat ends.
 	local function UpdateMode()
-		local mode = ns.GetGroupLayoutMode(HighestUsedGroup())
+		local mode = ns.GetGroupLayoutMode(ns.GetHighestUsedGroup())
 		if mode == currentMode then
 			return
 		end

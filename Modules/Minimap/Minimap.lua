@@ -49,6 +49,19 @@ local function GetMapSize(config)
 	return math.floor(mapRight - targetRight - config.gapToTarget)
 end
 
+-- The leave button would sit on the action bars; under the map's lower left
+-- corner it stays clear of them. Via Edit Mode because Blizzard re-stacks it
+-- with the bottom bars, in combat too.
+local function PlaceVehicleLeaveButton(config, size)
+	local mapLayout = ns.layout.minimap
+	ns:SetEditModeSystem(Enum.EditModeSystem.VehicleLeaveButton, nil, {
+		point = "TOPLEFT",
+		relativePoint = "BOTTOMRIGHT",
+		x = mapLayout.x - size,
+		y = mapLayout.y - config.vehicleLeaveGap,
+	})
+end
+
 function MinimapModule:OnEnable(config)
 	local size = GetMapSize(config)
 	Minimap:SetParent(UIParent)
@@ -61,6 +74,7 @@ function MinimapModule:OnEnable(config)
 	ns.CreateBorder(Minimap)
 
 	AdoptIndicators(config)
+	PlaceVehicleLeaveButton(config, size)
 
 	ns.KeepHidden(MinimapBackdrop)
 	ns.KeepHidden(Minimap.ZoomIn)
