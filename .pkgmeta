@@ -9,5 +9,6 @@ ignore:
   - flake.lock
   - CLAUDE.md
   - README.md
+  - deploy.sh
   - Media/Icon.svg
   - Media/Icon.png
