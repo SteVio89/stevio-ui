@@ -6,6 +6,7 @@
 ## IconTexture: Interface\AddOns\stevio-ui\Media\Icon
 ## X-License: MIT
 ## SavedVariables: StevioUIState, StevioUIExport, StevioUIDebug
+## X-Curse-Project-ID: 1739367
 
 Core\Init.lua
 Core\Consent.lua
