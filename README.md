@@ -1,8 +1,12 @@
-<img src="Media/Icon.png" alt="" width="96" align="right">
+<div align="center">
+
+<img src="Media/Icon.png" alt="stevio-ui" width="128">
 
 # stevio-ui
 
-A minimalist total-conversion UI for **WoW Forever** (interface 16001).
+A minimalist total-conversion UI for **WoW Forever** (interface 16001)
+
+</div>
 
 The goal is to see as much of the game world as possible: everything that
 matters sits in one cluster at the bottom centre, everything else stays hidden
