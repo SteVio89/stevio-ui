@@ -51,10 +51,13 @@ end
 
 local function ApplyHeaderMode(header, groupIndex, mode, container, cellWidth, cellHeight)
 	-- Cells only change width here, out of combat; all of them exist already (see PrecreateCells).
+	-- The header only adds anchors for the new "point" and keeps the old ones on
+	-- shown cells, so both would pull each cell into a diagonal staircase.
 	for slot = 1, UNITS_PER_GROUP do
 		local cell = header:GetAttribute("child" .. slot)
 		if cell then
 			cell:SetWidth(cellWidth)
+			cell:ClearAllPoints()
 		end
 	end
 

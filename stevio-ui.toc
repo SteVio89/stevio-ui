@@ -5,10 +5,11 @@
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\stevio-ui\Media\Icon
 ## X-License: MIT
-## SavedVariables: StevioUIState, StevioUIExport, StevioUIDebug
+## SavedVariables: StevioUIState, StevioUIExport, StevioUIDebug, StevioUIErrors
 ## X-Curse-Project-ID: 1739367
 
 Core\Init.lua
+Core\ErrorLog.lua
 Core\Consent.lua
 Core\Config.lua
 Core\Layout.lua
