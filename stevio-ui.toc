@@ -43,6 +43,9 @@ Modules\Tooltip\Tooltip.lua
 Modules\Tracker\Config.lua
 Modules\Tracker\Tracker.lua
 
+Modules\Notch\Config.lua
+Modules\Notch\Notch.lua
+
 Modules\Chat\Config.lua
 Modules\Chat\Chat.lua
 
