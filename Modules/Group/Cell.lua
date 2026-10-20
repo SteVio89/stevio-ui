@@ -52,35 +52,6 @@ local function UpdateRole(cell)
 	UnitFrameUtil.UpdateUnitFrameRoleIcon(cell)
 end
 
--- GetUnitAuras can't hand secret auras to addon code and errors instead;
--- the per-index query returns them with secret fields, which widgets accept.
-local function UpdateIconSide(cell, icons, filter)
-	local unit = cell.unit
-	for i, icon in ipairs(icons) do
-		local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, filter)
-		if aura then
-			icon.texture:SetTexture(aura.icon)
-			local id = aura.auraInstanceID
-			local duration = not issecretvalue(id) and C_UnitAuras.GetAuraDuration(unit, id)
-			if duration and not issecretvalue(duration) then
-				icon.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(unit, id))
-				icon.cooldown:SetCooldownFromDurationObject(duration)
-			else
-				icon.count:SetText("")
-				icon.cooldown:Clear()
-			end
-			icon:Show()
-		else
-			icon:Hide()
-		end
-	end
-end
-
-local function UpdateAuras(cell)
-	UpdateIconSide(cell, cell.leftIcons, config.dispellableFilter)
-	UpdateIconSide(cell, cell.rightIcons, config.otherFilter)
-end
-
 local function UpdateAll(cell)
 	if not cell.unit or not UnitExists(cell.unit) then
 		return
@@ -91,7 +62,6 @@ local function UpdateAll(cell)
 	UpdateRange(cell)
 	UpdateTarget(cell)
 	UpdateThreat(cell)
-	UpdateAuras(cell)
 	UpdateRole(cell)
 end
 
@@ -108,7 +78,6 @@ local unitEvents = {
 	end,
 	UNIT_IN_RANGE_UPDATE = UpdateRange,
 	UNIT_THREAT_SITUATION_UPDATE = UpdateThreat,
-	UNIT_AURA = UpdateAuras,
 }
 
 local globalEvents = {
@@ -131,6 +100,9 @@ local function SetUnit(cell, unit)
 	if not unit then
 		return
 	end
+	for _, container in ipairs(cell.auraContainers) do
+		container:SetUnit(unit)
+	end
 	for event in pairs(unitEvents) do
 		cell:RegisterUnitEvent(event, unit)
 	end
@@ -146,11 +118,10 @@ local function OnAttributeChanged(cell, name, value)
 	end
 end
 
-local function CreateIcon(cell, anchorPoint, offsetX)
-	local icon = CreateFrame("Frame", nil, cell.health)
+local ICON_SPACING = 2
+
+local function StyleIcon(icon)
 	icon:SetSize(config.iconSize, config.iconSize)
-	icon:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, 0)
-	icon:SetFrameLevel(cell.health:GetFrameLevel() + 2)
 
 	icon.texture = icon:CreateTexture(nil, "ARTWORK")
 	icon.texture:SetAllPoints()
@@ -166,8 +137,44 @@ local function CreateIcon(cell, anchorPoint, offsetX)
 	icon.count:SetPoint("BOTTOMRIGHT", 1, -1)
 
 	ns.CreateBorder(icon)
+end
+
+local function CreatePreviewIcon(cell, anchorPoint, offsetX)
+	local icon = CreateFrame("Frame", nil, cell.health)
+	icon:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, 0)
+	icon:SetFrameLevel(cell.health:GetFrameLevel() + 2)
+	StyleIcon(icon)
 	icon:Hide()
 	return icon
+end
+
+-- Runs once per button before Blizzard locks it against tainted access while
+-- auras are secret, so this is the only place our code may touch it.
+local function InitAuraButton(button)
+	button:EnableMouse(false)
+	StyleIcon(button)
+	button:SetIcon(button.texture)
+	button:SetDurationCooldown(button.cooldown)
+	button:SetApplicationCount(button.count)
+end
+
+-- Addon code can't read other units' auras in combat (the queries error once
+-- they turn secret), so Blizzard's secure container reads and tracks them and
+-- only fills in the elements we hand it.
+local function CreateAuraSide(cell, key, filter, anchorPoint, offsetX, growth)
+	local container = CreateFrame("AuraContainer", nil, cell.health, "CustomAuraContainerTemplate")
+	container:SetFrameLevel(cell.health:GetFrameLevel() + 2)
+	container:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, 0)
+	container:SetEditModePreviewEnabled(false)
+	container:SetFlowLayoutAnchorPoint("TOP" .. anchorPoint)
+	container:SetFlowLayoutGrowthDirection(growth, AnchorUtil.FlowDirection.Down)
+	container:AddAuraGroup(key, filter, {
+		maxFrameCount = config.iconsPerSide,
+		layout = { elementSpacing = ICON_SPACING },
+		initializeFrame = InitAuraButton,
+	})
+	container:SetEnabled(true)
+	return container
 end
 
 -- Visuals only, shared by live cells and the /sui test preview.
@@ -204,12 +211,15 @@ function ns.BuildGroupCell(cell)
 	cell.roleIcon:SetPoint("CENTER", cell.health)
 	cell.roleIcon:Hide()
 	cell.optionTable = { displayRoleIcon = true }
+end
 
-	local step = config.iconSize + 2
+-- Plain frames the /sui test preview fills with fake debuffs.
+function ns.BuildGroupPreviewIcons(cell)
+	local step = config.iconSize + ICON_SPACING
 	cell.leftIcons, cell.rightIcons = {}, {}
 	for i = 1, config.iconsPerSide do
-		cell.leftIcons[i] = CreateIcon(cell, "LEFT", 2 + (i - 1) * step)
-		cell.rightIcons[i] = CreateIcon(cell, "RIGHT", -2 - (i - 1) * step)
+		cell.leftIcons[i] = CreatePreviewIcon(cell, "LEFT", 2 + (i - 1) * step)
+		cell.rightIcons[i] = CreatePreviewIcon(cell, "RIGHT", -2 - (i - 1) * step)
 	end
 end
 
@@ -217,6 +227,10 @@ end
 -- because the secure header may create cells in combat, where Lua can't resize them.
 function ns.InitGroupCell(cell)
 	ns.BuildGroupCell(cell)
+	cell.auraContainers = {
+		CreateAuraSide(cell, "dispellable", config.dispellableFilter, "LEFT", 2, AnchorUtil.FlowDirection.Right),
+		CreateAuraSide(cell, "other", config.otherFilter, "RIGHT", -2, AnchorUtil.FlowDirection.Left),
+	}
 	cell:SetScript("OnEvent", OnEvent)
 	cell:HookScript("OnAttributeChanged", OnAttributeChanged)
 	cell:HookScript("OnShow", UpdateAll)

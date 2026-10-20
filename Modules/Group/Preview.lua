@@ -74,6 +74,7 @@ local function CreatePreview()
 		local cell = CreateFrame("Frame", nil, container)
 		cell:SetSize(baseWidth, cellHeight)
 		ns.BuildGroupCell(cell)
+		ns.BuildGroupPreviewIcons(cell)
 		ShowMember(cell, FakeMember(index))
 		cells[index] = cell
 	end
