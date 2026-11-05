@@ -5,7 +5,7 @@
 set -euo pipefail
 
 src="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-dest="${1:-/Applications/World of Warcraft/_classic_beta_/Interface/AddOns/stevio-ui}"
+dest="${1:-/Applications/World of Warcraft/_forever_/Interface/AddOns/stevio-ui}"
 dest="${dest%/}"
 
 case "$src/" in

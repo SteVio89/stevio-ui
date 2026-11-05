@@ -194,6 +194,9 @@ ns.config.settings.profile = {
 		RAIDweatherDensity = "1",
 		RAIDwmoLodDist = "350",
 		SSAO = "2",
+		-- "Enable Interact Key" for mouse and keyboard; the F binding does nothing
+		-- without it. The beta export missed it because its default differs from live.
+		SoftTargetInteract = "3",
 		Sound_EnableErrorSpeech = "0",
 		TerrainLodDiv = "512",
 		accessibilityScreenNarrationEnabled = "0",
