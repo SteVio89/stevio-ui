@@ -22,7 +22,9 @@ function History.StripMarkup(text)
 end
 
 -- One message line: time first, then the chat channel it came from (only set in
--- the shared "Other" channel), then the sender. System messages have no sender.
+-- the shared "Other" channel), then the sender. System messages have no sender;
+-- emotes (`entry.emote`) read as a sentence, "Bob waves.", without the colon
+-- (text emotes like /dance carry the name in their text and have no sender).
 -- `stamp`, `source` and `sender` are the already formatted (e.g. colored) parts;
 -- `source` and `sender` default to the entry's own.
 function History.Line(entry, stamp, source, sender)
@@ -31,7 +33,7 @@ function History.Line(entry, stamp, source, sender)
 		parts[#parts + 1] = "[" .. (source or entry.source) .. "]"
 	end
 	if entry.sender then
-		parts[#parts + 1] = (sender or entry.sender) .. ":"
+		parts[#parts + 1] = (sender or entry.sender) .. (entry.emote and "" or ":")
 	end
 	parts[#parts + 1] = entry.text or ""
 	return table.concat(parts, " ")
@@ -122,8 +124,8 @@ function Store:Ensure(key, opts)
 	return channel
 end
 
--- entry: { time, sender, text, outgoing, source, sourceType }: `sender` is nil for
--- system messages, `source` names the chat channel of a message in "Other" and
+-- entry: { time, sender, text, outgoing, source, sourceType, emote }: `sender` is
+-- nil for system messages and text emotes, `emote` marks emotes, `source` names the chat channel of a message in "Other" and
 -- `sourceType` its chat type (for its color). Returns the channel.
 function Store:Add(key, opts, entry, markUnread)
 	local channel = self:Ensure(key, opts)

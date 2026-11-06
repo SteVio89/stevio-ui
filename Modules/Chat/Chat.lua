@@ -147,9 +147,14 @@ local function Attended()
 end
 
 -- "time [channel] sender: text"; the channel only shows in "Other", the sender
--- is missing on system messages. Channel and sender take their channel's color.
+-- is missing on system messages. Channel and sender take their channel's color;
+-- emotes ("time Bob waves.") are colored as a whole in the emote color.
 local function FormatEntry(channel, entry)
 	local stamp = "|cff808080" .. (entry.time and date("%H:%M", entry.time) or "--:--") .. "|r"
+	if entry.emote then
+		local body = entry.sender and (entry.sender .. " " .. entry.text) or entry.text
+		return stamp .. " " .. ColorCode(TypeColor("EMOTE")) .. body .. "|r"
+	end
 	local source = entry.source and (ColorCode(TypeColor(entry.sourceType or channel.chatType)) .. entry.source .. "|r")
 	local sender = entry.sender and (ColorCode(ChannelColor(channel)) .. entry.sender .. "|r")
 	return ns.ChatHistory.Line(entry, stamp, source, sender)
@@ -390,14 +395,14 @@ local function OnChatMessage(event, text, sender, ...)
 	local channelIndex, baseName = select(6, ...)
 	local bnetID = select(11, ...)
 	local secret = issecretvalue(text) or issecretvalue(sender)
-	if def.system then
-		if not secret then
+	if def.system or def.textEmote then
+		if def.system and not secret then
 			text = SystemText(def, text, sender)
 			if not text then
 				return -- a Battle.net notice that isn't shown as text
 			end
 		end
-		sender = nil
+		sender = nil -- system messages have none, text emotes name it in their text
 	elseif not issecretvalue(sender) and not def.bnet then
 		sender = Ambiguate(sender, "short")
 	end
@@ -415,6 +420,7 @@ local function OnChatMessage(event, text, sender, ...)
 			sender = def.outgoing and UnitName("player") or sender,
 			text = (def.prefix or "") .. text,
 			outgoing = def.outgoing,
+			emote = def.emote,
 			-- "Other" mixes channels, so each line names its own.
 			source = source,
 			sourceType = sourceType,
