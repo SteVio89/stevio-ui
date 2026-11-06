@@ -40,7 +40,9 @@ until it is needed, and as much as possible can be done from the keyboard.
   persistent per-character history; `x` deletes any channel but guild with
   its history. Say, yell and chat channels only count as unread and don't pop
   up the chat. Hidden by default, toggled by key, with edge
-  badges that light up on new whispers, party or guild messages.
+  badges that light up on new whispers, party or guild messages; it opens on
+  the channel with the latest activity. While it is being built, Blizzard's
+  chat stays visible right of it (`showBlizzardChat` in `Modules/Chat/Config.lua`).
 - **Quest rewards** – marks the choice with the highest vendor value.
 - **Damage meter and auras** – Blizzard's own, repositioned.
 
@@ -78,6 +80,7 @@ first login.
 | Command | Action |
 | --- | --- |
 | `/sui test 5\|10\|25\|40` | Preview the group grid |
+| `/sui chat` | List the chat channels with message and unread counts |
 | `/sui qj` | List the current Quickjump targets |
 | `/sui export` | Export your current bindings and settings as a profile |
 | `/sui apply` | Re-apply the profile |
