@@ -71,3 +71,13 @@ publicStore:Add("other", { kind = "other", chatType = "CHANNEL", label = "Other"
 check(publicStore:Get("other").readOnly, "Other is read-only")
 check(publicStore:HasUnread("public") and publicStore:HasUnread("other"), "unread for public kinds")
 print("public channels ok")
+
+local recentStore = History.New({}, 3)
+check(recentStore:MostRecent() == nil, "no recent channel without activity")
+recentStore:Sorted({}) -- creates the empty guild channel
+check(recentStore:MostRecent() == nil, "empty guild is not recent")
+recentStore:Add("say", { kind = "public", chatType = "SAY", label = "Say" }, { time = 5, text = "a" }, true)
+recentStore:AddUnreadOnly("party", party, 7)
+recentStore:Add("yell", { kind = "public", chatType = "YELL", label = "Yell" }, { time = 6, text = "b" }, true)
+check(recentStore:MostRecent().key == "party", "most recent channel, secret messages included")
+print("most recent ok")

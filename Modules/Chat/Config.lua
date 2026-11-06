@@ -13,6 +13,11 @@ ns.config.chat = {
 	dividerColor = { 0.3, 0.3, 0.3, 1 },
 	deleteColor = { 0.8, 0.3, 0.3, 1 },
 
+	-- Temporary while the channel chat is being built: keeps Blizzard's chat
+	-- visible right of it (gap in pixels) to compare which messages arrive.
+	showBlizzardChat = true,
+	blizzardChatGap = 8,
+
 	autoShowDuration = 8,
 
 	-- Messages kept per channel; also what survives a /reload or relog.
