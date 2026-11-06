@@ -38,7 +38,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   (including emotes such as `/e` and `/dance`), yell and the chat channels listed in `publicChannels`, e.g. General and Trade;
   every other chat channel is collected read-only in "Other", each line
   naming its channel before the sender; system messages such as players
-  coming online or going offline are collected read-only in "System") with a
+  coming online or going offline are collected read-only in "System", together
+  with addon output such as `/sui` replies, which opens that channel) with a
   persistent per-character history, a date line before the first message of
   each day (`dateFormat`); `x` deletes any channel but guild with
   its history. Say, emotes, yell, chat channels and system messages only count as unread and don't pop
