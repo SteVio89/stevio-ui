@@ -111,6 +111,18 @@ ns.config.chat = {
 		},
 	},
 
+	-- Addon output (print(), e.g. /sui commands): Blizzard's chat is never shown,
+	-- so it goes to "System" and, being an answer to something just typed,
+	-- opens that channel (`focus`) even while another one is open.
+	print = {
+		kind = "system",
+		key = "system",
+		chatType = "SYSTEM",
+		label = "System",
+		readOnly = true,
+		focus = true,
+	},
+
 	-- Size and base colors come from ns.config.style.badge.
 	badge = {
 		segmentGap = 2,

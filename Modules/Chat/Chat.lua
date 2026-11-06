@@ -438,6 +438,38 @@ local function SystemText(def, text, sender)
 	return text
 end
 
+-- Stores a message (`entry`, nil when its contents are secret) in channel `key`
+-- and shows it according to `def` (see config.events).
+local function Receive(def, key, opts, entry)
+	local viewing = Attended() and state.selected == key
+	if not entry then
+		store:AddUnreadOnly(key, opts, time())
+	else
+		local channel = store:Add(key, opts, entry, not viewing and not def.outgoing)
+		if state.selected == key then
+			ShowEntry(channel, PreviousTimed(channel.messages, #channel.messages), entry)
+		end
+	end
+
+	-- Busy public chat only counts as unread; it doesn't pop up the hidden chat.
+	if def.outgoing or def.quiet then
+		Update()
+		return
+	end
+	-- Peek at the channel the message arrived in while the chat is hidden;
+	-- `focus` channels are opened even when the chat is open, unless the
+	-- player is typing into another channel.
+	if hidden or (def.focus and state.selected ~= key and not ui.input:HasFocus()) then
+		state.selected = key
+		if ui.copy then
+			ui.copy:Hide()
+		end
+		RenderMessages(store:Get(key))
+	end
+	StartAutoTimer(config.autoShowDuration)
+	Update()
+end
+
 -- Message contents may be secret (e.g. in encounters): those can't be stored and
 -- only light up the channel as unread.
 local function OnChatMessage(event, text, sender, ...)
@@ -461,11 +493,8 @@ local function OnChatMessage(event, text, sender, ...)
 	if not key then
 		return -- no way to tell which channel this belongs to
 	end
-	local viewing = Attended() and state.selected == key
-	if secret then
-		store:AddUnreadOnly(key, opts, time())
-	else
-		local entry = {
+	local entry = not secret
+		and {
 			time = time(),
 			sender = def.outgoing and UnitName("player") or sender,
 			text = (def.prefix or "") .. text,
@@ -475,24 +504,23 @@ local function OnChatMessage(event, text, sender, ...)
 			source = source,
 			sourceType = sourceType,
 		}
-		local channel = store:Add(key, opts, entry, not viewing and not def.outgoing)
-		if state.selected == key then
-			ShowEntry(channel, PreviousTimed(channel.messages, #channel.messages), entry)
-		end
-	end
+	Receive(def, key, opts, entry)
+end
 
-	-- Busy public chat only counts as unread; it doesn't pop up the hidden chat.
-	if def.outgoing or def.quiet then
-		Update()
-		return
+-- Addon output (print(), e.g. /sui) normally lands in Blizzard's chat, which is
+-- never shown; it goes to the System channel instead and opens it, since it
+-- usually answers something just typed.
+local function OnPrint(...)
+	local parts = {}
+	for i = 1, select("#", ...) do
+		local value = select(i, ...)
+		if issecretvalue(value) then
+			Receive(config.print, config.print.key, config.print, nil)
+			return
+		end
+		parts[i] = tostring(value)
 	end
-	-- Peek at the channel the message arrived in while the chat is hidden.
-	if hidden then
-		state.selected = key
-		RenderMessages(store:Get(key))
-	end
-	StartAutoTimer(config.autoShowDuration)
-	Update()
+	Receive(config.print, config.print.key, config.print, { time = time(), text = table.concat(parts, " ") })
 end
 
 local function Send(text)
@@ -828,6 +856,7 @@ function Chat:OnEnable()
 		ns:RegisterEvent(event, OnChatMessage)
 	end
 	ns:RegisterSlashCommand("chat", PrintChannels)
+	hooksecurefunc("print", OnPrint)
 
 	ns:SetEditModeSystem(Enum.EditModeSystem.ChatFrame, nil, BlizzardChatLayout(), SizeSettings())
 
