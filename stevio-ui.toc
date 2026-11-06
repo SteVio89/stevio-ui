@@ -61,6 +61,10 @@ Modules\Auras\Auras.lua
 Modules\QuestRewards\Config.lua
 Modules\QuestRewards\QuestRewards.lua
 
+Modules\LootTicker\Config.lua
+Modules\LootTicker\Feed.lua
+Modules\LootTicker\LootTicker.lua
+
 Modules\Accessibility\Config.lua
 Modules\Accessibility\QuickJump.lua
 Modules\Accessibility\DialogSources.lua

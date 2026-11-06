@@ -28,6 +28,8 @@ ns.layout = {
 	minimap = { point = "BOTTOMRIGHT", x = -12, y = 44 },
 	menubar = { point = "BOTTOMRIGHT", x = -12, y = 8 },
 	bags = { point = "BOTTOMLEFT", x = 12, y = 8 },
+	-- Above the bags, growing upwards into the free damage meter slot.
+	lootTicker = { point = "BOTTOMLEFT", x = 12, y = 52 },
 
 	-- Buffs keep Blizzard's heights and only move to the right edge; the tracker
 	-- overlaps them when shown, which is fine since it's hidden by default.
