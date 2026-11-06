@@ -44,8 +44,9 @@ until it is needed, and as much as possible can be done from the keyboard.
   its history. Say, emotes, yell, chat channels and system messages only count as unread and don't pop
   up the chat. Hidden by default, toggled by key, with edge
   badges that light up on new whispers, party or guild messages; it opens on
-  the channel with the latest activity. While it is being built, Blizzard's
-  chat stays visible right of it (`showBlizzardChat` in `Modules/Chat/Config.lua`).
+  the channel with the latest activity. Blizzard's chat stays hidden; only its
+  input box (Enter, slash commands) is used, shown right under the channel view
+  and hidden together with it.
 - **Quest rewards** – marks the choice with the highest vendor value.
 - **Damage meter and auras** – Blizzard's own, repositioned.
 
