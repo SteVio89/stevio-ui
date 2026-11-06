@@ -92,6 +92,9 @@ transcript = History.Transcript({ messages = {
 	{ time = 2, text = "Bob has gone offline." },
 } }, function(t) return "t" .. t end)
 check(transcript == "[t1] [LFG] A: x\n[t2] Bob has gone offline.", "transcript with source and system line: " .. transcript)
+check(History.Line({ sender = "Bob", text = "waves happily.", emote = true }, "12:00") == "12:00 Bob waves happily.", "emote line has no colon")
+check(History.Line({ text = "Bob dances.", emote = true }, "12:00") == "12:00 Bob dances.", "text emote carries the name")
+check(History.Line({ sender = "Bob", text = "waves.", emote = true }, "t", nil, "<Bob>") == "t <Bob> waves.", "formatted emote")
 print("line format ok")
 
 -- a date line before the first message of each day; untimed messages don't count
