@@ -13,10 +13,12 @@ ns.config.chat = {
 	dividerColor = { 0.3, 0.3, 0.3, 1 },
 	deleteColor = { 0.8, 0.3, 0.3, 1 },
 
-	-- Temporary while the channel chat is being built: keeps Blizzard's chat
-	-- visible right of it (gap in pixels) to compare which messages arrive.
-	showBlizzardChat = true,
+	-- Debugging aid: keeps Blizzard's chat visible right of the channel view
+	-- (gap in pixels) to compare which messages arrive.
+	showBlizzardChat = false,
 	blizzardChatGap = 8,
+	-- Gap (pixels) between the channel view and Blizzard's input box below it.
+	editBoxGap = 2,
 
 	autoShowDuration = 8,
 

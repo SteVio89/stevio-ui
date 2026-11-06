@@ -16,6 +16,7 @@ local tabs = {}
 local editBoxes = {}
 local hidden = false
 local applyingAlpha = false
+local placingEditBox = false
 
 local state = {
 	manual = false,
@@ -28,7 +29,8 @@ local badge
 local ui = {} -- frame, header, messages, input, rows
 
 -- Blizzard's chat windows are never shown: the channel view below replaces them.
--- Only their input box is still used (Enter / slash commands) while typing.
+-- Only their input box is still used (Enter / slash commands) while typing;
+-- it sits right under the channel view and is hidden together with it.
 -- While the channel view is being built, `showBlizzardChat` keeps them visible
 -- next to it for comparison.
 local function IsSuppressed(frame)
@@ -54,6 +56,25 @@ local function GuardAlpha(frame)
 	end)
 end
 
+-- Blizzard anchors the input box to its own (invisible) chat window and
+-- re-anchors it now and then (docking, chat style), so the anchor is restored
+-- whenever Blizzard moves it.
+local function PlaceEditBox(editBox)
+	placingEditBox = true
+	editBox:ClearAllPoints()
+	editBox:SetPoint("TOPLEFT", ui.frame, "BOTTOMLEFT", 0, -config.editBoxGap)
+	editBox:SetPoint("TOPRIGHT", ui.frame, "BOTTOMRIGHT", 0, -config.editBoxGap)
+	placingEditBox = false
+end
+
+local function GuardPlacement(editBox)
+	hooksecurefunc(editBox, "SetPoint", function(self)
+		if not placingEditBox then
+			PlaceEditBox(self)
+		end
+	end)
+end
+
 local function ManageChatFrame(frame)
 	if chatFrames[frame] then
 		return
@@ -74,6 +95,8 @@ local function ManageChatFrame(frame)
 	if editBox and not editBoxes[editBox] then
 		editBoxes[editBox] = true
 		GuardAlpha(editBox)
+		PlaceEditBox(editBox)
+		GuardPlacement(editBox)
 	end
 end
 
