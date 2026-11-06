@@ -21,13 +21,29 @@ function History.StripMarkup(text)
 	return text
 end
 
--- Plain-text transcript of a channel, one "[stamp] sender: text" line per message.
+-- One message line: time first, then the chat channel it came from (only set in
+-- the shared "Other" channel), then the sender. System messages have no sender.
+-- `stamp`, `source` and `sender` are the already formatted (e.g. colored) parts;
+-- `source` and `sender` default to the entry's own.
+function History.Line(entry, stamp, source, sender)
+	local parts = { stamp }
+	if entry.source then
+		parts[#parts + 1] = "[" .. (source or entry.source) .. "]"
+	end
+	if entry.sender then
+		parts[#parts + 1] = (sender or entry.sender) .. ":"
+	end
+	parts[#parts + 1] = entry.text or ""
+	return table.concat(parts, " ")
+end
+
+-- Plain-text transcript of a channel, one "[stamp] [source] sender: text" line per message.
 -- `stamp(time)` formats the time (defaults to the raw number).
 function History.Transcript(channel, stamp)
 	local lines = {}
 	for _, entry in ipairs(channel.messages) do
 		local when = entry.time and (stamp and stamp(entry.time) or tostring(entry.time)) or "--:--"
-		lines[#lines + 1] = History.StripMarkup(("[%s] %s: %s"):format(when, entry.sender or "?", entry.text or ""))
+		lines[#lines + 1] = History.StripMarkup(History.Line(entry, "[" .. when .. "]"))
 	end
 	return table.concat(lines, "\n")
 end
@@ -85,7 +101,9 @@ function Store:Ensure(key, opts)
 	return channel
 end
 
--- entry: { time, sender, text, outgoing }. Returns the channel.
+-- entry: { time, sender, text, outgoing, source, sourceType }: `sender` is nil for
+-- system messages, `source` names the chat channel of a message in "Other" and
+-- `sourceType` its chat type (for its color). Returns the channel.
 function Store:Add(key, opts, entry, markUnread)
 	local channel = self:Ensure(key, opts)
 	local messages = channel.messages

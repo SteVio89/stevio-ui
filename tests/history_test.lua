@@ -81,3 +81,15 @@ recentStore:AddUnreadOnly("party", party, 7)
 recentStore:Add("yell", { kind = "public", chatType = "YELL", label = "Yell" }, { time = 6, text = "b" }, true)
 check(recentStore:MostRecent().key == "party", "most recent channel, secret messages included")
 print("most recent ok")
+
+-- time first, then the chat channel (in "Other"), then the sender
+check(History.Line({ sender = "A", text = "hi" }, "12:00") == "12:00 A: hi", "line with sender")
+check(History.Line({ source = "LFG", sender = "A", text = "hi" }, "12:00") == "12:00 [LFG] A: hi", "line in Other")
+check(History.Line({ text = "Bob has come online." }, "12:00") == "12:00 Bob has come online.", "system line has no sender")
+check(History.Line({ source = "LFG", sender = "A", text = "hi" }, "t", "<LFG>", "<A>") == "t [<LFG>] <A>: hi", "formatted parts")
+transcript = History.Transcript({ messages = {
+	{ time = 1, source = "LFG", sender = "A", text = "x" },
+	{ time = 2, text = "Bob has gone offline." },
+} }, function(t) return "t" .. t end)
+check(transcript == "[t1] [LFG] A: x\n[t2] Bob has gone offline.", "transcript with source and system line: " .. transcript)
+print("line format ok")
