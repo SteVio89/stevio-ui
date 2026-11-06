@@ -19,6 +19,11 @@ ns.config.chat = {
 	blizzardChatGap = 8,
 	-- Gap (pixels) between the channel view and Blizzard's input box below it.
 	editBoxGap = 2,
+	-- Blizzard's chat toasts (Battle.net friend online, ...) appear under the
+	-- input box: gap in pixels, and the height they are bottom-aligned in
+	-- (the Battle.net toast is 50 or 63 high).
+	alertGap = 4,
+	alertHeight = 63,
 
 	autoShowDuration = 8,
 

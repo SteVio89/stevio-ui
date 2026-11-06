@@ -46,7 +46,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   badges that light up on new whispers, party or guild messages; it opens on
   the channel with the latest activity. Blizzard's chat stays hidden; only its
   input box (Enter, slash commands) is used, shown right under the channel view
-  and hidden together with it.
+  and hidden together with it. Blizzard's chat toasts (e.g. a Battle.net friend
+  coming online) pop up right under that input box.
 - **Quest rewards** – marks the choice with the highest vendor value.
 - **Damage meter and auras** – Blizzard's own, repositioned.
 
