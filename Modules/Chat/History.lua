@@ -138,6 +138,18 @@ function Store:HasUnread(kind)
 	return false
 end
 
+-- The channel with the latest activity, or nil when there is none yet. Opening
+-- the chat there shows what just happened instead of an empty channel.
+function Store:MostRecent()
+	local best
+	for _, channel in pairs(self.db.channels) do
+		if channel.last > 0 and (not best or channel.last > best.last or (channel.last == best.last and channel.key < best.key)) then
+			best = channel
+		end
+	end
+	return best
+end
+
 -- Channels in sidebar order: by kind order, then most recent activity first.
 -- Guild is always listed so it can be opened before the first message.
 function Store:Sorted(kindOrder)
