@@ -28,7 +28,7 @@ ns.config.chat = {
 	scrollStep = 3,
 
 	-- Sidebar order of the channel kinds.
-	kindOrder = { group = 1, guild = 2, whisper = 3, public = 4, other = 5 },
+	kindOrder = { group = 1, guild = 2, whisper = 3, public = 4, other = 5, system = 6 },
 
 	-- Numbered chat channels (base name, case-insensitive) that get their own
 	-- sidebar channel; messages from all other channels end up in "Other".
@@ -37,7 +37,9 @@ ns.config.chat = {
 	-- Chat events that feed the channels. Group channels (party, raid, instance)
 	-- are one channel each, whispers get one channel per partner.
 	-- Each message also briefly shows the hidden chat and lights its badge segment,
-	-- except `quiet` ones (say, yell, chat channels): they only count as unread.
+	-- except `quiet` ones (say, yell, chat channels, system): they only count as unread.
+	-- `system` messages (players coming online / going offline, ...) have no
+	-- sender and go to the read-only "System" channel.
 	events = {
 		CHAT_MSG_PARTY = { kind = "group", key = "party", chatType = "PARTY", label = "Party" },
 		CHAT_MSG_PARTY_LEADER = { kind = "group", key = "party", chatType = "PARTY", label = "Party" },
@@ -55,6 +57,26 @@ ns.config.chat = {
 		CHAT_MSG_WHISPER_INFORM = { kind = "whisper", chatType = "WHISPER", outgoing = true },
 		CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", bnet = true },
 		CHAT_MSG_BN_WHISPER_INFORM = { kind = "whisper", chatType = "BN_WHISPER", bnet = true, outgoing = true },
+		CHAT_MSG_SYSTEM = {
+			kind = "system",
+			key = "system",
+			chatType = "SYSTEM",
+			label = "System",
+			system = true,
+			readOnly = true,
+			quiet = true,
+		},
+		-- Battle.net friends coming online / going offline.
+		CHAT_MSG_BN_INLINE_TOAST_ALERT = {
+			kind = "system",
+			key = "system",
+			chatType = "SYSTEM",
+			label = "System",
+			system = true,
+			toast = { FRIEND_ONLINE = true, FRIEND_OFFLINE = true },
+			readOnly = true,
+			quiet = true,
+		},
 	},
 
 	-- Size and base colors come from ns.config.style.badge.
