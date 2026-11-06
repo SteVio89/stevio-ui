@@ -51,6 +51,37 @@ function Feed.Parse(text, patterns)
 	end
 end
 
+-- Patterns for the coin amounts in a money message, from format strings such
+-- as GOLD_AMOUNT ("%d Gold"). Digits may carry thousands separators.
+function Feed.MoneyPatterns(goldFormat, silverFormat, copperFormat)
+	local patterns = {}
+	for i, format in ipairs({ goldFormat, silverFormat, copperFormat }) do
+		local pattern = format:gsub("[%^%$%(%)%.%[%]%*%+%-%?]", "%%%0")
+		pattern = pattern:gsub("%%%d+%%%$d", "%%d")
+		pattern = pattern:gsub("%%d", "(%%d[%%d.,]*)")
+		patterns[i] = pattern
+	end
+	return patterns
+end
+
+-- Copper amount of a money message such as "You loot 1 Gold, 2 Silver", or
+-- nil if it names no coins. Anything in parentheses (e.g. the part deposited
+-- to the guild bank) is not counted.
+function Feed.ParseMoney(text, patterns)
+	text = text:gsub("%b()", "")
+	local copper, found = 0, false
+	for i, factor in ipairs({ 10000, 100, 1 }) do
+		local amount = text:match(patterns[i])
+		if amount then
+			copper = copper + tonumber((amount:gsub("%D", ""))) * factor
+			found = true
+		end
+	end
+	if found and copper > 0 then
+		return copper
+	end
+end
+
 function Feed.LinkName(link)
 	return link:match("|h%[(.-)%]|h") or link:match("|h(.-)|h") or link
 end
