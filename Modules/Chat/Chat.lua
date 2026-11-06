@@ -75,6 +75,33 @@ local function GuardPlacement(editBox)
 	end)
 end
 
+-- Blizzard stacks its chat toasts (Battle.net friend online, ...) upwards from
+-- ChatAlertFrame, which sits above its own chat window. That window is at the
+-- top of the screen, so the toasts ended up in the top left corner; they go
+-- right under the input box instead, which stays where it is.
+local placingAlerts = false
+
+local function PlaceAlerts()
+	local editBox = DEFAULT_CHAT_FRAME.editBox
+	placingAlerts = true
+	ChatAlertFrame:ClearAllPoints()
+	ChatAlertFrame:SetPoint("TOPLEFT", editBox, "BOTTOMLEFT", 0, -config.alertGap)
+	ChatAlertFrame:SetHeight(config.alertHeight)
+	placingAlerts = false
+end
+
+local function ManageAlerts()
+	if not ChatAlertFrame or not DEFAULT_CHAT_FRAME.editBox then
+		return
+	end
+	PlaceAlerts()
+	hooksecurefunc(ChatAlertFrame, "SetPoint", function()
+		if not placingAlerts then
+			PlaceAlerts()
+		end
+	end)
+end
+
 local function ManageChatFrame(frame)
 	if chatFrames[frame] then
 		return
@@ -806,6 +833,7 @@ function Chat:OnEnable()
 
 	HideChatButtons()
 	ScanChatFrames()
+	ManageAlerts()
 	GuardAlpha(GeneralDockManager)
 	hooksecurefunc("FCF_OpenTemporaryWindow", function()
 		ScanChatFrames()
