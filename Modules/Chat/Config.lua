@@ -24,6 +24,9 @@ ns.config.chat = {
 	historyLimit = 200,
 	sidebarWidth = 104,
 	rowHeight = 18,
+	-- Font size of the messages, the input line and the copy view
+	-- (sidebar and header keep ns.config.style.fontSize).
+	fontSize = 14,
 	-- Lines scrolled per mouse wheel notch.
 	scrollStep = 3,
 
