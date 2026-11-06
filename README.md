@@ -49,7 +49,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   and hidden together with it. Blizzard's chat toasts (e.g. a Battle.net friend
   coming online) pop up right under that input box.
 - **Quest rewards** – marks the choice with the highest vendor value.
-- **Damage meter and auras** – Blizzard's own, repositioned.
+- **Auras** – Blizzard's own, repositioned. Blizzard's damage meter is turned
+  off (`damageMeterEnabled` in the profile); its slot stays free.
 
 ## Assumptions
 
@@ -58,7 +59,7 @@ stevio-ui is built for one setup and is configured in code, not through options:
 - **German keyboard layout** – Quickjump letters and some keys are chosen for
   it (`Y`/`Z` are swapped compared to US).
 - **UI scale around 0.8** (≈ 960 UI units screen height). At higher scales the
-  40-player grid overlaps the damage meter.
+  40-player grid overlaps the free damage meter slot at the bottom left.
 - **The bundled keybinding and graphics profile is the author's own.** Change
   `Modules/Settings/Profile.lua` (or generate your own with `/sui export`) to make
   it yours.
