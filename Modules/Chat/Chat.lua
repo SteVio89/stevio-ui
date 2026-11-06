@@ -155,14 +155,42 @@ local function FormatEntry(channel, entry)
 	return ns.ChatHistory.Line(entry, stamp, source, sender)
 end
 
+local function Day(t)
+	return date(config.dateFormat, t)
+end
+
+local function DayLine(entry)
+	return "|cff808080-- " .. Day(entry.time) .. " --|r"
+end
+
+-- Adds `entry` to the message frame, after a date line when it starts a new
+-- day; `previous` is the last message shown before it.
+local function ShowEntry(channel, previous, entry)
+	if ns.ChatHistory.StartsDay(previous, entry, Day) then
+		ui.messages:AddMessage(DayLine(entry))
+	end
+	ui.messages:AddMessage(FormatEntry(channel, entry))
+end
+
+-- The last message with a time before index `index` (nil when there is none).
+local function PreviousTimed(messages, index)
+	for i = index - 1, 1, -1 do
+		if messages[i].time then
+			return messages[i]
+		end
+	end
+end
+
 local function RenderMessages(channel)
 	local messages = ui.messages
 	messages:Clear()
 	if not channel then
 		return
 	end
+	local previous
 	for _, entry in ipairs(channel.messages) do
-		messages:AddMessage(FormatEntry(channel, entry))
+		ShowEntry(channel, previous, entry)
+		previous = entry.time and entry or previous
 	end
 	messages:ScrollToBottom()
 end
@@ -391,9 +419,9 @@ local function OnChatMessage(event, text, sender, ...)
 			source = source,
 			sourceType = sourceType,
 		}
-		store:Add(key, opts, entry, not viewing and not def.outgoing)
+		local channel = store:Add(key, opts, entry, not viewing and not def.outgoing)
 		if state.selected == key then
-			ui.messages:AddMessage(FormatEntry(store:Get(key), entry))
+			ShowEntry(channel, PreviousTimed(channel.messages, #channel.messages), entry)
 		end
 	end
 
@@ -543,7 +571,7 @@ local function ToggleCopy()
 	end
 	copy.text = ns.ChatHistory.Transcript(channel, function(t)
 		return date("%H:%M", t)
-	end)
+	end, Day)
 	copy:Show()
 	copy.edit:SetText(copy.text)
 	copy.edit:SetFocus()

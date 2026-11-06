@@ -27,6 +27,9 @@ ns.config.chat = {
 	-- Font size of the messages, the input line and the copy view
 	-- (sidebar and header keep ns.config.style.fontSize).
 	fontSize = 14,
+	-- Date line shown before the first message of each day (os.date format);
+	-- the history survives relogs, so the time alone isn't enough.
+	dateFormat = "%a %d.%m.%Y",
 	-- Lines scrolled per mouse wheel notch.
 	scrollStep = 3,
 

@@ -93,3 +93,19 @@ transcript = History.Transcript({ messages = {
 } }, function(t) return "t" .. t end)
 check(transcript == "[t1] [LFG] A: x\n[t2] Bob has gone offline.", "transcript with source and system line: " .. transcript)
 print("line format ok")
+
+-- a date line before the first message of each day; untimed messages don't count
+local function day(t) return "d" .. math.floor(t / 100) end
+check(History.StartsDay(nil, { time = 5 }, day), "first message starts a day")
+check(not History.StartsDay({ time = 5 }, { time = 50 }, day), "same day")
+check(History.StartsDay({ time = 50 }, { time = 150 }, day), "next day")
+check(not History.StartsDay({ time = 50 }, { text = "x" }, day), "untimed message starts no day")
+transcript = History.Transcript({ messages = {
+	{ time = 10, sender = "A", text = "x" },
+	{ time = 20, sender = "B", text = "y" },
+	{ sender = "C", text = "z" },
+	{ time = 120, sender = "A", text = "w" },
+} }, function(t) return "t" .. t end, day)
+check(transcript == "-- d0 --\n[t10] A: x\n[t20] B: y\n[--:--] C: z\n-- d1 --\n[t120] A: w", "transcript with dates: " .. transcript)
+check(History.Transcript({ messages = { { time = 1, text = "a" } } }, nil) == "[1] a", "no date lines without day")
+print("dates ok")
