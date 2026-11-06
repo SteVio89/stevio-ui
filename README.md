@@ -49,8 +49,9 @@ until it is needed, and as much as possible can be done from the keyboard.
   input box (Enter, slash commands) is used, shown right under the channel view
   and hidden together with it. Blizzard's chat toasts (e.g. a Battle.net friend
   coming online) pop up right under that input box.
-- **Loot ticker** – your last ten looted items and currencies above the bags,
-  with icon, name in quality colour and count. New loot enters at the bottom
+- **Loot ticker** – your last ten looted items, currencies and gold above the
+  bags, with icon, name in quality colour and count; gold is shown with coin
+  icons on one line. New loot enters at the bottom
   and pushes older lines up; when all ten rows are taken the oldest drops out,
   and every line fades out slowly after a few seconds. Looting more of
   something still listed adds to that line.
