@@ -10,6 +10,27 @@ ns.ChatHistory = History
 local Store = {}
 Store.__index = Store
 
+-- Strips WoW escape sequences (colors, textures, hyperlinks) so text can be copied.
+function History.StripMarkup(text)
+	text = text:gsub("|H.-|h(.-)|h", "%1")
+	text = text:gsub("|T.-|t", "")
+	text = text:gsub("|c%x%x%x%x%x%x%x%x", "")
+	text = text:gsub("|r", "")
+	text = text:gsub("||", "|")
+	return text
+end
+
+-- Plain-text transcript of a channel, one "[stamp] sender: text" line per message.
+-- `stamp(time)` formats the time (defaults to the raw number).
+function History.Transcript(channel, stamp)
+	local lines = {}
+	for _, entry in ipairs(channel.messages) do
+		local when = entry.time and (stamp and stamp(entry.time) or tostring(entry.time)) or "--:--"
+		lines[#lines + 1] = History.StripMarkup(("[%s] %s: %s"):format(when, entry.sender or "?", entry.text or ""))
+	end
+	return table.concat(lines, "\n")
+end
+
 -- `saved` is the SavedVariables table (may be empty); `limit` caps messages per channel.
 function History.New(saved, limit)
 	saved.channels = saved.channels or {}

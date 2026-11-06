@@ -48,3 +48,10 @@ local saved = {}
 History.New(saved, 3):Add("party", party, { time = 1, text = "kept" }, false)
 check(History.New(saved, 3):Get("party").messages[1].text == "kept", "persists via saved table")
 print("ok")
+
+check(History.StripMarkup("|cffff0000hi|r |Hitem:1|h[Sword]|h |TFoo:0|t||") == "hi [Sword] |", "markup is stripped")
+local transcript = History.Transcript({ messages = {
+	{ time = 5, sender = "A", text = "|cff00ff00x|r" },
+	{ sender = "B", text = "y" },
+} }, function(t) return "t" .. t end)
+check(transcript == "[t5] A: x\n[--:--] B: y", "transcript format")
