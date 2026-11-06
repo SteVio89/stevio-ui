@@ -283,10 +283,25 @@ local function StartAutoTimer(duration)
 	end)
 end
 
--- Whisper partners are keyed by name (or Battle.net id), group chats by type.
-local function ChannelFor(def, sender, bnetID)
+-- Whisper partners are keyed by name (or Battle.net id), group chats by type,
+-- chat channels by name (see ns.ChatHistory.PublicChannel).
+-- Returns nil when the channel can't be told (secret values).
+local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	if def.key then
 		return def.key, { kind = def.kind, chatType = def.chatType, label = def.label }
+	end
+	if def.channel then
+		if issecretvalue(baseName) or issecretvalue(channelIndex) or not baseName then
+			return nil
+		end
+		local key, label, own = ns.ChatHistory.PublicChannel(baseName, config.publicChannels)
+		if own then
+			return key, { kind = def.kind, chatType = "CHANNEL" .. channelIndex, label = label, channelIndex = channelIndex }
+		end
+		return key, { kind = "other", chatType = def.chatType, label = label, readOnly = true }, baseName
+	end
+	if issecretvalue(sender) or issecretvalue(bnetID) then
+		return nil
 	end
 	if def.bnet then
 		return "bn:" .. bnetID, { kind = def.kind, chatType = def.chatType, label = sender, bnetID = bnetID }
@@ -298,16 +313,17 @@ end
 -- only light up the channel as unread.
 local function OnChatMessage(event, text, sender, ...)
 	local def = config.events[event]
+	local channelIndex, baseName = select(6, ...)
 	local bnetID = select(11, ...)
-	local secret = issecretvalue(text) or issecretvalue(sender) or issecretvalue(bnetID)
-	if secret and not def.key then
-		return -- no way to tell which whisper channel this belongs to
-	end
-	if not secret and not def.bnet then
+	local secret = issecretvalue(text) or issecretvalue(sender)
+	if not issecretvalue(sender) and not def.bnet then
 		sender = Ambiguate(sender, "short")
 	end
 
-	local key, opts = ChannelFor(def, sender, bnetID)
+	local key, opts, source = ChannelFor(def, sender, bnetID, channelIndex, baseName)
+	if not key then
+		return -- no way to tell which channel this belongs to
+	end
 	local viewing = Attended() and state.selected == key
 	if secret then
 		store:AddUnreadOnly(key, opts, time())
@@ -315,7 +331,8 @@ local function OnChatMessage(event, text, sender, ...)
 		local entry = {
 			time = time(),
 			sender = def.outgoing and UnitName("player") or sender,
-			text = (def.prefix or "") .. text,
+			-- "Other" mixes channels, so each line names its own.
+			text = (def.prefix or "") .. (source and ("[%s] "):format(source) or "") .. text,
 			outgoing = def.outgoing,
 		}
 		store:Add(key, opts, entry, not viewing and not def.outgoing)
@@ -324,26 +341,32 @@ local function OnChatMessage(event, text, sender, ...)
 		end
 	end
 
+	-- Busy public chat only counts as unread; it doesn't pop up the hidden chat.
+	if def.outgoing or def.quiet then
+		Update()
+		return
+	end
 	-- Peek at the channel the message arrived in while the chat is hidden.
-	if hidden and not def.outgoing then
+	if hidden then
 		state.selected = key
 		RenderMessages(store:Get(key))
 	end
-	if not def.outgoing then
-		StartAutoTimer(config.autoShowDuration)
-	end
+	StartAutoTimer(config.autoShowDuration)
 	Update()
 end
 
 local function Send(text)
 	local channel = Selected()
-	if not channel or text == "" then
+	-- "Other" mixes several channels, so there is no one to answer to.
+	if not channel or text == "" or channel.readOnly then
 		return
 	end
 	if channel.bnetID then
 		BNSendWhisper(channel.bnetID, text)
 	elseif channel.kind == "whisper" then
 		SendChatMessage(text, "WHISPER", nil, channel.target)
+	elseif channel.channelIndex then
+		SendChatMessage(text, "CHANNEL", nil, channel.channelIndex)
 	else
 		SendChatMessage(text, channel.chatType)
 	end

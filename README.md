@@ -34,9 +34,12 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Minimap** – square, borderless, mouse-wheel zoom, size derived from the
   screen.
 - **Channel chat and objective tracker** – chat is organised in channels like
-  Slack/Teams (party/raid/instance, guild, one per whisper partner) with a
-  persistent per-character history; `x` deletes a group or whisper channel with
-  its history. Hidden by default, toggled by key, with edge
+  Slack/Teams (party/raid/instance, guild, one per whisper partner, say, yell
+  and the chat channels listed in `publicChannels`, e.g. General and Trade;
+  every other chat channel is collected read-only in "Other") with a
+  persistent per-character history; `x` deletes any channel but guild with
+  its history. Say, yell and chat channels only count as unread and don't pop
+  up the chat. Hidden by default, toggled by key, with edge
   badges that light up on new whispers, party or guild messages.
 - **Quest rewards** – marks the choice with the highest vendor value.
 - **Damage meter and auras** – Blizzard's own, repositioned.

@@ -2,7 +2,8 @@ local _, ns = ...
 
 -- Channel store behind the chat: pure data, no frames, so it can be unit tested
 -- outside the game (see tests/history_test.lua). A channel is
--- { key, kind, chatType, label, messages = {...}, unread, last, bnetID, target }.
+-- { key, kind, chatType, label, messages = {...}, unread, last, bnetID, target,
+--   channelIndex, readOnly }.
 
 local History = {}
 ns.ChatHistory = History
@@ -31,6 +32,19 @@ function History.Transcript(channel, stamp)
 	return table.concat(lines, "\n")
 end
 
+-- Where a message in a numbered chat channel (General, Trade, ...) goes: channels
+-- listed in `explicit` (base names, case-insensitive) get their own channel, all
+-- others share "Other". Returns key, label and whether the channel is explicit.
+function History.PublicChannel(baseName, explicit)
+	local lower = baseName:lower()
+	for _, name in ipairs(explicit) do
+		if name:lower() == lower then
+			return "channel:" .. lower, baseName, true
+		end
+	end
+	return "other", "Other", false
+end
+
 -- `saved` is the SavedVariables table (may be empty); `limit` caps messages per channel.
 function History.New(saved, limit)
 	saved.channels = saved.channels or {}
@@ -41,7 +55,8 @@ function Store:Get(key)
 	return self.db.channels[key]
 end
 
--- opts: kind, chatType, label, bnetID, target. Created on first use.
+-- opts: kind, chatType, label, bnetID, target, channelIndex, readOnly.
+-- Created on first use; the channel number and color follow the latest message.
 function Store:Ensure(key, opts)
 	local channel = self.db.channels[key]
 	if not channel then
@@ -53,6 +68,7 @@ function Store:Ensure(key, opts)
 			messages = {},
 			unread = 0,
 			last = 0,
+			readOnly = opts.readOnly,
 		}
 		self.db.channels[key] = channel
 	end
@@ -61,6 +77,10 @@ function Store:Ensure(key, opts)
 	end
 	if opts.target then
 		channel.target = opts.target
+	end
+	if opts.channelIndex then
+		channel.channelIndex = opts.channelIndex
+		channel.chatType = opts.chatType
 	end
 	return channel
 end

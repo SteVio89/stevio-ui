@@ -55,3 +55,19 @@ local transcript = History.Transcript({ messages = {
 	{ sender = "B", text = "y" },
 } }, function(t) return "t" .. t end)
 check(transcript == "[t5] A: x\n[--:--] B: y", "transcript format")
+
+local explicit = { "Trade", "General" }
+local key, label, own = History.PublicChannel("trade", explicit)
+check(key == "channel:trade" and label == "trade" and own, "explicit channel gets its own channel")
+key, label, own = History.PublicChannel("LookingForGroup", explicit)
+check(key == "other" and label == "Other" and not own, "other channels share Other")
+
+local publicStore = History.New({}, 3)
+publicStore:Add("channel:trade", { kind = "public", chatType = "CHANNEL2", label = "Trade", channelIndex = 2 }, { time = 1, text = "a" }, true)
+publicStore:Add("channel:trade", { kind = "public", chatType = "CHANNEL5", label = "Trade", channelIndex = 5 }, { time = 2, text = "b" }, true)
+check(publicStore:Get("channel:trade").channelIndex == 5, "channel number follows the latest message")
+check(publicStore:Get("channel:trade").chatType == "CHANNEL5", "channel color follows the channel number")
+publicStore:Add("other", { kind = "other", chatType = "CHANNEL", label = "Other", readOnly = true }, { time = 3, text = "c" }, true)
+check(publicStore:Get("other").readOnly, "Other is read-only")
+check(publicStore:HasUnread("public") and publicStore:HasUnread("other"), "unread for public kinds")
+print("public channels ok")
