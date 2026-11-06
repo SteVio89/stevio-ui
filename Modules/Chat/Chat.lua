@@ -106,12 +106,16 @@ local function ChatWidth()
 	return Clamp(math.floor(UIParent:GetWidth() * config.widthFraction), 250, 800)
 end
 
-local function ChannelColor(channel)
-	local info = ChatTypeInfo[channel.chatType]
+local function TypeColor(chatType)
+	local info = chatType and ChatTypeInfo[chatType]
 	if info and info.r then
 		return info.r, info.g, info.b
 	end
 	return 1, 1, 1
+end
+
+local function ChannelColor(channel)
+	return TypeColor(channel.chatType)
 end
 
 local function ColorCode(r, g, b)
@@ -142,10 +146,13 @@ local function Attended()
 	return state.manual or state.typing
 end
 
+-- "time [channel] sender: text"; the channel only shows in "Other", the sender
+-- is missing on system messages. Channel and sender take their channel's color.
 local function FormatEntry(channel, entry)
-	local r, g, b = ChannelColor(channel)
-	local stamp = entry.time and date("%H:%M", entry.time) or "--:--"
-	return ("|cff808080%s|r %s%s|r: %s"):format(stamp, ColorCode(r, g, b), entry.sender or "?", entry.text)
+	local stamp = "|cff808080" .. (entry.time and date("%H:%M", entry.time) or "--:--") .. "|r"
+	local source = entry.source and (ColorCode(TypeColor(entry.sourceType or channel.chatType)) .. entry.source .. "|r")
+	local sender = entry.sender and (ColorCode(ChannelColor(channel)) .. entry.sender .. "|r")
+	return ns.ChatHistory.Line(entry, stamp, source, sender)
 end
 
 local function RenderMessages(channel)
@@ -315,7 +322,7 @@ end
 -- Returns nil when the channel can't be told (secret values).
 local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	if def.key then
-		return def.key, { kind = def.kind, chatType = def.chatType, label = def.label }
+		return def.key, { kind = def.kind, chatType = def.chatType, label = def.label, readOnly = def.readOnly }
 	end
 	if def.channel then
 		if issecretvalue(baseName) or issecretvalue(channelIndex) or not baseName then
@@ -325,7 +332,8 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 		if own then
 			return key, { kind = def.kind, chatType = "CHANNEL" .. channelIndex, label = label, channelIndex = channelIndex }
 		end
-		return key, { kind = "other", chatType = def.chatType, label = label, readOnly = true }, baseName
+		local opts = { kind = "other", chatType = def.chatType, label = label, readOnly = true }
+		return key, opts, baseName, "CHANNEL" .. channelIndex
 	end
 	if issecretvalue(sender) or issecretvalue(bnetID) then
 		return nil
@@ -336,6 +344,17 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	return "whisper:" .. sender, { kind = def.kind, chatType = def.chatType, label = sender, target = sender }
 end
 
+-- Battle.net notices arrive as a token (e.g. "FRIEND_ONLINE") plus the friend's
+-- name; Blizzard's text for it is a global. Only the tokens listed in `toast`
+-- are shown, others (broadcasts, requests) take different arguments.
+local function SystemText(def, text, sender)
+	if def.toast then
+		local template = def.toast[text] and _G["BN_INLINE_TOAST_" .. text]
+		return template and template:format(sender)
+	end
+	return text
+end
+
 -- Message contents may be secret (e.g. in encounters): those can't be stored and
 -- only light up the channel as unread.
 local function OnChatMessage(event, text, sender, ...)
@@ -343,11 +362,19 @@ local function OnChatMessage(event, text, sender, ...)
 	local channelIndex, baseName = select(6, ...)
 	local bnetID = select(11, ...)
 	local secret = issecretvalue(text) or issecretvalue(sender)
-	if not issecretvalue(sender) and not def.bnet then
+	if def.system then
+		if not secret then
+			text = SystemText(def, text, sender)
+			if not text then
+				return -- a Battle.net notice that isn't shown as text
+			end
+		end
+		sender = nil
+	elseif not issecretvalue(sender) and not def.bnet then
 		sender = Ambiguate(sender, "short")
 	end
 
-	local key, opts, source = ChannelFor(def, sender, bnetID, channelIndex, baseName)
+	local key, opts, source, sourceType = ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	if not key then
 		return -- no way to tell which channel this belongs to
 	end
@@ -358,9 +385,11 @@ local function OnChatMessage(event, text, sender, ...)
 		local entry = {
 			time = time(),
 			sender = def.outgoing and UnitName("player") or sender,
-			-- "Other" mixes channels, so each line names its own.
-			text = (def.prefix or "") .. (source and ("[%s] "):format(source) or "") .. text,
+			text = (def.prefix or "") .. text,
 			outgoing = def.outgoing,
+			-- "Other" mixes channels, so each line names its own.
+			source = source,
+			sourceType = sourceType,
 		}
 		store:Add(key, opts, entry, not viewing and not def.outgoing)
 		if state.selected == key then
@@ -384,7 +413,7 @@ end
 
 local function Send(text)
 	local channel = Selected()
-	-- "Other" mixes several channels, so there is no one to answer to.
+	-- "Other" mixes several channels and "System" has no sender: no one to answer to.
 	if not channel or text == "" or channel.readOnly then
 		return
 	end
