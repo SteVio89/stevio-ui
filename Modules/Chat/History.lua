@@ -2,7 +2,7 @@ local _, ns = ...
 
 -- Channel store behind the chat: pure data, no frames, so it can be unit tested
 -- outside the game (see tests/history_test.lua). A channel is
--- { key, kind, chatType, label, messages = {...}, unread, last, bnetID }.
+-- { key, kind, chatType, label, messages = {...}, unread, last, bnetID, target }.
 
 local History = {}
 ns.ChatHistory = History
@@ -20,7 +20,7 @@ function Store:Get(key)
 	return self.db.channels[key]
 end
 
--- opts: kind, chatType, label, bnetID. Created on first use.
+-- opts: kind, chatType, label, bnetID, target. Created on first use.
 function Store:Ensure(key, opts)
 	local channel = self.db.channels[key]
 	if not channel then
@@ -37,6 +37,9 @@ function Store:Ensure(key, opts)
 	end
 	if opts.bnetID then
 		channel.bnetID = opts.bnetID
+	end
+	if opts.target then
+		channel.target = opts.target
 	end
 	return channel
 end

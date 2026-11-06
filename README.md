@@ -33,7 +33,10 @@ until it is needed, and as much as possible can be done from the keyboard.
   placed via a dedicated Edit Mode layout named `stevio-ui`.
 - **Minimap** – square, borderless, mouse-wheel zoom, size derived from the
   screen.
-- **Chat and objective tracker** – hidden by default, toggled by key, with edge
+- **Channel chat and objective tracker** – chat is organised in channels like
+  Slack/Teams (party/raid/instance, guild, one per whisper partner) with a
+  persistent per-character history; `x` deletes a group or whisper channel with
+  its history. Hidden by default, toggled by key, with edge
   badges that light up on new whispers, party or guild messages.
 - **Quest rewards** – marks the choice with the highest vendor value.
 - **Damage meter and auras** – Blizzard's own, repositioned.
@@ -64,6 +67,7 @@ first login.
 | `,` | Quickjump: show labels / next window |
 | `J` / `K` | Quickjump: scroll |
 | `.` | Toggle chat |
+| *(unbound)* | Chat: write message, next / previous channel (`Tab` / `Shift-Tab` in the input) |
 | `-` | Toggle objective tracker |
 
 ## Commands

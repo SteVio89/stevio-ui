@@ -6,6 +6,15 @@
 	<Binding name="STEVIOUI_TOGGLE_CHAT" category="ADDONS">
 		StevioUI.ToggleChat()
 	</Binding>
+	<Binding name="STEVIOUI_CHAT_INPUT" category="ADDONS">
+		StevioUI.FocusChatInput()
+	</Binding>
+	<Binding name="STEVIOUI_CHAT_NEXT" category="ADDONS">
+		StevioUI.NextChatChannel()
+	</Binding>
+	<Binding name="STEVIOUI_CHAT_PREVIOUS" category="ADDONS">
+		StevioUI.PreviousChatChannel()
+	</Binding>
 	<Binding name="STEVIOUI_QUICKJUMP" category="ADDONS">
 		StevioUI.QuickJumpLeader()
 	</Binding>
