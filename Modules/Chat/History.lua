@@ -37,11 +37,32 @@ function History.Line(entry, stamp, source, sender)
 	return table.concat(parts, " ")
 end
 
+-- Whether `entry` starts a new day after `previous` (nil for the first message),
+-- so the chat can put a date line before it. `day(time)` names the day (e.g.
+-- the formatted date). Messages without a time never start a day.
+function History.StartsDay(previous, entry, day)
+	if not entry.time then
+		return false
+	end
+	if not previous or not previous.time then
+		return true
+	end
+	return day(previous.time) ~= day(entry.time)
+end
+
 -- Plain-text transcript of a channel, one "[stamp] [source] sender: text" line per message.
--- `stamp(time)` formats the time (defaults to the raw number).
-function History.Transcript(channel, stamp)
+-- `stamp(time)` formats the time (defaults to the raw number); with `day(time)`
+-- a "-- day --" line precedes the first message of each day.
+function History.Transcript(channel, stamp, day)
 	local lines = {}
+	local previous
 	for _, entry in ipairs(channel.messages) do
+		if day and History.StartsDay(previous, entry, day) then
+			lines[#lines + 1] = "-- " .. day(entry.time) .. " --"
+		end
+		if entry.time then
+			previous = entry
+		end
 		local when = entry.time and (stamp and stamp(entry.time) or tostring(entry.time)) or "--:--"
 		lines[#lines + 1] = History.StripMarkup(History.Line(entry, "[" .. when .. "]"))
 	end
