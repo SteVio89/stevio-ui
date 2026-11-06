@@ -16,6 +16,13 @@ ns.config.notch = {
 	-- The cursor itself is hidden behind the notch, so the hover area reaches
 	-- a little below it.
 	hoverBelow = 2,
+	-- Once open, the island stays while the cursor is within this margin of it,
+	-- and only closes after the cursor has been outside for hideDelay seconds,
+	-- so brief slips past the edge (or a row disappearing) do not close it.
+	islandMargin = 6,
+	hideDelay = 0.3,
+	-- How often the cursor position is checked.
+	pollInterval = 0.05,
 
 	updateInterval = 0.5,
 

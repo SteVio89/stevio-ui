@@ -34,8 +34,12 @@ local L = GetLocale() == "deDE" and {
 	guild = "Guild %d",
 }
 
-local hover, island
+local Zone = ns.NotchZone
+
+local watcher, island
 local notchHeight = 0
+-- Trigger area in UIParent units ({ left, right, bottom }), see Zone.Contains.
+local notchRect
 local rows = {}
 
 local function SetBar(row, min, max, value, overlayValue, r, g, b)
@@ -268,9 +272,12 @@ local function UpdateGeometry()
 	local left, right, height, topOffset = GetNotchRect()
 	notchHeight = height
 
-	hover:ClearAllPoints()
-	hover:SetPoint("TOPLEFT", UIParent, "TOPLEFT", left, topOffset)
-	hover:SetSize(right - left, height + config.hoverBelow)
+	local originX, top = UIParent:GetLeft(), UIParent:GetTop() + topOffset
+	notchRect = {
+		left = originX + left,
+		right = originX + right,
+		bottom = top - height - config.hoverBelow,
+	}
 
 	island:ClearAllPoints()
 	island:SetPoint("TOPLEFT", UIParent, "TOPLEFT", left - config.extraWidth, topOffset)
@@ -294,7 +301,8 @@ local function CreateIsland()
 		rows[#rows + 1] = CreateRow(spec)
 	end
 
-	-- While hidden the island does no work at all; while shown it polls, which
+	-- While hidden the island does no work beyond the cheap cursor check below;
+	-- while shown it polls, which
 	-- also covers values without change events (FPS, latency, time, position).
 	island:SetScript("OnShow", function(self)
 		self.elapsed = 0
@@ -304,10 +312,6 @@ local function CreateIsland()
 		Refresh()
 	end)
 	island:SetScript("OnUpdate", function(self, elapsed)
-		if not (self:IsMouseOver() or hover:IsMouseOver()) then
-			self:Hide()
-			return
-		end
 		self.elapsed = self.elapsed + elapsed
 		if self.elapsed >= config.updateInterval then
 			self.elapsed = 0
@@ -315,13 +319,32 @@ local function CreateIsland()
 		end
 	end)
 
-	-- Motion only: clicks and camera drags starting at the notch still reach the world.
-	hover = CreateFrame("Frame", "StevioUI_NotchHover", UIParent)
-	hover:SetFrameStrata("FULLSCREEN_DIALOG")
-	hover:SetMouseMotionEnabled(true)
-	hover:SetMouseClickEnabled(false)
-	hover:SetScript("OnEnter", function()
-		island:Show()
+	-- The cursor position is polled instead of relying on OnEnter/OnLeave: those
+	-- only fire when mouse focus changes, so the island never came up when the
+	-- cursor was already in the notch (after turning the camera, a loading
+	-- screen or a UI rescale) or when another frame held the mouse focus.
+	local state = Zone.New()
+	local islandRect = {}
+	local input, options = {}, { hideDelay = config.hideDelay, margin = config.islandMargin }
+	local sinceCheck = 0
+	watcher = CreateFrame("Frame", "StevioUI_NotchWatcher", UIParent)
+	watcher:SetScript("OnUpdate", function(_, elapsed)
+		sinceCheck = sinceCheck + elapsed
+		if sinceCheck < config.pollInterval then
+			return
+		end
+		local x, y = GetCursorPosition()
+		local scale = UIParent:GetEffectiveScale()
+		input.x, input.y = x / scale, y / scale
+		input.cursorHidden = IsMouselooking()
+		input.notch = notchRect
+		input.island = nil
+		if island:IsShown() then
+			islandRect.left, islandRect.right, islandRect.bottom = island:GetLeft(), island:GetRight(), island:GetBottom()
+			input.island = islandRect
+		end
+		island:SetShown(Zone.Step(state, input, sinceCheck, options))
+		sinceCheck = 0
 	end)
 end
 
@@ -335,7 +358,8 @@ local function DumpGeometry()
 		("avoid notch: %s, NotchedDisplayMode: %s"):format(tostring(C_UI.ShouldUIParentAvoidNotch()), tostring(C_CVar.GetCVar("NotchedDisplayMode"))),
 		("UIParent: %.1f x %.1f, top %.1f, effective scale %.3f"):format(UIParent:GetWidth(), UIParent:GetHeight(), UIParent:GetTop(), UIParent:GetEffectiveScale()),
 		("notch: left %.1f, right %.1f, height %.1f, top offset %.1f"):format(GetNotchRect()),
-		("hover: left %.1f, right %.1f, top %.1f, bottom %.1f"):format(hover:GetLeft(), hover:GetRight(), hover:GetTop(), hover:GetBottom()),
+		("trigger: left %.1f, right %.1f, bottom %.1f"):format(notchRect.left, notchRect.right, notchRect.bottom),
+		("cursor: %.1f, %.1f"):format(GetCursorPosition()),
 	}
 	local text = table.concat(lines, "\n")
 	StevioUIDebug = text
