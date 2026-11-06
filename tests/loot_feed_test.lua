@@ -34,6 +34,18 @@ check(l == currency and n == 25, "currency")
 check(Feed.Parse("Bob receives loot: " .. link .. ".", patterns) == nil, "others' loot is ignored")
 check(Feed.Parse("You receive loot: nothing.", patterns) == nil, "no link, no entry")
 
+-- Money messages (enUS / deDE coin formats).
+local money = Feed.MoneyPatterns("%d Gold", "%d Silver", "%d Copper")
+check(Feed.ParseMoney("You loot 1 Gold, 23 Silver, 45 Copper", money) == 12345, "all coins")
+check(Feed.ParseMoney("You loot 7 Copper", money) == 7, "copper only")
+check(Feed.ParseMoney("Your share of the loot is 2 Silver, 3 Copper.", money) == 203, "share")
+check(Feed.ParseMoney("You loot 1,234 Gold", money) == 12340000, "thousands separator")
+check(Feed.ParseMoney("You loot 5 Silver (1 Copper deposited to guild bank)", money) == 500, "guild part ignored")
+check(Feed.ParseMoney("You loot nothing", money) == nil, "no coins")
+local geld = Feed.MoneyPatterns("%d Gold", "%d Silber", "%d Kupfer")
+check(Feed.ParseMoney("Ihr erhaltet 3 Gold, 4 Kupfer.", geld) == 30004, "German coins")
+check(Feed.ParseMoney("2 Gold", Feed.MoneyPatterns("%1$d Gold", "%1$d Silver", "%1$d Copper")) == 20000, "positional")
+
 check(Feed.LinkName(link) == "Linen Cloth", "name without brackets")
 check(Feed.LinkColor(link) == "ff0070dd", "link color")
 

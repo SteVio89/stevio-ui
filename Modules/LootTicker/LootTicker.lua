@@ -2,13 +2,13 @@ local _, ns = ...
 
 local LootTicker = ns:RegisterModule("lootTicker", {})
 
--- Own loot and currency gains as a short list above the bags: icon, name in
+-- Own loot, gold and currency gains as a short list above the bags: icon, name in
 -- quality color and count. Lines enter at the bottom, move up as new ones
 -- arrive and fade out after a while. Click-through, so it never blocks the world.
 
 local Feed = ns.LootFeed
 
-local config, feed, container, patterns
+local config, feed, container, patterns, moneyPatterns
 local rows = {}
 local rowHeight
 
@@ -55,6 +55,12 @@ end
 local function ShowEntry(row, entry)
 	row.entry = entry
 	row.icon:SetTexture(entry.icon or 134400) -- question mark
+	if entry.money then
+		-- The count is copper; the string shows it with coin icons.
+		row.text:SetText(GetMoneyString(entry.count, true))
+		row.text:SetTextColor(1, 1, 1)
+		return
+	end
 	local name = Feed.LinkName(entry.link)
 	if entry.count > 1 then
 		row.text:SetFormattedText("%s |cffffffffx%d|r", name, entry.count)
@@ -89,6 +95,15 @@ local function OnUpdate(_, elapsed)
 	end
 end
 
+local function AddEntry(entry)
+	feed:Add(entry, GetTime(), config.mergeRepeats)
+	-- A merged entry keeps its table but changes its count.
+	for _, row in ipairs(rows) do
+		row.entry = nil
+	end
+	container:Show()
+end
+
 local function Add(link, count)
 	local icon, quality, isCurrency = LinkInfo(link)
 	if isCurrency and not config.showCurrency then
@@ -97,17 +112,17 @@ local function Add(link, count)
 	if quality and not isCurrency and quality < config.minQuality then
 		return
 	end
-	feed:Add({
+	AddEntry({
 		link = link,
 		count = count,
 		icon = icon,
 		color = { QualityColor(quality, link) },
-	}, GetTime(), config.mergeRepeats)
-	-- A merged entry keeps its table but changes its count.
-	for _, row in ipairs(rows) do
-		row.entry = nil
-	end
-	container:Show()
+	})
+end
+
+-- All money shares one line ("money" is never a real link), so it merges.
+local function AddMoney(copper)
+	AddEntry({ link = "money", count = copper, icon = 133784, money = true }) -- coin icon
 end
 
 local function OnLoot(_, text)
@@ -118,6 +133,16 @@ local function OnLoot(_, text)
 	local link, count = Feed.Parse(text, patterns)
 	if link then
 		Add(link, count)
+	end
+end
+
+local function OnMoney(_, text)
+	if issecretvalue(text) or not config.showMoney then
+		return
+	end
+	local copper = Feed.ParseMoney(text, moneyPatterns)
+	if copper then
+		AddMoney(copper)
 	end
 end
 
@@ -132,6 +157,9 @@ local function Preview()
 				added = added + 1
 			end
 		end
+	end
+	if config.showMoney then
+		AddMoney(12345)
 	end
 end
 
@@ -157,6 +185,8 @@ function LootTicker:OnEnable(moduleConfig)
 		CURRENCY_GAINED
 	)
 
+	moneyPatterns = Feed.MoneyPatterns(GOLD_AMOUNT, SILVER_AMOUNT, COPPER_AMOUNT)
+
 	container = CreateFrame("Frame", nil, UIParent)
 	container:SetFrameStrata("LOW")
 	container:SetSize(config.width, config.maxRows * rowHeight - config.rowGap)
@@ -172,5 +202,6 @@ function LootTicker:OnEnable(moduleConfig)
 
 	ns:RegisterEvent("CHAT_MSG_LOOT", OnLoot)
 	ns:RegisterEvent("CHAT_MSG_CURRENCY", OnLoot)
+	ns:RegisterEvent("CHAT_MSG_MONEY", OnMoney)
 	ns:RegisterSlashCommand("loot", Preview)
 end
