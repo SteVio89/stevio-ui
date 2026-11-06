@@ -29,8 +29,13 @@ local ui = {} -- frame, header, messages, input, rows
 
 -- Blizzard's chat windows are never shown: the channel view below replaces them.
 -- Only their input box is still used (Enter / slash commands) while typing.
+-- While the channel view is being built, `showBlizzardChat` keeps them visible
+-- next to it for comparison.
 local function IsSuppressed(frame)
-	return hidden or not editBoxes[frame]
+	if editBoxes[frame] then
+		return hidden
+	end
+	return not config.showBlizzardChat
 end
 
 local function ApplyAlpha(frame)
@@ -79,14 +84,15 @@ local function ScanChatFrames()
 end
 
 local function ApplyVisibility()
+	local blizzard = config.showBlizzardChat
 	for frame in pairs(chatFrames) do
 		ApplyAlpha(frame)
-		frame:EnableMouse(false)
-		frame:EnableMouseWheel(false)
+		frame:EnableMouse(blizzard)
+		frame:EnableMouseWheel(blizzard)
 	end
 	for tab in pairs(tabs) do
 		ApplyAlpha(tab)
-		tab:EnableMouse(false)
+		tab:EnableMouse(blizzard)
 	end
 	for editBox in pairs(editBoxes) do
 		ApplyAlpha(editBox)
@@ -173,14 +179,29 @@ local function Select(key)
 	RefreshSidebar()
 end
 
+-- Where the chat opens when no channel is picked: the latest activity, so
+-- messages in quiet channels (say, General, ...) aren't hidden behind an empty
+-- Guild channel.
+local function DefaultKey()
+	local recent = store:MostRecent()
+	if recent then
+		return recent.key
+	end
+	local first = store:Sorted(config.kindOrder)[1]
+	return first and first.key
+end
+
+local function IsEmpty(channel)
+	return #channel.messages == 0 and channel.unread == 0
+end
+
 local function DeleteChannel(key)
 	if not store:Delete(key) then
 		return
 	end
 	if state.selected == key then
 		state.selected = nil
-		local first = store:Sorted(config.kindOrder)[1]
-		Select(first and first.key)
+		Select(DefaultKey())
 	else
 		RefreshSidebar()
 	end
@@ -250,11 +271,17 @@ function RefreshSidebar()
 end
 
 local function Update()
+	local wasHidden = hidden
 	hidden = not (state.manual or state.typing or state.autoTimer)
-	if not state.selected or not Selected() then
-		local first = store:Sorted(config.kindOrder)[1]
-		state.selected = first and first.key
-		RenderMessages(Selected())
+	local channel = Selected()
+	-- An empty channel picked by hand stays open; one left over from before
+	-- the chat was hidden gives way to where something happened.
+	if not channel or (wasHidden and not hidden and IsEmpty(channel)) then
+		local key = DefaultKey()
+		if key ~= state.selected or not channel then
+			state.selected = key
+			RenderMessages(Selected())
+		end
 	end
 	if Attended() and state.selected then
 		store:MarkRead(state.selected)
@@ -450,6 +477,17 @@ local function HideChatButtons()
 	ns.KeepHidden(QuickJoinToastButton)
 end
 
+-- Blizzard's chat sits right of the channel view while both are shown.
+local function BlizzardChatLayout()
+	local layout = ns.layout.chat
+	if not config.showBlizzardChat then
+		return layout
+	end
+	local placed = CopyTable(layout)
+	placed.x = (layout.x or 0) + ChatWidth() + config.blizzardChatGap
+	return placed
+end
+
 -- Edit Mode stores chat size split into hundreds and the remainder.
 local function SizeSettings()
 	local Setting = Enum.EditModeChatFrameSetting
@@ -634,13 +672,51 @@ local function CreateChannelView()
 	CreateCopyView(frame)
 end
 
+-- Typing in Blizzard's input box opens the chat. The hooks moved into
+-- ChatFrameUtil in newer clients; older ones still have the globals.
+local function HookChatActivation(name, legacy, typing)
+	local function OnActivation()
+		state.typing = typing
+		Update()
+	end
+	if ChatFrameUtil and ChatFrameUtil[name] then
+		hooksecurefunc(ChatFrameUtil, name, OnActivation)
+	elseif _G[legacy] then
+		hooksecurefunc(legacy, OnActivation)
+	end
+end
+
+-- /sui chat: what the channel store holds, to check messages arrive at all.
+local function PrintChannels()
+	local channels = store:Sorted(config.kindOrder)
+	print(("|cff33ff99%s|r: %d chat channels"):format(ns.name, #channels))
+	for _, channel in ipairs(channels) do
+		print(
+			("  %s%s|r [%s] %d messages, %d unread%s"):format(
+				ColorCode(ChannelColor(channel)),
+				channel.label,
+				channel.key,
+				#channel.messages,
+				channel.unread,
+				channel.key == state.selected and " (selected)" or ""
+			)
+		)
+	end
+end
+
 function Chat:OnEnable()
 	StevioUIChatHistory = StevioUIChatHistory or {}
 	store = ns.ChatHistory.New(StevioUIChatHistory, config.historyLimit)
 	CreateChannelView()
 	badge = CreateBadge()
 
-	ns:SetEditModeSystem(Enum.EditModeSystem.ChatFrame, nil, ns.layout.chat, SizeSettings())
+	-- Registered first, so messages are stored even if a Blizzard hook below fails.
+	for event in pairs(config.events) do
+		ns:RegisterEvent(event, OnChatMessage)
+	end
+	ns:RegisterSlashCommand("chat", PrintChannels)
+
+	ns:SetEditModeSystem(Enum.EditModeSystem.ChatFrame, nil, BlizzardChatLayout(), SizeSettings())
 
 	HideChatButtons()
 	ScanChatFrames()
@@ -650,18 +726,8 @@ function Chat:OnEnable()
 		ApplyVisibility()
 	end)
 
-	hooksecurefunc(ChatFrameUtil, "ActivateChat", function()
-		state.typing = true
-		Update()
-	end)
-	hooksecurefunc(ChatFrameUtil, "DeactivateChat", function()
-		state.typing = false
-		Update()
-	end)
-
-	for event in pairs(config.events) do
-		ns:RegisterEvent(event, OnChatMessage)
-	end
+	HookChatActivation("ActivateChat", "ChatEdit_ActivateChat", true)
+	HookChatActivation("DeactivateChat", "ChatEdit_DeactivateChat", false)
 
 	Update()
 end
