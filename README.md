@@ -49,6 +49,11 @@ until it is needed, and as much as possible can be done from the keyboard.
   input box (Enter, slash commands) is used, shown right under the channel view
   and hidden together with it. Blizzard's chat toasts (e.g. a Battle.net friend
   coming online) pop up right under that input box.
+- **Loot ticker** – your last ten looted items and currencies above the bags,
+  with icon, name in quality colour and count. New loot enters at the bottom
+  and pushes older lines up; when all ten rows are taken the oldest drops out,
+  and every line fades out slowly after a few seconds. Looting more of
+  something still listed adds to that line.
 - **Quest rewards** – marks the choice with the highest vendor value.
 - **Auras** – Blizzard's own, repositioned. Blizzard's damage meter is turned
   off (`damageMeterEnabled` in the profile); its slot stays free.
@@ -87,6 +92,7 @@ first login.
 | Command | Action |
 | --- | --- |
 | `/sui test 5\|10\|25\|40` | Preview the group grid |
+| `/sui loot` | Preview the loot ticker with a few items from your bags |
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui qj` | List the current Quickjump targets |
 | `/sui export` | Export your current bindings and settings as a profile |
