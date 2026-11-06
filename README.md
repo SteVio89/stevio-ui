@@ -34,14 +34,14 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Minimap** – square, borderless, mouse-wheel zoom, size derived from the
   screen.
 - **Channel chat and objective tracker** – chat is organised in channels like
-  Slack/Teams (party/raid/instance, guild, one per whisper partner, say, yell
-  and the chat channels listed in `publicChannels`, e.g. General and Trade;
+  Slack/Teams (party/raid/instance, guild, one per whisper partner, say
+  (including emotes such as `/e` and `/dance`), yell and the chat channels listed in `publicChannels`, e.g. General and Trade;
   every other chat channel is collected read-only in "Other", each line
   naming its channel before the sender; system messages such as players
   coming online or going offline are collected read-only in "System") with a
   persistent per-character history, a date line before the first message of
   each day (`dateFormat`); `x` deletes any channel but guild with
-  its history. Say, yell, chat channels and system messages only count as unread and don't pop
+  its history. Say, emotes, yell, chat channels and system messages only count as unread and don't pop
   up the chat. Hidden by default, toggled by key, with edge
   badges that light up on new whispers, party or guild messages; it opens on
   the channel with the latest activity. While it is being built, Blizzard's

@@ -58,6 +58,18 @@ ns.config.chat = {
 		CHAT_MSG_OFFICER = { kind = "guild", key = "guild", chatType = "GUILD", label = "Guild", prefix = "[O] " },
 		CHAT_MSG_SAY = { kind = "public", key = "say", chatType = "SAY", label = "Say", quiet = true },
 		CHAT_MSG_YELL = { kind = "public", key = "yell", chatType = "YELL", label = "Yell", quiet = true },
+		-- Emotes are local like say, so they share its channel: /e (`emote`) gives the
+		-- action without the name, /dance etc. (`textEmote`) the whole sentence.
+		CHAT_MSG_EMOTE = { kind = "public", key = "say", chatType = "SAY", label = "Say", quiet = true, emote = true },
+		CHAT_MSG_TEXT_EMOTE = {
+			kind = "public",
+			key = "say",
+			chatType = "SAY",
+			label = "Say",
+			quiet = true,
+			emote = true,
+			textEmote = true,
+		},
 		CHAT_MSG_CHANNEL = { kind = "public", chatType = "CHANNEL", channel = true, quiet = true },
 		CHAT_MSG_WHISPER = { kind = "whisper", chatType = "WHISPER" },
 		CHAT_MSG_WHISPER_INFORM = { kind = "whisper", chatType = "WHISPER", outgoing = true },
