@@ -35,8 +35,8 @@ local function AdoptIndicators(config)
 	end)
 end
 
--- Derived from the layout instead of a fixed size so the map always ends just
--- short of the target frame, whatever the screen width or UI scale.
+-- Derived from the layout instead of a fixed size so the map scales with the
+-- space right of the target frame, whatever the screen width or UI scale.
 local function GetMapSize(config)
 	local targetWidth
 	for _, spec in ipairs(ns.config.units.frames) do
@@ -46,7 +46,7 @@ local function GetMapSize(config)
 	end
 	local targetRight = UIParent:GetWidth() / 2 + ns.layout.target.x + targetWidth
 	local mapRight = UIParent:GetWidth() + ns.layout.minimap.x
-	return math.floor(mapRight - targetRight - config.gapToTarget)
+	return math.floor((mapRight - targetRight - config.gapToTarget) * config.sizeScale)
 end
 
 -- The leave button would sit on the action bars; under the map's lower left
