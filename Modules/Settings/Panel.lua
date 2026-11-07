@@ -9,9 +9,7 @@ local Overrides = ns.Overrides
 local Editor = ns.ConfigEditor
 local config = ns.config.settings
 
-local function T(english, german)
-	return ns.isGerman and german or english
-end
+local T = ns.T
 
 -- Module pages in sidebar order: config key and title.
 local MODULES = {

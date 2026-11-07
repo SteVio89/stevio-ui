@@ -338,16 +338,16 @@ end
 -- /sui chat: what the channel store holds, to check messages arrive at all.
 local function PrintChannels()
 	local channels = C.store:Sorted(config.kindOrder)
-	ns.Print(("%d chat channels"):format(#channels))
+	ns.Print(ns.T("%d chat channels", "%d Chatkanäle"):format(#channels))
 	for _, channel in ipairs(channels) do
 		ns.PrintLine(
-			("  %s%s|r [%s] %d messages, %d unread%s"):format(
+			ns.T("  %s%s|r [%s] %d messages, %d unread%s", "  %s%s|r [%s] %d Nachrichten, %d ungelesen%s"):format(
 				C.ColorCode(C.ChannelColor(channel)),
-				channel.label,
+				C.Label(channel),
 				channel.key,
 				#channel.messages,
 				channel.unread,
-				channel.key == state.selected and " (selected)" or ""
+				channel.key == state.selected and ns.T(" (selected)", " (ausgewählt)") or ""
 			)
 		)
 	end

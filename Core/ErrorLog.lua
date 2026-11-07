@@ -55,13 +55,13 @@ ns:RegisterSlashCommand("errors", function(input)
 		if ScriptErrorsFrame then
 			firstSessionIndex = #ScriptErrorsFrame.errorData + 1
 		end
-		ns.Print("error log cleared")
+		ns.Print(ns.T("error log cleared", "Fehlerprotokoll geleert"))
 		return
 	end
 
 	local all = AllErrors()
 	if #all == 0 then
-		ns.Print("no errors logged – /sui errors clear")
+		ns.Print(ns.T("no errors logged – /sui errors clear", "keine Fehler protokolliert – /sui errors clear"))
 		return
 	end
 	local parts = {}

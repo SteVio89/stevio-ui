@@ -110,7 +110,11 @@ local function CreateWindow()
 
 	local title = ns.CreateFontString(frame, 12)
 	title:SetPoint("TOPLEFT", 10, -10)
-	title:SetText(("%s – Profile.lua (Cmd+A, Cmd+C)"):format(addonName))
+	-- Shared by the profile export, the error log and debug dumps.
+	title:SetText(
+		ns.T("%s – select all and copy (Cmd+A, Cmd+C)", "%s – alles markieren und kopieren (Cmd+A, Cmd+C)")
+			:format(addonName)
+	)
 
 	local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
 	close:SetPoint("TOPRIGHT", 2, 2)

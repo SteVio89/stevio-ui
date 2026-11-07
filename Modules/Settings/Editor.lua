@@ -18,9 +18,7 @@ local CONTROL_X = 300
 local OVERRIDDEN_COLOR = { 1, 0.82, 0 }
 local DEFAULT_COLOR = { 0.9, 0.9, 0.9 }
 
-local function T(english, german)
-	return ns.isGerman and german or english
-end
+local T = ns.T
 
 -- Paths the editor never shows: the profile has pages of its own, and the
 -- settings module builds this panel, so turning it off would lock it away.

@@ -125,6 +125,6 @@ ns:RegisterSlashCommand("test", function(input)
 		ShowPreview(math.min(math.floor(count), MAX_UNITS))
 	else
 		HidePreview()
-		ns.Print("/sui test 5|10|25|40 – /sui test (aus)")
+		ns.Print(ns.T("/sui test 5|10|25|40 – /sui test (off)", "/sui test 5|10|25|40 – /sui test (aus)"))
 	end
 end)

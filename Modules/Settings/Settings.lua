@@ -119,7 +119,7 @@ end
 local function Restore()
 	local backup = StevioUIState and StevioUIState.backup
 	if not backup then
-		ns.Print("Keine Sicherung vorhanden.")
+		ns.Print(ns.T("No backup found.", "Keine Sicherung vorhanden."))
 		return
 	end
 	ApplyActionBars(backup.actionBars)
@@ -139,17 +139,17 @@ local function ApplyProfile()
 	local profile = config.profile
 	local changed = {}
 	if profile.actionBars and ApplyActionBars(profile.actionBars) then
-		changed[#changed + 1] = "action bars"
+		changed[#changed + 1] = ns.T("action bars", "Aktionsleisten")
 	end
 	if profile.cvars and ApplyCVars(ns.EffectiveCVars()) then
-		changed[#changed + 1] = "cvars"
+		changed[#changed + 1] = ns.T("settings", "Einstellungen")
 	end
 	if profile.bindings and ApplyBindings(ns.EffectiveBindings()) then
-		changed[#changed + 1] = "bindings"
+		changed[#changed + 1] = ns.T("key bindings", "Tastenbelegung")
 	end
 	profileApplied = true
 	if #changed > 0 then
-		ns.Print(("Profil angewendet (%s)."):format(table.concat(changed, ", ")))
+		ns.Print(ns.T("Profile applied (%s).", "Profil angewendet (%s)."):format(table.concat(changed, ", ")))
 	end
 end
 

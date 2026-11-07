@@ -44,6 +44,29 @@ function C.Day(t)
 	return date(config.dateFormat, t)
 end
 
+-- Names of the fixed channels, in the client's language; the saved label
+-- (English) is kept for whisper partners, chat channels and communities.
+local LABELS = {
+	party = { "Party", "Gruppe" },
+	raid = { "Raid", "Schlachtzug" },
+	instance = { "Instance", "Instanz" },
+	guild = { "Guild", "Gilde" },
+	say = { "Say", "Sagen" },
+	yell = { "Yell", "Schreien" },
+	other = { "Other", "Andere" },
+	npc = { "NPC", "NPC" },
+	progress = { "Loot & Progress", "Beute & Fortschritt" },
+	system = { "System", "System" },
+}
+
+function C.Label(channel)
+	local names = LABELS[channel.key]
+	if names then
+		return ns.T(names[1], names[2])
+	end
+	return channel.label
+end
+
 function C.Selected()
 	return C.state.selected and C.store:Get(C.state.selected)
 end

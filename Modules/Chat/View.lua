@@ -105,7 +105,7 @@ function C.RefreshSidebar()
 		ui.rows[index] = row
 		row.key = channel.key
 		local r, g, b = C.ChannelColor(channel)
-		local text = channel.label
+		local text = C.Label(channel)
 		if channel.unread > 0 then
 			text = ("%s (%d)"):format(text, channel.unread)
 		end
@@ -122,7 +122,7 @@ function C.RefreshSidebar()
 	local channel = C.Selected()
 	if channel then
 		local r, g, b = C.ChannelColor(channel)
-		ui.header:SetText(channel.label)
+		ui.header:SetText(C.Label(channel))
 		ui.header:SetTextColor(r, g, b)
 	else
 		ui.header:SetText("")

@@ -9,6 +9,10 @@ ns.config = {}
 -- Texts come in German and English, picked by the client language.
 ns.isGerman = GetLocale() == "deDE"
 
+function ns.T(english, german)
+	return ns.isGerman and german or english
+end
+
 -- A raid has up to 8 groups of 5; the group grid and keyboard healing share these.
 ns.MAX_GROUPS = 8
 ns.UNITS_PER_GROUP = 5
