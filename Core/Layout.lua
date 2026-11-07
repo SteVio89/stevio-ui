@@ -31,12 +31,14 @@ ns.layout = {
 	-- Above the bags, growing upwards into the free damage meter slot.
 	lootTicker = { point = "BOTTOMLEFT", x = 12, y = 52 },
 
-	-- Buffs keep Blizzard's heights and only move to the right edge; the tracker
-	-- overlaps them when shown, which is fine since it's hidden by default.
+	-- Top right, stacked: two rows of buffs, two rows of debuffs, then the
+	-- tracker, so the tracker no longer covers the auras when shown. The row
+	-- heights follow the icon sizes in Modules/Auras/Config.lua (a row at 100%
+	-- is about 36 units, icon plus duration text).
 	buffs = { point = "TOPRIGHT", x = -12, y = -10 },
-	debuffs = { point = "TOPRIGHT", x = -12, y = -155 },
+	debuffs = { point = "TOPRIGHT", x = -12, y = -76 },
 
-	tracker = { point = "TOPRIGHT", x = -12, y = -8 },
+	tracker = { point = "TOPRIGHT", x = -12, y = -160 },
 	trackerBadge = { point = "RIGHT", x = 0, y = 0 },
 
 	-- Top left, leaving room above for the tabs.
