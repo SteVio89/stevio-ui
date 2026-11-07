@@ -12,7 +12,7 @@ local KeyboardHealing = ns:RegisterModule("keyboardHealing", {})
 -- cursorGroup, cursorSlot) lives in the controller's environment, which every
 -- snippet wrapped against it shares.
 
-local UNITS_PER_GROUP = 5
+local UNITS_PER_GROUP = ns.UNITS_PER_GROUP
 
 -- Rows mode stacks groups upwards with members left to right; columns mode
 -- puts groups side by side with members top to bottom (see Group.lua).
@@ -94,7 +94,8 @@ local SYNC_FROM_CLICK = [[
 	end
 ]]
 
-local MAX_GROUPS = 8
+-- The restricted snippets above can't see Lua upvalues and spell out the 8 groups themselves.
+local MAX_GROUPS = ns.MAX_GROUPS
 
 local controller
 local testCells = {}

@@ -4,9 +4,8 @@ local badgeStyle = ns.config.style.badge
 
 local Tracker = ns:RegisterModule("tracker", {})
 
-local isGerman = GetLocale() == "deDE"
 BINDING_HEADER_STEVIOUI = "stevio-ui"
-BINDING_NAME_STEVIOUI_TOGGLE_TRACKER = isGerman and "Questverfolgung ein-/ausblenden" or "Toggle objective tracker"
+BINDING_NAME_STEVIOUI_TOGGLE_TRACKER = ns.isGerman and "Questverfolgung ein-/ausblenden" or "Toggle objective tracker"
 
 local shown = false
 local applying = false

@@ -8,7 +8,7 @@ local Notch = ns:RegisterModule("notch", {})
 -- Nothing is visible until the cursor reaches the notch; then a black island
 -- grows out of it with information that is only needed now and then.
 
-local L = GetLocale() == "deDE"
+local L = ns.isGerman
 		and {
 			level = "Stufe %d",
 			rested = "Erholt",

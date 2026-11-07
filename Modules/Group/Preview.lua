@@ -3,8 +3,8 @@ local _, ns = ...
 local config = ns.config.group
 local style = ns.config.style
 
-local UNITS_PER_GROUP = 5
-local MAX_UNITS = 40
+local UNITS_PER_GROUP = ns.UNITS_PER_GROUP
+local MAX_UNITS = ns.MAX_GROUPS * ns.UNITS_PER_GROUP
 
 local CLASSES = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }
 local POWER_BY_CLASS = { WARRIOR = "RAGE", ROGUE = "ENERGY" }

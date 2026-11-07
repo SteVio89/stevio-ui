@@ -90,18 +90,13 @@ local barSystemIndices = {
 	Enum.EditModeActionBarSystemIndices.Bar3,
 }
 
--- Edit Mode stores icon size as steps of 10 above 50%.
-local function IconSizeSetting(percent)
-	return (percent - 50) / 10
-end
-
 local function PlaceBars()
 	local Setting = Enum.EditModeActionBarSetting
 	local barSettings = {
 		[Setting.Orientation] = Enum.ActionBarOrientation.Horizontal,
 		[Setting.NumRows] = 1,
 		[Setting.NumIcons] = 12,
-		[Setting.IconSize] = IconSizeSetting(config.iconSize),
+		[Setting.IconSize] = ns.EditModeIconSize(config.iconSize),
 		[Setting.IconPadding] = config.iconPadding,
 		[Setting.HideBarArt] = 1,
 	}

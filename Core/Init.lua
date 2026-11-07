@@ -6,6 +6,13 @@ StevioUI = ns
 ns.name = addonName
 ns.config = {}
 
+-- Texts come in German and English, picked by the client language.
+ns.isGerman = GetLocale() == "deDE"
+
+-- A raid has up to 8 groups of 5; the group grid and keyboard healing share these.
+ns.MAX_GROUPS = 8
+ns.UNITS_PER_GROUP = 5
+
 local modules = {}
 
 function ns:RegisterModule(name, module)
