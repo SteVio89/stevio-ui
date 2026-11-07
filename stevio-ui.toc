@@ -61,9 +61,6 @@ Modules\Chat\Parse.lua
 Modules\Chat\Commands.lua
 Modules\Chat\Chat.lua
 
-Modules\DamageMeter\Config.lua
-Modules\DamageMeter\DamageMeter.lua
-
 Modules\Auras\Config.lua
 Modules\Auras\Auras.lua
 

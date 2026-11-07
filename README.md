@@ -76,7 +76,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   something still listed adds to that line.
 - **Quest rewards** – marks the choice with the highest vendor value.
 - **Auras** – Blizzard's own, compacted to two rows of buffs and two rows of debuffs in the top right corner, with the objective tracker below them. Blizzard's damage meter is turned
-  off (`damageMeterEnabled` in the profile); its slot stays free.
+  off (`damageMeterEnabled` in the profile); the loot ticker uses its space at the bottom left.
 
 ## Assumptions
 
@@ -85,7 +85,7 @@ stevio-ui is built for one setup and is configured in code, not through options:
 - **German keyboard layout** – Quickjump letters and some keys are chosen for
   it (`Y`/`Z` are swapped compared to US).
 - **UI scale around 0.8** (≈ 960 UI units screen height). At higher scales the
-  40-player grid overlaps the free damage meter slot at the bottom left.
+  40-player grid overlaps the loot ticker at the bottom left.
 - **The bundled keybinding and graphics profile is the author's own.** Change
   `Modules/Settings/Profile.lua` (or generate your own with `/sui export`) to make
   it yours.
@@ -115,6 +115,8 @@ first login.
 | `/sui loot` | Preview the loot ticker with a few items from your bags |
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui qj` | List the current Quickjump targets |
+| `/sui notch` | Show the notch geometry (for checking the island's placement) |
+| `/sui errors` | Show stevio-ui's logged Lua errors (`/sui errors clear` empties the log) |
 | `/sui export` | Export your current bindings and settings as a profile |
 | `/sui apply` | Re-apply the profile |
 | `/sui restore` | Restore the settings from before stevio-ui and disable it |

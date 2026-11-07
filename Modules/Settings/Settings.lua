@@ -63,7 +63,8 @@ local function ApplyBindings(bindings, bindingSet)
 end
 
 -- Taken once when the player agrees to the takeover, so /sui restore can hand
--- back exactly what the profile overwrote.
+-- back what the profile overwrote. It holds every CVar, so CVars added to the
+-- profile later can be handed back too.
 function ns.CaptureBackup()
 	local backup = {
 		actionBars = {},
@@ -81,10 +82,21 @@ function ns.CaptureBackup()
 			backup.bindings[key] = command
 		end
 	end
-	for name in pairs(config.profile.cvars or {}) do
-		backup.cvars[name] = GetCVar(name)
-	end
+	ns.ForEachCVar(function(name, value)
+		backup.cvars[name] = value
+	end)
 	return backup
+end
+
+-- Only the CVars the profile manages go back, so settings the player changed
+-- later themselves (volume, camera, ...) stay. Backups from before the full
+-- snapshot lack CVars the profile gained since; those go back to the default.
+local function RestoreCVars(backupCVars)
+	local values = {}
+	for name in pairs(config.profile.cvars or {}) do
+		values[name] = backupCVars[name] or C_CVar.GetCVarDefault(name)
+	end
+	ApplyCVars(values)
 end
 
 local function Restore()
@@ -94,7 +106,7 @@ local function Restore()
 		return
 	end
 	ApplyActionBars(backup.actionBars)
-	ApplyCVars(backup.cvars)
+	RestoreCVars(backup.cvars)
 	ApplyBindings(backup.bindings, backup.bindingSet)
 	ns.RestoreEditModeLayout(backup.editModeLayout)
 	-- Forgetting the consent makes a later re-enable ask again and take a fresh backup.

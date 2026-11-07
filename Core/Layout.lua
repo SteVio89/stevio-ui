@@ -38,7 +38,7 @@ ns.layout = {
 	minimap = { point = "BOTTOMRIGHT", x = -12, y = 44 },
 	menubar = { point = "BOTTOMRIGHT", x = -12, y = 8 },
 	bags = { point = "BOTTOMLEFT", x = 12, y = 8 },
-	-- Above the bags, growing upwards into the free damage meter slot.
+	-- Above the bags, growing upwards where Blizzard's (turned off) damage meter would sit.
 	lootTicker = { point = "BOTTOMLEFT", x = 12, y = 52 },
 
 	-- Top right, stacked: two rows of buffs, two rows of debuffs, then the
@@ -54,7 +54,4 @@ ns.layout = {
 	-- Top left, leaving room above for the tabs.
 	chat = { point = "TOPLEFT", x = 12, y = -36 },
 	chatBadge = { point = "LEFT", x = 0, y = 0 },
-
-	-- Lower left quarter, below the chat badge and clear of the unit frames.
-	damageMeter = { point = "BOTTOMLEFT", x = 12, y = 228 },
 }

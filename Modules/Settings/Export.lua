@@ -48,17 +48,27 @@ local function AppendBindings(lines)
 	lines[#lines + 1] = "\t},"
 end
 
-local function AppendCVars(lines)
-	local entries = {}
+-- Calls `callback(name, value, defaultValue)` for every CVar the player can
+-- change (not locked, secure or read-only).
+function ns.ForEachCVar(callback)
 	for _, info in ipairs(ConsoleGetAllCommands()) do
-		local name = info.command
-		if info.commandType == Enum.ConsoleCommandType.Cvar and not IsIgnoredCVar(name) then
+		if info.commandType == Enum.ConsoleCommandType.Cvar then
+			local name = info.command
 			local value, defaultValue, _, _, isLocked, isSecure, isReadOnly = C_CVar.GetCVarInfo(name)
-			if value and value ~= defaultValue and not isLocked and not isSecure and not isReadOnly then
-				entries[#entries + 1] = ("\t\t%s = %q,"):format(LuaKey(name), value)
+			if value and not isLocked and not isSecure and not isReadOnly then
+				callback(name, value, defaultValue)
 			end
 		end
 	end
+end
+
+local function AppendCVars(lines)
+	local entries = {}
+	ns.ForEachCVar(function(name, value, defaultValue)
+		if value ~= defaultValue and not IsIgnoredCVar(name) then
+			entries[#entries + 1] = ("\t\t%s = %q,"):format(LuaKey(name), value)
+		end
+	end)
 	table.sort(entries)
 
 	lines[#lines + 1] = "\tcvars = {"
