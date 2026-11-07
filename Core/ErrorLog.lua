@@ -66,7 +66,14 @@ ns:RegisterSlashCommand("errors", function(input)
 	end
 	local parts = {}
 	for i, entry in ipairs(all) do
-		parts[i] = ("#%d  %s  x%d\n%s\n%s\nLocals:\n%s"):format(i, entry.time, entry.count, entry.message, entry.stack, entry.locals)
+		parts[i] = ("#%d  %s  x%d\n%s\n%s\nLocals:\n%s"):format(
+			i,
+			entry.time,
+			entry.count,
+			entry.message,
+			entry.stack,
+			entry.locals
+		)
 	end
 	ns.ShowExportWindow(table.concat(parts, "\n\n"))
 end)

@@ -33,7 +33,9 @@ store:Add("whisper:Al", { kind = "whisper", chatType = "WHISPER", label = "Al" }
 local order = { group = 1, guild = 2, whisper = 3 }
 local sorted = store:Sorted(order)
 local keys = {}
-for _, c in ipairs(sorted) do keys[#keys + 1] = c.key end
+for _, c in ipairs(sorted) do
+	keys[#keys + 1] = c.key
+end
 check(table.concat(keys, ",") == "party,guild,whisper:Al,whisper:Bob", "sort order: " .. table.concat(keys, ","))
 
 check(store:Delete("whisper:Bob"), "whisper deletable")
@@ -50,10 +52,15 @@ check(History.New(saved, 3):Get("party").messages[1].text == "kept", "persists v
 print("ok")
 
 check(History.StripMarkup("|cffff0000hi|r |Hitem:1|h[Sword]|h |TFoo:0|t||") == "hi [Sword] |", "markup is stripped")
-local transcript = History.Transcript({ messages = {
-	{ time = 5, sender = "A", text = "|cff00ff00x|r" },
-	{ sender = "B", text = "y" },
-} }, function(t) return "t" .. t end)
+local transcript = History.Transcript(
+	{ messages = {
+		{ time = 5, sender = "A", text = "|cff00ff00x|r" },
+		{ sender = "B", text = "y" },
+	} },
+	function(t)
+		return "t" .. t
+	end
+)
 check(transcript == "[t5] A: x\n[--:--] B: y", "transcript format")
 
 local explicit = { "Trade", "General" }
@@ -63,11 +70,26 @@ key, label, own = History.PublicChannel("LookingForGroup", explicit)
 check(key == "other" and label == "Other" and not own, "other channels share Other")
 
 local publicStore = History.New({}, 3)
-publicStore:Add("channel:trade", { kind = "public", chatType = "CHANNEL2", label = "Trade", channelIndex = 2 }, { time = 1, text = "a" }, true)
-publicStore:Add("channel:trade", { kind = "public", chatType = "CHANNEL5", label = "Trade", channelIndex = 5 }, { time = 2, text = "b" }, true)
+publicStore:Add(
+	"channel:trade",
+	{ kind = "public", chatType = "CHANNEL2", label = "Trade", channelIndex = 2 },
+	{ time = 1, text = "a" },
+	true
+)
+publicStore:Add(
+	"channel:trade",
+	{ kind = "public", chatType = "CHANNEL5", label = "Trade", channelIndex = 5 },
+	{ time = 2, text = "b" },
+	true
+)
 check(publicStore:Get("channel:trade").channelIndex == 5, "channel number follows the latest message")
 check(publicStore:Get("channel:trade").chatType == "CHANNEL5", "channel color follows the channel number")
-publicStore:Add("other", { kind = "other", chatType = "CHANNEL", label = "Other", readOnly = true }, { time = 3, text = "c" }, true)
+publicStore:Add(
+	"other",
+	{ kind = "other", chatType = "CHANNEL", label = "Other", readOnly = true },
+	{ time = 3, text = "c" },
+	true
+)
 check(publicStore:Get("other").readOnly, "Other is read-only")
 check(publicStore:HasUnread("public") and publicStore:HasUnread("other"), "unread for public kinds")
 print("public channels ok")
@@ -85,31 +107,62 @@ print("most recent ok")
 -- time first, then the chat channel (in "Other"), then the sender
 check(History.Line({ sender = "A", text = "hi" }, "12:00") == "12:00 A: hi", "line with sender")
 check(History.Line({ source = "LFG", sender = "A", text = "hi" }, "12:00") == "12:00 [LFG] A: hi", "line in Other")
-check(History.Line({ text = "Bob has come online." }, "12:00") == "12:00 Bob has come online.", "system line has no sender")
-check(History.Line({ source = "LFG", sender = "A", text = "hi" }, "t", "<LFG>", "<A>") == "t [<LFG>] <A>: hi", "formatted parts")
-transcript = History.Transcript({ messages = {
-	{ time = 1, source = "LFG", sender = "A", text = "x" },
-	{ time = 2, text = "Bob has gone offline." },
-} }, function(t) return "t" .. t end)
-check(transcript == "[t1] [LFG] A: x\n[t2] Bob has gone offline.", "transcript with source and system line: " .. transcript)
-check(History.Line({ sender = "Bob", text = "waves happily.", emote = true }, "12:00") == "12:00 Bob waves happily.", "emote line has no colon")
-check(History.Line({ text = "Bob dances.", emote = true }, "12:00") == "12:00 Bob dances.", "text emote carries the name")
-check(History.Line({ sender = "Bob", text = "waves.", emote = true }, "t", nil, "<Bob>") == "t <Bob> waves.", "formatted emote")
+check(
+	History.Line({ text = "Bob has come online." }, "12:00") == "12:00 Bob has come online.",
+	"system line has no sender"
+)
+check(
+	History.Line({ source = "LFG", sender = "A", text = "hi" }, "t", "<LFG>", "<A>") == "t [<LFG>] <A>: hi",
+	"formatted parts"
+)
+transcript = History.Transcript({
+	messages = {
+		{ time = 1, source = "LFG", sender = "A", text = "x" },
+		{ time = 2, text = "Bob has gone offline." },
+	},
+}, function(t)
+	return "t" .. t
+end)
+check(
+	transcript == "[t1] [LFG] A: x\n[t2] Bob has gone offline.",
+	"transcript with source and system line: " .. transcript
+)
+check(
+	History.Line({ sender = "Bob", text = "waves happily.", emote = true }, "12:00") == "12:00 Bob waves happily.",
+	"emote line has no colon"
+)
+check(
+	History.Line({ text = "Bob dances.", emote = true }, "12:00") == "12:00 Bob dances.",
+	"text emote carries the name"
+)
+check(
+	History.Line({ sender = "Bob", text = "waves.", emote = true }, "t", nil, "<Bob>") == "t <Bob> waves.",
+	"formatted emote"
+)
 print("line format ok")
 
 -- a date line before the first message of each day; untimed messages don't count
-local function day(t) return "d" .. math.floor(t / 100) end
+local function day(t)
+	return "d" .. math.floor(t / 100)
+end
 check(History.StartsDay(nil, { time = 5 }, day), "first message starts a day")
 check(not History.StartsDay({ time = 5 }, { time = 50 }, day), "same day")
 check(History.StartsDay({ time = 50 }, { time = 150 }, day), "next day")
 check(not History.StartsDay({ time = 50 }, { text = "x" }, day), "untimed message starts no day")
-transcript = History.Transcript({ messages = {
-	{ time = 10, sender = "A", text = "x" },
-	{ time = 20, sender = "B", text = "y" },
-	{ sender = "C", text = "z" },
-	{ time = 120, sender = "A", text = "w" },
-} }, function(t) return "t" .. t end, day)
-check(transcript == "-- d0 --\n[t10] A: x\n[t20] B: y\n[--:--] C: z\n-- d1 --\n[t120] A: w", "transcript with dates: " .. transcript)
+transcript = History.Transcript({
+	messages = {
+		{ time = 10, sender = "A", text = "x" },
+		{ time = 20, sender = "B", text = "y" },
+		{ sender = "C", text = "z" },
+		{ time = 120, sender = "A", text = "w" },
+	},
+}, function(t)
+	return "t" .. t
+end, day)
+check(
+	transcript == "-- d0 --\n[t10] A: x\n[t20] B: y\n[--:--] C: z\n-- d1 --\n[t120] A: w",
+	"transcript with dates: " .. transcript
+)
 check(History.Transcript({ messages = { { time = 1, text = "a" } } }, nil) == "[1] a", "no date lines without day")
 print("dates ok")
 
@@ -119,8 +172,18 @@ check(clubId == 123 and streamId == 4, "community ids")
 check(History.CommunityIds("Trade") == nil, "not a community")
 check(History.CommunityKey(123, 4) == "community:123:4", "community key")
 local communityStore = History.New({}, 3)
-communityStore:Add("community:1:2", { kind = "community", chatType = "CHANNEL3", label = "Old", relabel = true, clubId = 1, streamId = 2 }, { time = 1, text = "a" }, true)
-communityStore:Add("community:1:2", { kind = "community", chatType = "CHANNEL4", label = "New", relabel = true, clubId = 1, streamId = 2 }, { time = 2, text = "b" }, true)
+communityStore:Add(
+	"community:1:2",
+	{ kind = "community", chatType = "CHANNEL3", label = "Old", relabel = true, clubId = 1, streamId = 2 },
+	{ time = 1, text = "a" },
+	true
+)
+communityStore:Add(
+	"community:1:2",
+	{ kind = "community", chatType = "CHANNEL4", label = "New", relabel = true, clubId = 1, streamId = 2 },
+	{ time = 2, text = "b" },
+	true
+)
 local community = communityStore:Get("community:1:2")
 check(community.label == "New" and community.clubId == 1 and community.streamId == 2, "community follows its name")
 check(community.chatType == "CHANNEL4", "community color follows the channel number")

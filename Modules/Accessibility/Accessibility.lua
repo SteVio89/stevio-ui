@@ -2,7 +2,8 @@ local _, ns = ...
 
 local Accessibility = ns:RegisterModule("accessibility", {})
 
-BINDING_NAME_STEVIOUI_QUICKJUMP = GetLocale() == "deDE" and "Kürzel anzeigen / nächstes Fenster" or "Show labels / next window"
+BINDING_NAME_STEVIOUI_QUICKJUMP = GetLocale() == "deDE" and "Kürzel anzeigen / nächstes Fenster"
+	or "Show labels / next window"
 
 -- Popups come first because they usually block whatever else is open. A
 -- dialog whose labels were used up gets them back before windows are cycled.

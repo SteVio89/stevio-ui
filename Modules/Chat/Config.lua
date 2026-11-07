@@ -116,7 +116,12 @@ ns.config.chat = {
 		CHAT_MSG_RAID_LEADER = { kind = "group", key = "raid", chatType = "RAID", label = "Raid" },
 		CHAT_MSG_RAID_WARNING = { kind = "group", key = "raid", chatType = "RAID", label = "Raid", prefix = "[RW] " },
 		CHAT_MSG_INSTANCE_CHAT = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT", label = "Instance" },
-		CHAT_MSG_INSTANCE_CHAT_LEADER = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT", label = "Instance" },
+		CHAT_MSG_INSTANCE_CHAT_LEADER = {
+			kind = "group",
+			key = "instance",
+			chatType = "INSTANCE_CHAT",
+			label = "Instance",
+		},
 		CHAT_MSG_GUILD = guild,
 		CHAT_MSG_OFFICER = With(guild, { prefix = "[O] " }),
 		CHAT_MSG_GUILD_DISCORD = guild,

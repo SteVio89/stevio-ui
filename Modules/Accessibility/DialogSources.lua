@@ -50,7 +50,10 @@ local popupSource = {
 			local dialog = _G["StaticPopup" .. i]
 			if dialog and dialog:IsShown() then
 				local buttons = dialog.ButtonContainer
-				tAppendAll(targets, Shown(buttons.Button1, buttons.Button2, buttons.Button3, buttons.Button4, dialog.ExtraButton))
+				tAppendAll(
+					targets,
+					Shown(buttons.Button1, buttons.Button2, buttons.Button3, buttons.Button4, dialog.ExtraButton)
+				)
 			end
 		end
 		return QuickJump.SortByPosition(targets)
@@ -105,7 +108,12 @@ local questSource = {
 		return {}
 	end,
 	GetScrollBar = function()
-		for _, scrollFrame in ipairs({ QuestGreetingScrollFrame, QuestDetailScrollFrame, QuestProgressScrollFrame, QuestRewardScrollFrame }) do
+		for _, scrollFrame in ipairs({
+			QuestGreetingScrollFrame,
+			QuestDetailScrollFrame,
+			QuestProgressScrollFrame,
+			QuestRewardScrollFrame,
+		}) do
 			if scrollFrame:IsVisible() then
 				return scrollFrame.ScrollBar
 			end
@@ -153,7 +161,12 @@ function ns.SetupDialogSources()
 	end
 
 	QuestFrame:HookScript("OnHide", RequestRefresh)
-	for _, panel in ipairs({ QuestFrameGreetingPanel, QuestFrameDetailPanel, QuestFrameProgressPanel, QuestFrameRewardPanel }) do
+	for _, panel in ipairs({
+		QuestFrameGreetingPanel,
+		QuestFrameDetailPanel,
+		QuestFrameProgressPanel,
+		QuestFrameRewardPanel,
+	}) do
 		panel:HookScript("OnShow", RequestRefresh)
 	end
 	-- A reward picked by label has no mouse over it, so its tooltip is shown as

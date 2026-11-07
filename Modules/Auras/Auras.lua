@@ -26,8 +26,16 @@ end
 
 function Auras:OnEnable(config)
 	local indices = Enum.EditModeAuraFrameSystemIndices
-	ns:SetEditModeSystem(Enum.EditModeSystem.AuraFrame, indices.BuffFrame, ns.layout.buffs,
-		Settings(config.buffs, "IconLimitBuffFrame"))
-	ns:SetEditModeSystem(Enum.EditModeSystem.AuraFrame, indices.DebuffFrame, ns.layout.debuffs,
-		Settings(config.debuffs, "IconLimitDebuffFrame"))
+	ns:SetEditModeSystem(
+		Enum.EditModeSystem.AuraFrame,
+		indices.BuffFrame,
+		ns.layout.buffs,
+		Settings(config.buffs, "IconLimitBuffFrame")
+	)
+	ns:SetEditModeSystem(
+		Enum.EditModeSystem.AuraFrame,
+		indices.DebuffFrame,
+		ns.layout.debuffs,
+		Settings(config.debuffs, "IconLimitDebuffFrame")
+	)
 end

@@ -357,12 +357,20 @@ ns:RegisterSlashCommand("qj", function()
 			else
 				for _, target in ipairs(collected) do
 					-- Secure clicks refuse targets that are constrained or forbid scripted input.
-					local blocked = target.HasAccessConstraints and (target:HasAccessConstraints()
-						or target:HasAnyForbiddenAspects(Enum.ForbiddenAspect.ScriptedInput))
+					local blocked = target.HasAccessConstraints
+						and (
+							target:HasAccessConstraints()
+							or target:HasAnyForbiddenAspects(Enum.ForbiddenAspect.ScriptedInput)
+						)
 					lines[#lines + 1] = ("  %s type=%s visible=%s enabled=%s blocked=%s onclick=%s onmouseup=%s"):format(
-						target:GetDebugName(), target:GetObjectType(), tostring(target:IsVisible()),
-						tostring(not target.IsEnabled or target:IsEnabled()), tostring(blocked),
-						tostring(target:GetScript("OnClick") ~= nil), tostring(target:GetScript("OnMouseUp") ~= nil))
+						target:GetDebugName(),
+						target:GetObjectType(),
+						tostring(target:IsVisible()),
+						tostring(not target.IsEnabled or target:IsEnabled()),
+						tostring(blocked),
+						tostring(target:GetScript("OnClick") ~= nil),
+						tostring(target:GetScript("OnMouseUp") ~= nil)
+					)
 				end
 			end
 		end

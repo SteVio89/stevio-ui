@@ -10,8 +10,14 @@ local ActionBars = ns:RegisterModule("actionbars", {})
 -- secret-value restrictions without any code of ours involved.
 
 local deadButtonParts = {
-	"NormalTexture", "SlotBackground", "SlotArt", "Border", "IconMask",
-	"NewActionTexture", "SpellHighlightTexture", "Name",
+	"NormalTexture",
+	"SlotBackground",
+	"SlotArt",
+	"Border",
+	"IconMask",
+	"NewActionTexture",
+	"SpellHighlightTexture",
+	"Name",
 }
 
 local function StyleButton(button)
@@ -103,8 +109,16 @@ local function PlaceBars()
 		ns:SetEditModeSystem(Enum.EditModeSystem.ActionBar, systemIndex, ns.layout.actionBars[index], barSettings)
 	end
 
-	ns:SetEditModeSystem(Enum.EditModeSystem.ActionBar, Enum.EditModeActionBarSystemIndices.StanceBar, ns.layout.stanceBar)
-	ns:SetEditModeSystem(Enum.EditModeSystem.ActionBar, Enum.EditModeActionBarSystemIndices.PetActionBar, ns.layout.petBar)
+	ns:SetEditModeSystem(
+		Enum.EditModeSystem.ActionBar,
+		Enum.EditModeActionBarSystemIndices.StanceBar,
+		ns.layout.stanceBar
+	)
+	ns:SetEditModeSystem(
+		Enum.EditModeSystem.ActionBar,
+		Enum.EditModeActionBarSystemIndices.PetActionBar,
+		ns.layout.petBar
+	)
 end
 
 function ActionBars:OnEnable()

@@ -110,18 +110,20 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 		if clubId then
 			local resolve = ChatFrameUtil and ChatFrameUtil.ResolveChannelName
 			local label = resolve and resolve(baseName) or baseName
-			return ns.ChatHistory.CommunityKey(clubId, streamId), {
-				kind = "community",
-				chatType = "CHANNEL" .. channelIndex,
-				label = label,
-				relabel = true,
-				clubId = clubId,
-				streamId = streamId,
-			}
+			return ns.ChatHistory.CommunityKey(clubId, streamId),
+				{
+					kind = "community",
+					chatType = "CHANNEL" .. channelIndex,
+					label = label,
+					relabel = true,
+					clubId = clubId,
+					streamId = streamId,
+				}
 		end
 		local key, label, own = ns.ChatHistory.PublicChannel(baseName, config.publicChannels)
 		if own then
-			return key, { kind = def.kind, chatType = "CHANNEL" .. channelIndex, label = label, channelIndex = channelIndex }
+			return key,
+				{ kind = def.kind, chatType = "CHANNEL" .. channelIndex, label = label, channelIndex = channelIndex }
 		end
 		local opts = { kind = "other", chatType = def.chatType, label = label, readOnly = true }
 		return key, opts, baseName, "CHANNEL" .. channelIndex
@@ -134,7 +136,8 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 		local battleTag = info and info.battleTag
 		if battleTag and battleTag ~= "" then
 			local name = ns.ChatHistory.BattleTagName(battleTag)
-			local opts = { kind = def.kind, chatType = def.chatType, label = name, bnetID = bnetID, battleTag = battleTag }
+			local opts =
+				{ kind = def.kind, chatType = def.chatType, label = name, bnetID = bnetID, battleTag = battleTag }
 			return ns.ChatHistory.BattleNetKey(battleTag), opts, nil, nil, name
 		end
 		-- No account info: keyed by the session id, as before.

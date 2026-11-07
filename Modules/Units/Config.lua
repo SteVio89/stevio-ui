@@ -6,10 +6,36 @@ ns.config.units = {
 	-- Order matters: later frames anchor to earlier ones. `healthTextSize` is
 	-- the font size of the "12.3k · 87%" health text inside the health bar.
 	frames = {
-		{ unit = "player", width = 200, healthHeight = 20, powerHeight = 6, showName = true, showCombat = true, healthTextSize = 11 },
+		{
+			unit = "player",
+			width = 200,
+			healthHeight = 20,
+			powerHeight = 6,
+			showName = true,
+			showCombat = true,
+			healthTextSize = 11,
+		},
 		{ unit = "target", width = 200, healthHeight = 20, powerHeight = 6, showName = true, healthTextSize = 11 },
-		{ unit = "pet", width = 120, healthHeight = 10, powerHeight = 4, anchorTo = "player", align = "RIGHT", gap = 18, healthTextSize = 8 },
-		{ unit = "targettarget", width = 120, healthHeight = 10, powerHeight = 0, anchorTo = "target", align = "LEFT", gap = 8, healthTextSize = 8 },
+		{
+			unit = "pet",
+			width = 120,
+			healthHeight = 10,
+			powerHeight = 4,
+			anchorTo = "player",
+			align = "RIGHT",
+			gap = 18,
+			healthTextSize = 8,
+		},
+		{
+			unit = "targettarget",
+			width = 120,
+			healthHeight = 10,
+			powerHeight = 0,
+			anchorTo = "target",
+			align = "LEFT",
+			gap = 8,
+			healthTextSize = 8,
+		},
 		{ unit = "focus", width = 120, healthHeight = 10, powerHeight = 0, showName = true, healthTextSize = 8 },
 	},
 

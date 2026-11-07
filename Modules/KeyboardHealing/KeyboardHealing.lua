@@ -141,8 +141,15 @@ local function GetTestCell(groupIndex, slot)
 end
 
 local function SetCursor(mode, groupIndex, slot)
-	SecureHandlerExecute(controller, ("gridMode = %q; cursorGroup = %s; cursorSlot = %s; owner:RunAttribute(%q)")
-		:format(mode, tostring(groupIndex), tostring(slot), "UpdateCursor"))
+	SecureHandlerExecute(
+		controller,
+		("gridMode = %q; cursorGroup = %s; cursorSlot = %s; owner:RunAttribute(%q)"):format(
+			mode,
+			tostring(groupIndex),
+			tostring(slot),
+			"UpdateCursor"
+		)
+	)
 end
 
 local function FindPlayerCell()

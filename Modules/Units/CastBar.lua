@@ -63,7 +63,8 @@ local function Start(castBar, isChannel)
 	end
 
 	ApplyColor(castBar:GetStatusBarTexture(), notInterruptible)
-	local direction = isChannel and Enum.StatusBarTimerDirection.RemainingTime or Enum.StatusBarTimerDirection.ElapsedTime
+	local direction = isChannel and Enum.StatusBarTimerDirection.RemainingTime
+		or Enum.StatusBarTimerDirection.ElapsedTime
 	castBar:SetTimerDuration(duration, Enum.StatusBarInterpolation.Immediate, direction)
 	castBar.duration = duration
 	castBar.spellName:SetText(name)

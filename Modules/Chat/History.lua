@@ -236,7 +236,10 @@ end
 function Store:MostRecent()
 	local best
 	for _, channel in pairs(self.db.channels) do
-		if channel.last > 0 and (not best or channel.last > best.last or (channel.last == best.last and channel.key < best.key)) then
+		if
+			channel.last > 0
+			and (not best or channel.last > best.last or (channel.last == best.last and channel.key < best.key))
+		then
 			best = channel
 		end
 	end

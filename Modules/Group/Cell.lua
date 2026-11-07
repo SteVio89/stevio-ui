@@ -227,8 +227,13 @@ local function CreatePrediction(cell)
 	-- Blizzard's striped shield texture over the absorb fill.
 	local stripes = cell.absorb:CreateTexture(nil, "ARTWORK", nil, 1)
 	stripes:SetAllPoints(cell.absorb:GetStatusBarTexture())
-	SetTextureWithAddressModeOptions(stripes, "RaidFrame-Shield-Overlay", TextureKitConstants.IgnoreAtlasSize,
-		TextureKitConstants.AddressModeWrap, TextureKitConstants.AddressModeWrap)
+	SetTextureWithAddressModeOptions(
+		stripes,
+		"RaidFrame-Shield-Overlay",
+		TextureKitConstants.IgnoreAtlasSize,
+		TextureKitConstants.AddressModeWrap,
+		TextureKitConstants.AddressModeWrap
+	)
 	cell.health:HookScript("OnSizeChanged", function(_, width)
 		cell.myHeal:SetWidth(width)
 		cell.otherHeal:SetWidth(width)
@@ -307,9 +312,39 @@ function ns.InitGroupCell(cell)
 	CreatePrediction(cell)
 	local Flow = AnchorUtil.FlowDirection
 	cell.auraContainers = {
-		CreateAuraGroup(cell, "dispellable", config.dispellableFilter, "LEFT", 2, 0, Flow.Right, config.iconsPerSide, config.iconSize),
-		CreateAuraGroup(cell, "other", config.otherFilter, "RIGHT", -2, 0, Flow.Left, config.iconsPerSide, config.iconSize),
-		CreateAuraGroup(cell, "own", config.ownAuraFilter, "TOPLEFT", 2, -2, Flow.Right, config.ownAurasMax, config.ownAuraSize),
+		CreateAuraGroup(
+			cell,
+			"dispellable",
+			config.dispellableFilter,
+			"LEFT",
+			2,
+			0,
+			Flow.Right,
+			config.iconsPerSide,
+			config.iconSize
+		),
+		CreateAuraGroup(
+			cell,
+			"other",
+			config.otherFilter,
+			"RIGHT",
+			-2,
+			0,
+			Flow.Left,
+			config.iconsPerSide,
+			config.iconSize
+		),
+		CreateAuraGroup(
+			cell,
+			"own",
+			config.ownAuraFilter,
+			"TOPLEFT",
+			2,
+			-2,
+			Flow.Right,
+			config.ownAurasMax,
+			config.ownAuraSize
+		),
 	}
 	cell:SetScript("OnEvent", OnEvent)
 	cell:HookScript("OnAttributeChanged", OnAttributeChanged)
