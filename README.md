@@ -80,7 +80,8 @@ until it is needed, and as much as possible can be done from the keyboard.
 
 ## Assumptions
 
-stevio-ui is built for one setup and is configured in code, not through options:
+stevio-ui is built for one setup; its defaults in code are the author's, and
+the options panel (see Configuration) changes them for yours:
 
 - **German keyboard layout** – Quickjump letters and some keys are chosen for
   it (`Y`/`Z` are swapped compared to US).
@@ -117,15 +118,27 @@ first login.
 | `/sui qj` | List the current Quickjump targets |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |
 | `/sui errors` | Show stevio-ui's logged Lua errors (`/sui errors clear` empties the log) |
+| `/sui config` | Open the options panel |
+| `/sui reset` | Reset all options to the defaults in code |
 | `/sui export` | Export your current bindings and settings as a profile |
 | `/sui apply` | Re-apply the profile |
 | `/sui restore` | Restore the settings from before stevio-ui and disable it |
 
 ## Configuration
 
-Every module has a `Config.lua` (`enabled = false` turns it off), the global
-look lives in `Core/Config.lua` and all positions in `Core/Layout.lua`. Edit and
-`/reload`.
+The defaults live in code: every module has a `Config.lua` (`enabled = false`
+turns it off), the global look lives in `Core/Config.lua`, all positions in
+`Core/Layout.lua` and the keybindings and graphics settings in
+`Modules/Settings/Profile.lua`.
+
+The options panel (Options → AddOns → stevio-ui, or `/sui config`) changes
+them account-wide without touching the code: a page per module generated from
+its config (every value, including lists, which can grow and shrink), a
+General page with the modules, style and layout, and pages for keybindings
+and graphics settings. Changed values are highlighted and take effect after
+`Reload UI`. Keybindings and settings changed in Blizzard's own menus are kept
+as well instead of being reverted at the next login. `/sui reset` (or "Reset
+all options") goes back to the code.
 
 ## Development
 
