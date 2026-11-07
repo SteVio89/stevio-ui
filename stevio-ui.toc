@@ -50,6 +50,11 @@ Modules\Notch\Notch.lua
 
 Modules\Chat\Config.lua
 Modules\Chat\History.lua
+Modules\Chat\Shared.lua
+Modules\Chat\Blizzard.lua
+Modules\Chat\View.lua
+Modules\Chat\Copy.lua
+Modules\Chat\Badge.lua
 Modules\Chat\Chat.lua
 
 Modules\DamageMeter\Config.lua
