@@ -1,7 +1,8 @@
 local _, ns = ...
 
--- Game-independent part of the loot ticker: turning loot messages into
--- entries, the capped list of entries and their fading over time.
+-- Game-independent part of the loot ticker: turning loot messages and loot
+-- history drops into entries, the capped list of entries and their fading
+-- over time.
 local Feed = {}
 ns.LootFeed = Feed
 Feed.__index = Feed
@@ -61,15 +62,6 @@ function Feed.Parse(text, patterns)
 	end
 end
 
--- Group loot roll messages ("Bob won: [Sword]", "Need Roll - 87 for [Sword]
--- by Bob", "You passed on: [Sword]"): returns the item link and the player
--- name in it (nil in messages about yourself). The number in them is a roll,
--- not a count.
-function Feed.ParseRoll(text, patterns)
-	local link, _, name = Feed.Parse(text, patterns)
-	return link, name
-end
-
 -- Item quality from the color of a link ("ffa335ee"), using `qualityHex`
 -- ({ [quality] = "ffa335ee" }); nil when no quality has that color.
 function Feed.QualityFromColor(hex, qualityHex)
@@ -124,12 +116,13 @@ function Feed.LinkColor(link)
 	return link:match("|c(%x%x%x%x%x%x%x%x)")
 end
 
--- Opacity of an entry `age` seconds old, or nil once it has faded out.
-function Feed.Alpha(age, options)
+-- Opacity of an entry `age` seconds old, or nil once it has faded out. It
+-- stays for `holdTime` (default options.holdTime) after fading in.
+function Feed.Alpha(age, options, holdTime)
 	if age < options.fadeInTime then
 		return age / options.fadeInTime
 	end
-	age = age - options.fadeInTime - options.holdTime
+	age = age - options.fadeInTime - (holdTime or options.holdTime)
 	if age <= 0 then
 		return 1
 	end
@@ -137,6 +130,20 @@ function Feed.Alpha(age, options)
 		return nil
 	end
 	return 1 - age / options.fadeOutTime
+end
+
+-- Opacity of an entry at `now`: lines about other players (`other`) stay
+-- only groupHoldTime; an open roll (`pendingUntil`) stays fully visible until
+-- then and fades as if it had just faded in once that time is reached.
+function Feed.EntryAlpha(entry, now, options)
+	local age = now - entry.time
+	if entry.pendingUntil then
+		if now < entry.pendingUntil then
+			return math.min(age / options.fadeInTime, 1)
+		end
+		age = options.fadeInTime + now - entry.pendingUntil
+	end
+	return Feed.Alpha(age, options, entry.other and options.groupHoldTime or nil)
 end
 
 -- Moves `current` towards `target`, covering one row height in `slideTime`.
@@ -154,16 +161,21 @@ end
 
 -- entries[1] is the newest. Adding to a full feed drops the oldest entry.
 -- With `merge`, an entry with the same `key` (an item looted by the same
--- player, all money) is replaced and its count added; entries without a key
--- (roll messages) never merge.
+-- player, all money) is replaced and its count added. An entry with
+-- `replace` (a roll on one drop) always takes the place of the one with its
+-- key, keeping its row, so a roll stays one line while it changes.
 function Feed:Add(entry, now, merge)
 	entry.time = now
-	if merge and entry.key then
+	if (merge or entry.replace) and entry.key then
 		for i, old in ipairs(self.entries) do
 			if old.key == entry.key then
+				entry.y = old.y
+				if entry.replace then
+					self.entries[i] = entry
+					return entry
+				end
 				table.remove(self.entries, i)
 				entry.count = entry.count + old.count
-				entry.y = old.y
 				break
 			end
 		end
@@ -175,12 +187,107 @@ function Feed:Add(entry, now, merge)
 	return entry
 end
 
+-- The entry with `key`, or nil.
+function Feed:Find(key)
+	for _, entry in ipairs(self.entries) do
+		if entry.key == key then
+			return entry
+		end
+	end
+end
+
 -- Drops entries that have faded out and returns how many are left.
 function Feed:Expire(now, options)
 	for i = #self.entries, 1, -1 do
-		if not Feed.Alpha(now - self.entries[i].time, options) then
+		if not Feed.EntryAlpha(self.entries[i], now, options) then
 			table.remove(self.entries, i)
 		end
 	end
 	return #self.entries
+end
+
+-- A player name without its realm ("Bob-Realm" -> "Bob").
+function Feed.ShortName(name)
+	return name and (name:match("^([^-]+)-") or name)
+end
+
+-- Roll states of C_LootHistory (Enum.EncounterLootDropRollState).
+Feed.RollState = { NeedMainSpec = 0, NeedOffSpec = 1, Transmog = 2, Greed = 3, NoRoll = 4, Pass = 5 }
+
+local function RollOf(info)
+	return {
+		name = Feed.ShortName(info.playerName),
+		class = info.playerClass,
+		isSelf = info.isSelf,
+		state = info.state,
+		roll = info.roll,
+	}
+end
+
+-- The parts of a loot history drop (C_LootHistory.GetSortedInfoForDrop) the
+-- ticker shows: whether the roll is still open, all passed, the winner and the
+-- player's own choice (`mine`, nil when they haven't chosen yet), each as
+-- { name, class, isSelf, state, roll }.
+function Feed.RollSummary(drop)
+	local summary = { allPassed = drop.allPassed and true or false }
+	if drop.winner then
+		summary.winner = RollOf(drop.winner)
+	end
+	for _, info in ipairs(drop.rollInfos or {}) do
+		if info.isSelf then
+			summary.mine = RollOf(info)
+		end
+	end
+	if not summary.mine and drop.playerRollState and drop.playerRollState ~= Feed.RollState.NoRoll then
+		summary.mine = { isSelf = true, state = drop.playerRollState }
+	end
+	if summary.mine and summary.mine.state == Feed.RollState.NoRoll then
+		summary.mine = nil
+	end
+	summary.pending = not summary.winner and not summary.allPassed
+	return summary
+end
+
+-- Whether a roll entry was won by `looter` (nil: the player) for an item
+-- named like `link`.
+local function WonBy(entry, link, looter)
+	local winner = entry.winner
+	if not entry.roll or not winner or Feed.LinkName(entry.link) ~= Feed.LinkName(link) then
+		return false
+	end
+	if looter then
+		return not winner.isSelf and winner.name == Feed.ShortName(looter)
+	end
+	return winner.isSelf
+end
+
+-- The roll entry a loot message ("Bob receives loot: [Item]") belongs to:
+-- that item won by that player and not claimed by an earlier message.
+function Feed:RollFor(link, looter)
+	for _, entry in ipairs(self.entries) do
+		if not entry.received and WonBy(entry, link, looter) then
+			return entry
+		end
+	end
+end
+
+-- Removes the single item `link` looted by `looter` (nil: the player) within
+-- `window` seconds before `now`, for when the loot message came before the
+-- roll was decided. Returns whether one was removed.
+function Feed:TakeLoot(link, looter, now, window)
+	local name, short = Feed.LinkName(link), Feed.ShortName(looter)
+	for i, entry in ipairs(self.entries) do
+		if
+			not entry.roll
+			and not entry.money
+			and entry.count == 1
+			and now - entry.time <= window
+			and Feed.ShortName(entry.looter) == short
+			and Feed.LinkName(entry.link) == name
+		then
+			table.remove(self.entries, i)
+			return true
+		end
+	end
+	return false
 end

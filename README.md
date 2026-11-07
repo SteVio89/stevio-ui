@@ -68,9 +68,13 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Loot ticker** – your last 24 looted items, currencies and gold above the
   bags, with icon, name in quality colour and count; gold is shown with coin
   icons on one line. Other group members' loot from rare quality up
-  (`groupMinQuality`) appears as "Name: item" with the name in class colour,
-  and every group loot roll message (selections, rolls, winners) is listed
-  too; lines about other players are dimmed. New loot enters at the bottom
+  (`groupMinQuality`) appears as "item  Name" with the name in class colour,
+  dimmed and gone sooner. A group loot roll is a single line per drop, read
+  from the loot history and updated in place: "rolling · you: Need" until it
+  is decided, then the winner with their roll and yours (or "all passed");
+  the winner's loot message adds no extra line. Details (count, player,
+  roll) sit on the right and are never cut off; only a long item name is
+  shortened. New loot enters at the bottom
   and pushes older lines up; when all rows are taken the oldest drops out,
   and every line fades out slowly after a few seconds. Looting more of
   something still listed adds to that line.
