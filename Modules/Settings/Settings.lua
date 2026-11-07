@@ -6,7 +6,7 @@ local Settings = ns:RegisterModule("settings", {})
 
 local function ApplyActionBars(toggles)
 	for index, enabled in ipairs(toggles) do
-		if not not select(index, GetActionBarToggles()) ~= enabled then
+		if (not not select(index, GetActionBarToggles())) ~= enabled then
 			SetActionBarToggles(unpack(toggles))
 			return true
 		end

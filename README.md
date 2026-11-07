@@ -127,6 +127,12 @@ Every module has a `Config.lua` (`enabled = false` turns it off), the global
 look lives in `Core/Config.lua` and all positions in `Core/Layout.lua`. Edit and
 `/reload`.
 
+## Development
+
+`tests/run.sh` runs what CI runs on every push: a syntax check, luacheck,
+StyLua's format check and the unit tests in `tests/`. `nix develop` (or direnv)
+provides the tools.
+
 ## License
 
 [MIT](LICENSE)

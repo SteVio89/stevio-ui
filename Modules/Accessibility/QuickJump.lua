@@ -1,7 +1,6 @@
 local _, ns = ...
 
 local config = ns.config.accessibility
-local style = ns.config.style
 
 -- Quick-jump labels: every selectable button of the open window gets a
 -- two-letter label; typing it clicks the button. An uppercase first letter

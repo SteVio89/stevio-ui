@@ -10,5 +10,8 @@ ignore:
   - CLAUDE.md
   - README.md
   - deploy.sh
+  - .stylua.toml
+  - .luacheckrc
+  - tests
   - Media/Icon.svg
   - Media/Icon.png
