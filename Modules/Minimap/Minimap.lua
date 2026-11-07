@@ -35,6 +35,23 @@ local function AdoptIndicators(config)
 	end)
 end
 
+-- Blizzard anchors the looking-for-group eye to the micro menu, which ends up
+-- covering the map; the map's lower left corner keeps it out of the way. The
+-- older names cover clients that still ship the minimap-cluster variant.
+local function PlaceQueueButton(config)
+	local button = QueueStatusButton or QueueStatusMinimapButton or MiniMapLFGFrame or LFGMinimapFrame
+	if not button then
+		return
+	end
+	button:SetParent(Minimap)
+	button:SetScale(config.iconScale)
+	button:SetFrameLevel(Minimap:GetFrameLevel() + 5)
+	ns.PinFrame(button, function(frame)
+		frame:ClearAllPoints()
+		frame:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 2, 2)
+	end)
+end
+
 -- Derived from the layout instead of a fixed size so the map scales with the
 -- space right of the target frame, whatever the screen width or UI scale.
 local function GetMapSize(config)
@@ -74,6 +91,7 @@ function MinimapModule:OnEnable(config)
 	ns.CreateBorder(Minimap)
 
 	AdoptIndicators(config)
+	PlaceQueueButton(config)
 	PlaceVehicleLeaveButton(config, size)
 
 	ns.KeepHidden(MinimapBackdrop)
