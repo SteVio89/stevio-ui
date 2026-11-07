@@ -47,6 +47,7 @@ Modules\Tracker\Tracker.lua
 
 Modules\Notch\Config.lua
 Modules\Notch\Zone.lua
+Modules\Notch\Buttons.lua
 Modules\Notch\Notch.lua
 
 Modules\Chat\Config.lua

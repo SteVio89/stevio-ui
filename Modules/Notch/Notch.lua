@@ -37,6 +37,7 @@ local L = ns.isGerman
 	}
 
 local Zone = ns.NotchZone
+local Buttons = ns.NotchButtons
 
 local watcher, island
 local notchHeight = 0
@@ -194,6 +195,15 @@ local function UpdateOnline(row)
 	return true
 end
 
+local function UpdateButtons(row)
+	local height = Buttons.Layout(island:GetWidth() - 2 * config.padding, config.buttonSize, config.buttonGap)
+	if height == 0 then
+		return false
+	end
+	row:SetHeight(height)
+	return true
+end
+
 local rowSpecs = {
 	{ update = UpdateXP, bar = true },
 	{ update = UpdateRested },
@@ -206,10 +216,17 @@ local rowSpecs = {
 	{ update = UpdateSystem },
 	{ update = UpdateOnline },
 }
+if config.minimapButtons then
+	rowSpecs[#rowSpecs + 1] = { update = UpdateButtons, buttons = true, groupStart = true }
+end
 
 local function CreateRow(spec)
 	local row = CreateFrame("Frame", nil, island)
 	row.spec = spec
+	if spec.buttons then
+		Buttons.Setup(row)
+		return row
+	end
 
 	-- The value sizes to its text; the label takes the rest and truncates.
 	row.value = ns.CreateFontString(row, nil, "RIGHT")
@@ -321,6 +338,9 @@ local function CreateIsland()
 		if IsInGuild() then
 			C_GuildInfo.GuildRoster()
 		end
+		if config.minimapButtons then
+			Buttons.Scan(config.buttonSize)
+		end
 		Refresh()
 	end)
 	island:SetScript("OnUpdate", function(self, elapsed)
@@ -397,6 +417,17 @@ function Notch:OnEnable()
 	ns:RegisterEvent("UI_SCALE_CHANGED", function()
 		C_Timer.After(0, UpdateGeometry)
 	end)
+
+	-- Adopting the buttons early keeps them from showing on the map until the
+	-- island first opens; buttons created later are picked up when it opens.
+	if config.minimapButtons then
+		ns:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+			C_Timer.After(config.buttonScanDelay, function()
+				Buttons.Scan(config.buttonSize)
+			end)
+		end)
+		Buttons.Scan(config.buttonSize)
+	end
 
 	ns:RegisterSlashCommand("notch", DumpGeometry)
 end

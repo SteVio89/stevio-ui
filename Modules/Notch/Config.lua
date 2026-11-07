@@ -29,6 +29,15 @@ ns.config.notch = {
 	-- Used when the client reports no notch (external display, windowed mode).
 	fallback = { width = 200, height = 32 },
 
+	-- Minimap buttons of other addons (not Blizzard's) move into the island,
+	-- in a grid below the other rows.
+	minimapButtons = true,
+	buttonSize = 22,
+	buttonGap = 6,
+	-- Seconds after a loading screen before looking for new buttons, since
+	-- addons often create theirs only once the world is shown.
+	buttonScanDelay = 2,
+
 	durabilityWarn = 0.5,
 	durabilityCritical = 0.2,
 
