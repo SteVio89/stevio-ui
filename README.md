@@ -34,8 +34,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   right-clicks.
 - **Action bars, menu and bags** – Blizzard's secure buttons, stripped down and
   placed via a dedicated Edit Mode layout named `stevio-ui`.
-- **Minimap** – square, borderless, mouse-wheel zoom, size derived from the
-  screen.
+- **Minimap** – square, borderless, mouse-wheel zoom, the looking-for-group
+  button in its lower left corner, size derived from the screen.
 - **Channel chat and objective tracker** – chat is organised in channels like
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
