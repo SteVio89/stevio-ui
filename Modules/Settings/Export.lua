@@ -2,7 +2,8 @@ local addonName, ns = ...
 
 local config = ns.config.settings
 
-local function IsIgnoredCVar(name)
+-- CVars holding client state rather than preferences (config.ignoredCVars).
+function ns.IsIgnoredCVar(name)
 	for _, pattern in ipairs(config.ignoredCVars) do
 		if name:find(pattern) then
 			return true
@@ -65,7 +66,7 @@ end
 local function AppendCVars(lines)
 	local entries = {}
 	ns.ForEachCVar(function(name, value, defaultValue)
-		if value ~= defaultValue and not IsIgnoredCVar(name) then
+		if value ~= defaultValue and not ns.IsIgnoredCVar(name) then
 			entries[#entries + 1] = ("\t\t%s = %q,"):format(LuaKey(name), value)
 		end
 	end)

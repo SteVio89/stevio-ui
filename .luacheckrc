@@ -11,6 +11,7 @@ ignore = { "113" } -- accessing an undefined (game API) global
 globals = {
 	-- SavedVariables (stevio-ui.toc)
 	"StevioUIState",
+	"StevioUIConfig",
 	"StevioUIExport",
 	"StevioUIDebug",
 	"StevioUIErrors",
