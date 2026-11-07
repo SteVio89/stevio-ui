@@ -93,7 +93,7 @@ local function StartAutoTimer(duration)
 	end)
 end
 
--- Whisper partners are keyed by name (or Battle.net id), group chats by type,
+-- Whisper partners are keyed by full name (or Battle.net id), group chats by type,
 -- chat channels by name (see ns.ChatHistory.PublicChannel).
 -- Returns nil when the channel can't be told (secret values).
 local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
@@ -130,7 +130,11 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	if def.bnet then
 		return "bn:" .. bnetID, { kind = def.kind, chatType = def.chatType, label = sender, bnetID = bnetID }
 	end
-	return "whisper:" .. sender, { kind = def.kind, chatType = def.chatType, label = sender, target = sender }
+	-- The full name answers the right player even across realms; the label shows
+	-- the realm only for other realms, like Blizzard's chat.
+	local full = ns.ChatHistory.FullName(sender, GetNormalizedRealmName())
+	local label = Ambiguate(full, "none")
+	return ns.ChatHistory.WhisperKey(full), { kind = def.kind, chatType = def.chatType, label = label, target = full }
 end
 
 -- Stores a message (`entry`, nil when its contents are secret) in channel `key`
@@ -183,11 +187,13 @@ local function OnChatMessage(event, text, sender, ...)
 		sender = nil -- finished lines name whoever they are about in their text
 	elseif def.textEmote then
 		sender = nil -- text emotes name the sender in their text
-	elseif not issecretvalue(sender) and not def.bnet then
-		sender = Ambiguate(sender, "short")
 	end
 
 	local key, opts, source, sourceType = ChannelFor(def, sender, bnetID, channelIndex, baseName)
+	-- Lines show whisper partners with the realm when it isn't the own one, everyone else by name only.
+	if not def.format and not def.textEmote and not def.bnet and not issecretvalue(sender) then
+		sender = Ambiguate(sender, def.kind == "whisper" and "none" or "short")
+	end
 	if not key then
 		return -- no way to tell which channel this belongs to
 	end
@@ -310,6 +316,7 @@ end
 function Chat:OnEnable()
 	StevioUIChatHistory = StevioUIChatHistory or {}
 	C.store = ns.ChatHistory.New(StevioUIChatHistory, config.historyLimit)
+	C.store:MigrateWhispers(GetNormalizedRealmName())
 	C.CreateChannelView()
 	C.CreateBadge()
 

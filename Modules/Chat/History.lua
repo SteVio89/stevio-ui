@@ -84,6 +84,64 @@ function History.PublicChannel(baseName, explicit)
 	return "other", "Other", false
 end
 
+-- Full "Name-Realm" of a player: chat events name players of the own realm
+-- without the realm on some clients, so it is added to tell same-named players
+-- of different realms apart and to whisper the right one. `realm` may be nil
+-- (not known yet), which leaves the name as it is.
+function History.FullName(name, realm)
+	if name:find("-", 1, true) or not realm or realm == "" then
+		return name
+	end
+	return name .. "-" .. realm
+end
+
+function History.WhisperKey(fullName)
+	return "whisper:" .. fullName
+end
+
+-- Whisper channels used to be keyed by the short name. Renames those to the
+-- full name on `realm`; when a channel of that name exists already, the older
+-- messages go in front of its own (keeping the newest `limit`).
+function Store:MigrateWhispers(realm)
+	if not realm or realm == "" then
+		return
+	end
+	local channels = self.db.channels
+	local old = {}
+	for key, channel in pairs(channels) do
+		local name = key:match("^whisper:(.+)$")
+		if name and not name:find("-", 1, true) and not channel.bnetID then
+			old[#old + 1] = key
+		end
+	end
+	for _, key in ipairs(old) do
+		local channel = channels[key]
+		channels[key] = nil
+		local full = History.FullName(key:sub(#"whisper:" + 1), realm)
+		local newKey = History.WhisperKey(full)
+		local existing = channels[newKey]
+		if existing then
+			local merged = {}
+			for _, entry in ipairs(channel.messages) do
+				merged[#merged + 1] = entry
+			end
+			for _, entry in ipairs(existing.messages) do
+				merged[#merged + 1] = entry
+			end
+			while #merged > self.limit do
+				table.remove(merged, 1)
+			end
+			existing.messages = merged
+			existing.unread = existing.unread + channel.unread
+			existing.last = math.max(existing.last, channel.last)
+		else
+			channel.key = newKey
+			channel.target = full
+			channels[newKey] = channel
+		end
+	end
+end
+
 -- Community streams added to the chat are chat channels named
 -- "Community:<clubId>:<streamId>". Returns both ids as numbers, or nil.
 function History.CommunityIds(baseName)
