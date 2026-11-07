@@ -2,8 +2,9 @@ local _, ns = ...
 
 local config = ns.config.units.castBar
 
-local castColor = CreateColor(unpack(config.color))
-local notInterruptibleColor = CreateColor(unpack(config.notInterruptibleColor))
+-- Created with the first cast bar: the options panel's overrides only reach
+-- the config once the saved variables are loaded, after this file ran.
+local castColor, notInterruptibleColor
 
 -- How often the remaining time text is redrawn.
 local TIME_INTERVAL = 0.05
@@ -101,6 +102,8 @@ end
 -- `options`: height and fontSize (default: the castBar config).
 function ns.CreateCastBar(unit, sizeFrame, anchor, align, options)
 	options = options or {}
+	castColor = castColor or CreateColor(unpack(config.color))
+	notInterruptibleColor = notInterruptibleColor or CreateColor(unpack(config.notInterruptibleColor))
 	local castBar = ns.CreateStatusBar(UIParent)
 	castBar.unit = unit
 	castBar:SetSize(sizeFrame:GetWidth(), options.height or config.height)

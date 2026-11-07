@@ -1,6 +1,7 @@
 local _, ns = ...
 
--- Channel definitions shared by several events; `With` copies one and adds fields.
+-- Channel definitions shared by several events; `With` copies one and adds
+-- fields, so every event has a table of its own the options panel can change.
 local function With(base, fields)
 	local def = {}
 	for key, value in pairs(base) do
@@ -122,10 +123,10 @@ ns.config.chat = {
 			chatType = "INSTANCE_CHAT",
 			label = "Instance",
 		},
-		CHAT_MSG_GUILD = guild,
+		CHAT_MSG_GUILD = With(guild),
 		CHAT_MSG_OFFICER = With(guild, { prefix = "[O] " }),
-		CHAT_MSG_GUILD_DISCORD = guild,
-		CHAT_MSG_SAY = say,
+		CHAT_MSG_GUILD_DISCORD = With(guild),
+		CHAT_MSG_SAY = With(say),
 		CHAT_MSG_YELL = { kind = "public", key = "yell", chatType = "YELL", label = "Yell", quiet = true },
 		-- Emotes are local like say, so they share its channel: /e (`emote`) gives the
 		-- action without the name, /dance etc. (`textEmote`) the whole sentence.
@@ -138,30 +139,30 @@ ns.config.chat = {
 		CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", bnet = true },
 		CHAT_MSG_BN_WHISPER_INFORM = { kind = "whisper", chatType = "BN_WHISPER", bnet = true, outgoing = true },
 
-		CHAT_MSG_MONSTER_SAY = npc,
-		CHAT_MSG_MONSTER_YELL = npc,
-		CHAT_MSG_MONSTER_EMOTE = npc,
-		CHAT_MSG_MONSTER_WHISPER = npc,
-		CHAT_MSG_MONSTER_PARTY = npc,
-		CHAT_MSG_RAID_BOSS_EMOTE = npc,
-		CHAT_MSG_RAID_BOSS_WHISPER = npc,
+		CHAT_MSG_MONSTER_SAY = With(npc),
+		CHAT_MSG_MONSTER_YELL = With(npc),
+		CHAT_MSG_MONSTER_EMOTE = With(npc),
+		CHAT_MSG_MONSTER_WHISPER = With(npc),
+		CHAT_MSG_MONSTER_PARTY = With(npc),
+		CHAT_MSG_RAID_BOSS_EMOTE = With(npc),
+		CHAT_MSG_RAID_BOSS_WHISPER = With(npc),
 
-		CHAT_MSG_LOOT = progress,
-		CHAT_MSG_MONEY = progress,
-		CHAT_MSG_CURRENCY = progress,
-		CHAT_MSG_COMBAT_XP_GAIN = progress,
-		CHAT_MSG_COMBAT_HONOR_GAIN = progress,
-		CHAT_MSG_COMBAT_FACTION_CHANGE = progress,
-		CHAT_MSG_COMBAT_MISC_INFO = progress,
-		CHAT_MSG_SKILL = progress,
-		CHAT_MSG_OPENING = progress,
-		CHAT_MSG_COLLECTED_APPEARANCE = progress,
+		CHAT_MSG_LOOT = With(progress),
+		CHAT_MSG_MONEY = With(progress),
+		CHAT_MSG_CURRENCY = With(progress),
+		CHAT_MSG_COMBAT_XP_GAIN = With(progress),
+		CHAT_MSG_COMBAT_HONOR_GAIN = With(progress),
+		CHAT_MSG_COMBAT_FACTION_CHANGE = With(progress),
+		CHAT_MSG_COMBAT_MISC_INFO = With(progress),
+		CHAT_MSG_SKILL = With(progress),
+		CHAT_MSG_OPENING = With(progress),
+		CHAT_MSG_COLLECTED_APPEARANCE = With(progress),
 		CHAT_MSG_ACHIEVEMENT = With(progress, { format = "name" }),
 		CHAT_MSG_GUILD_ACHIEVEMENT = With(progress, { format = "name" }),
 		CHAT_MSG_GUILD_ITEM_LOOTED = With(progress, { format = "guildLoot" }),
 
 		-- Players coming online / going offline, /who results and other notices.
-		CHAT_MSG_SYSTEM = system,
+		CHAT_MSG_SYSTEM = With(system),
 		CHAT_MSG_AFK = With(system, { format = "get" }),
 		CHAT_MSG_DND = With(system, { format = "get" }),
 		CHAT_MSG_IGNORED = With(system, { format = "ignored" }),
@@ -169,15 +170,15 @@ ns.config.chat = {
 		CHAT_MSG_RESTRICTED = With(system, { format = "restricted" }),
 		CHAT_MSG_CHANNEL_NOTICE = With(system, { format = "notice" }),
 		CHAT_MSG_CHANNEL_NOTICE_USER = With(system, { format = "noticeUser" }),
-		CHAT_MSG_TRADESKILLS = system,
-		CHAT_MSG_PET_INFO = system,
-		CHAT_MSG_PET_BATTLE_INFO = system,
-		CHAT_MSG_BG_SYSTEM_HORDE = system,
-		CHAT_MSG_BG_SYSTEM_ALLIANCE = system,
-		CHAT_MSG_BG_SYSTEM_NEUTRAL = system,
-		CHAT_MSG_TARGETICONS = system,
+		CHAT_MSG_TRADESKILLS = With(system),
+		CHAT_MSG_PET_INFO = With(system),
+		CHAT_MSG_PET_BATTLE_INFO = With(system),
+		CHAT_MSG_BG_SYSTEM_HORDE = With(system),
+		CHAT_MSG_BG_SYSTEM_ALLIANCE = With(system),
+		CHAT_MSG_BG_SYSTEM_NEUTRAL = With(system),
+		CHAT_MSG_TARGETICONS = With(system),
 		CHAT_MSG_PING = With(system, { format = "ping" }),
-		CHAT_MSG_BN_WHISPER_PLAYER_OFFLINE = system,
+		CHAT_MSG_BN_WHISPER_PLAYER_OFFLINE = With(system),
 		-- Battle.net friends coming online / going offline.
 		CHAT_MSG_BN_INLINE_TOAST_ALERT = With(system, {
 			format = "toast",
@@ -190,9 +191,9 @@ ns.config.chat = {
 	-- Lines Blizzard writes into its chat window without a chat event; each
 	-- names its channel definition (see Chat.lua for the wording).
 	notices = {
-		levelUp = progress,
+		levelUp = With(progress),
 		guildMotd = With(guild, { quiet = true }),
-		system = system,
+		system = With(system),
 	},
 
 	-- Addon output (/sui commands): Blizzard's chat is never shown, so it goes
