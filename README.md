@@ -56,7 +56,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   and every line fades out slowly after a few seconds. Looting more of
   something still listed adds to that line.
 - **Quest rewards** – marks the choice with the highest vendor value.
-- **Auras** – Blizzard's own, repositioned. Blizzard's damage meter is turned
+- **Auras** – Blizzard's own, compacted to two rows of buffs and two rows of debuffs in the top right corner, with the objective tracker below them. Blizzard's damage meter is turned
   off (`damageMeterEnabled` in the profile); its slot stays free.
 
 ## Assumptions
