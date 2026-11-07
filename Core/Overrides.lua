@@ -107,8 +107,23 @@ function Overrides.Put(roots, path, value)
 	end
 end
 
+-- Whether a saved value still fits the config: its parent table exists and it
+-- doesn't change the kind of value (a code change may have removed or reshaped it).
+local function Fits(roots, path, value)
+	local parentPath = {}
+	for i = 1, #path - 1 do
+		parentPath[i] = path[i]
+	end
+	if type(Overrides.Get(roots, parentPath)) ~= "table" then
+		return false
+	end
+	local current = Overrides.Get(roots, path)
+	return current == nil and type(path[#path]) == "string" or current ~= nil and type(current) == type(value)
+end
+
 -- Applies all saved values; shorter paths first, so a replaced list is in
--- place before edits inside it.
+-- place before edits inside it. Values that no longer fit the config are
+-- dropped from `values`.
 function Overrides.ApplyAll(roots, values)
 	local keys = {}
 	for encoded in pairs(values) do
@@ -122,7 +137,12 @@ function Overrides.ApplyAll(roots, values)
 		return a < b
 	end)
 	for _, encoded in ipairs(keys) do
-		Overrides.Put(roots, Overrides.Decode(encoded), values[encoded])
+		local path = Overrides.Decode(encoded)
+		if Fits(roots, path, values[encoded]) then
+			Overrides.Put(roots, path, values[encoded])
+		else
+			values[encoded] = nil
+		end
 	end
 end
 

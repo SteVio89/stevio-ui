@@ -199,9 +199,17 @@ local function ChooseAction(owner, onChoose)
 	end)
 end
 
+local function StopCapture(button)
+	button:EnableKeyboard(false)
+	button:SetScript("OnKeyDown", nil)
+	if button.idleText then
+		button:SetText(button.idleText)
+	end
+end
+
 -- Waits for the next key (with modifiers) on `button`; Escape cancels.
 local function CaptureKey(button, onKey)
-	local text = button:GetText()
+	button.idleText = button.idleText or button:GetText()
 	button:SetText(T("Press a key", "Taste drücken"))
 	button:EnableKeyboard(true)
 	button:SetPropagateKeyboardInput(false)
@@ -209,9 +217,7 @@ local function CaptureKey(button, onKey)
 		if IsMetaKey and IsMetaKey(key) then
 			return
 		end
-		self:EnableKeyboard(false)
-		self:SetScript("OnKeyDown", nil)
-		self:SetText(text)
+		StopCapture(self)
 		if key ~= "ESCAPE" then
 			onKey(CreateKeyChordStringUsingMetaKeyState(key))
 		end
@@ -223,6 +229,10 @@ local function CreateBindingsPage()
 	page = CreateListPage(T("Keybindings", "Tastenbelegung"), function(self, top)
 		local add = CreateButton(self, T("Add binding", "Taste belegen"), 160)
 		add:SetPoint("TOPLEFT", 16, -top)
+		-- Closing the panel ends a capture still waiting for a key.
+		self:HookScript("OnHide", function()
+			StopCapture(add)
+		end)
 		add:SetScript("OnClick", function(button)
 			CaptureKey(button, function(key)
 				ChooseAction(button, function(command)
@@ -272,6 +282,7 @@ end
 
 -- Sets `name` to `value` as an override (nil removes it) and applies it.
 local function SetCVarOverride(name, value)
+	name = ns.KnownCVarName(name)
 	local profileValue = (config.profile.cvars or {})[name]
 	if value == nil or value == profileValue then
 		StevioUIConfig.cvars[name] = nil

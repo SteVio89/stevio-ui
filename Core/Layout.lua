@@ -12,8 +12,6 @@ local sideGap = 16
 local groupHalfWidth = 331
 
 ns.layout = {
-	barBlockWidth = barBlockWidth,
-	barBlockTop = barBlockTop,
 
 	actionBars = {
 		{ point = "BOTTOM", x = 0, y = 38 }, -- bar 1 (main)

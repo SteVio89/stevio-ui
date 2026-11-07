@@ -27,17 +27,30 @@ local function ApplyActionBars(toggles)
 	return false
 end
 
-local function ApplyCVars(cvars)
-	local changed = false
+-- Runs `fn` with `applying` set; an error inside still resets it, so one bad
+-- value can't stop the capture for the rest of the session.
+local function Applying(fn, ...)
 	applying = true
-	for name, value in pairs(cvars) do
-		if GetCVar(name) ~= value then
-			SetCVar(name, value)
-			changed = true
-		end
-	end
+	local ok, result = pcall(fn, ...)
 	applying = false
-	return changed
+	if not ok then
+		geterrorhandler()(result)
+		return false
+	end
+	return result
+end
+
+local function ApplyCVars(cvars)
+	return Applying(function()
+		local changed = false
+		for name, value in pairs(cvars) do
+			if GetCVar(name) ~= value then
+				SetCVar(name, value)
+				changed = true
+			end
+		end
+		return changed
+	end)
 end
 
 function ns.GetBindingKeys(index)
@@ -54,10 +67,17 @@ end
 
 -- Strict: every key not bound in the profile gets unbound, so a fresh client
 -- ends up with exactly the bindings in code.
+local ApplyBindingsNow
+
 local function ApplyBindings(bindings, bindingSet)
+	return Applying(function()
+		return ApplyBindingsNow(bindings, bindingSet)
+	end)
+end
+
+function ApplyBindingsNow(bindings, bindingSet)
 	bindingSet = bindingSet or Enum.BindingSet.Account
 	local changed = false
-	applying = true
 	for index = 1, GetNumBindings() do
 		for _, key in ipairs(ns.GetBindingKeys(index)) do
 			if bindings[key] == nil then
@@ -75,7 +95,6 @@ local function ApplyBindings(bindings, bindingSet)
 	if changed or GetCurrentBindingSet() ~= bindingSet then
 		SaveBindings(bindingSet)
 	end
-	applying = false
 	return changed
 end
 
@@ -157,11 +176,19 @@ end
 -- Keybindings and Options menus, other addons) becomes an override instead of
 -- being reverted at the next login. Client-state CVars (config.ignoredCVars)
 -- and CVars the player can't set are left out.
+-- Profile keys whose command isn't there this session (an addon turned off)
+-- count as unchanged, so they aren't saved as removed.
 local function CurrentBindings()
-	local current = {}
+	local current, commands = {}, {}
 	for index = 1, GetNumBindings() do
 		local command = GetBinding(index)
+		commands[command] = true
 		for _, key in ipairs(ns.GetBindingKeys(index)) do
+			current[key] = command
+		end
+	end
+	for key, command in pairs(config.profile.bindings) do
+		if current[key] == nil and not commands[command] then
 			current[key] = command
 		end
 	end
@@ -176,7 +203,7 @@ local function OnBindingsChanged()
 end
 
 -- CVar names are case-insensitive; the profile's or override's spelling wins.
-local function KnownName(name)
+function ns.KnownCVarName(name)
 	local lower = name:lower()
 	for _, map in ipairs({ config.profile.cvars or {}, StevioUIConfig.cvars }) do
 		for known in pairs(map) do
@@ -196,7 +223,7 @@ local function OnCVarChanged(_, name)
 	if value == nil or isLocked or isSecure or isReadOnly then
 		return
 	end
-	name = KnownName(name)
+	name = ns.KnownCVarName(name)
 	local profileValue = config.profile.cvars[name]
 	-- Back at the profile's value (or, for a CVar outside the profile, at the
 	-- game default) the override goes away again.
@@ -213,9 +240,7 @@ end
 function ns.ApplyOverridesNow(cvarName, cvarValue)
 	ns:RunAfterCombat(function()
 		if cvarName and cvarValue then
-			applying = true
-			SetCVar(cvarName, cvarValue)
-			applying = false
+			Applying(SetCVar, cvarName, cvarValue)
 		end
 		if config.profile.cvars then
 			ApplyCVars(ns.EffectiveCVars())
@@ -254,7 +279,6 @@ function Settings:OnEnable()
 	if config.consoleKey then
 		SetConsoleKey(config.consoleKey)
 	end
-	ns.SetupOptionsPanel()
 
 	ns:RegisterSlashCommand("export", function()
 		local text = ns.BuildProfileExport()
@@ -267,4 +291,10 @@ function Settings:OnEnable()
 	ns:RegisterSlashCommand("restore", function()
 		ns:RunAfterCombat(Restore)
 	end)
+
+	-- Last, so a failing panel can't take /sui restore down with it.
+	local ok, err = pcall(ns.SetupOptionsPanel)
+	if not ok then
+		geterrorhandler()(err)
+	end
 end

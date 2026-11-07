@@ -108,13 +108,28 @@ local function CreateSmallButton(parent, text, width)
 	return button
 end
 
+-- Picker values are rounded, so confirming an untouched color saves nothing.
+local function Round(value)
+	return math.floor(value * 1000 + 0.5) / 1000
+end
+
 local function OpenColorPicker(page, path, color)
 	local previous = { unpack(color) }
+	-- The picker reports a color while it is being set up; only later ones count.
+	local ready = false
 	local function Apply()
+		if not ready then
+			return
+		end
 		local r, g, b = ColorPickerFrame:GetColorRGB()
-		local value = { r, g, b }
+		local value = { Round(r), Round(g), Round(b) }
 		if #previous == 4 then
-			value[4] = ColorPickerFrame:GetColorAlpha()
+			value[4] = Round(ColorPickerFrame:GetColorAlpha())
+		end
+		for i, component in ipairs(value) do
+			if math.abs(component - previous[i]) < 0.001 then
+				value[i] = previous[i]
+			end
 		end
 		SetValue(page, path, value)
 	end
@@ -130,6 +145,7 @@ local function OpenColorPicker(page, path, color)
 			SetValue(page, path, previous)
 		end,
 	})
+	ready = true
 end
 
 local function CreateRow(page)
@@ -326,7 +342,14 @@ function Visit(page, path, value, depth, listPath, index, labelOverride)
 	end
 end
 
+-- Hiding a focused input commits it, which renders again; such a render
+-- waits until the running one is done.
 local function Render(page)
+	if page.rendering then
+		page.renderAgain = true
+		return
+	end
+	page.rendering = true
 	page.used = 0
 	for _, section in ipairs(page.sections) do
 		local value = Overrides.Get(ns.overrideRoots, section.path)
@@ -338,6 +361,11 @@ local function Render(page)
 		page.rows[i]:Hide()
 	end
 	page.content:SetHeight(math.max(page.used * ROW_HEIGHT, 1))
+	page.rendering = false
+	if page.renderAgain then
+		page.renderAgain = false
+		Render(page)
+	end
 end
 
 -- Page frame ----------------------------------------------------------------
