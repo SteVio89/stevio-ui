@@ -99,6 +99,24 @@ function History.WhisperKey(fullName)
 	return "whisper:" .. fullName
 end
 
+-- Puts the messages of an older channel `from` in front of those of `into`
+-- (keeping the newest `limit`) and adds up unread counts.
+local function MergeInto(store, from, into)
+	local merged = {}
+	for _, entry in ipairs(from.messages) do
+		merged[#merged + 1] = entry
+	end
+	for _, entry in ipairs(into.messages) do
+		merged[#merged + 1] = entry
+	end
+	while #merged > store.limit do
+		table.remove(merged, 1)
+	end
+	into.messages = merged
+	into.unread = into.unread + from.unread
+	into.last = math.max(into.last, from.last)
+end
+
 -- Whisper channels used to be keyed by the short name. Renames those to the
 -- full name on `realm`; when a channel of that name exists already, the older
 -- messages go in front of its own (keeping the newest `limit`).
@@ -121,25 +139,24 @@ function Store:MigrateWhispers(realm)
 		local newKey = History.WhisperKey(full)
 		local existing = channels[newKey]
 		if existing then
-			local merged = {}
-			for _, entry in ipairs(channel.messages) do
-				merged[#merged + 1] = entry
-			end
-			for _, entry in ipairs(existing.messages) do
-				merged[#merged + 1] = entry
-			end
-			while #merged > self.limit do
-				table.remove(merged, 1)
-			end
-			existing.messages = merged
-			existing.unread = existing.unread + channel.unread
-			existing.last = math.max(existing.last, channel.last)
+			MergeInto(self, channel, existing)
 		else
 			channel.key = newKey
 			channel.target = full
 			channels[newKey] = channel
 		end
 	end
+end
+
+-- Battle.net whisper partners are keyed by BattleTag ("Name#1234"): the
+-- account id and the Real ID name in chat events only hold for one session,
+-- the BattleTag stays. Lines and labels show its name part.
+function History.BattleTagName(battleTag)
+	return battleTag:match("^([^#]+)") or battleTag
+end
+
+function History.BattleNetKey(battleTag)
+	return "bn:" .. battleTag
 end
 
 -- Community streams added to the chat are chat channels named
@@ -165,7 +182,7 @@ function Store:Get(key)
 	return self.db.channels[key]
 end
 
--- opts: kind, chatType, label, bnetID, target, channelIndex, readOnly, clubId,
+-- opts: kind, chatType, label, bnetID, battleTag, target, channelIndex, readOnly, clubId,
 -- streamId, relabel. Created on first use; the channel number and color follow
 -- the latest message, and so does the label with `relabel` (a renamed community).
 function Store:Ensure(key, opts)
@@ -185,6 +202,9 @@ function Store:Ensure(key, opts)
 	end
 	if opts.bnetID then
 		channel.bnetID = opts.bnetID
+	end
+	if opts.battleTag then
+		channel.battleTag = opts.battleTag
 	end
 	if opts.target then
 		channel.target = opts.target

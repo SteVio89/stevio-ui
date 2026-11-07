@@ -93,9 +93,11 @@ local function StartAutoTimer(duration)
 	end)
 end
 
--- Whisper partners are keyed by full name (or Battle.net id), group chats by type,
+-- Whisper partners are keyed by full name (or BattleTag), group chats by type,
 -- chat channels by name (see ns.ChatHistory.PublicChannel).
--- Returns nil when the channel can't be told (secret values).
+-- Returns key, channel options, and for "Other" the line's source channel and
+-- its chat type; for Battle.net whispers the fifth value is the name to show
+-- as sender. Returns nil when the channel can't be told (secret values).
 local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	if def.key then
 		return def.key, { kind = def.kind, chatType = def.chatType, label = def.label, readOnly = def.readOnly }
@@ -128,6 +130,14 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 		return nil
 	end
 	if def.bnet then
+		local info = C_BattleNet.GetAccountInfoByID(bnetID)
+		local battleTag = info and info.battleTag
+		if battleTag and battleTag ~= "" then
+			local name = ns.ChatHistory.BattleTagName(battleTag)
+			local opts = { kind = def.kind, chatType = def.chatType, label = name, bnetID = bnetID, battleTag = battleTag }
+			return ns.ChatHistory.BattleNetKey(battleTag), opts, nil, nil, name
+		end
+		-- No account info: keyed by the session id, as before.
 		return "bn:" .. bnetID, { kind = def.kind, chatType = def.chatType, label = sender, bnetID = bnetID }
 	end
 	-- The full name answers the right player even across realms; the label shows
@@ -189,11 +199,12 @@ local function OnChatMessage(event, text, sender, ...)
 		sender = nil -- text emotes name the sender in their text
 	end
 
-	local key, opts, source, sourceType = ChannelFor(def, sender, bnetID, channelIndex, baseName)
+	local key, opts, source, sourceType, displayName = ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	-- Lines show whisper partners with the realm when it isn't the own one, everyone else by name only.
 	if not def.format and not def.textEmote and not def.bnet and not issecretvalue(sender) then
 		sender = Ambiguate(sender, def.kind == "whisper" and "none" or "short")
 	end
+	sender = displayName or sender
 	if not key then
 		return -- no way to tell which channel this belongs to
 	end
@@ -229,6 +240,22 @@ local function OnPrint(...)
 	C.Receive(config.print, config.print.key, config.print, { time = time(), text = table.concat(parts, " "), colorType = "SYSTEM" })
 end
 
+-- The account id may change between sessions, so channels with a BattleTag
+-- look it up again in the friend list; a friend no longer in the list gets
+-- nothing rather than whoever holds the old id now.
+local function CurrentBattleNetID(channel)
+	if not channel.battleTag then
+		return channel.bnetID
+	end
+	for index = 1, BNGetNumFriends() do
+		local info = C_BattleNet.GetFriendAccountInfo(index)
+		if info and info.battleTag == channel.battleTag then
+			channel.bnetID = info.bnetAccountID
+			return info.bnetAccountID
+		end
+	end
+end
+
 function C.Send(text)
 	local channel = C.Selected()
 	-- "Other" mixes several channels and "System" has no sender: no one to answer to.
@@ -237,8 +264,11 @@ function C.Send(text)
 	end
 	if channel.clubId then
 		C_Club.SendMessage(channel.clubId, channel.streamId, text)
-	elseif channel.bnetID then
-		C_BattleNet.SendWhisper(channel.bnetID, text)
+	elseif channel.bnetID or channel.battleTag then
+		local bnetID = CurrentBattleNetID(channel)
+		if bnetID then
+			C_BattleNet.SendWhisper(bnetID, text)
+		end
 	elseif channel.kind == "whisper" then
 		C_ChatInfo.SendChatMessage(text, "WHISPER", nil, channel.target)
 	elseif channel.channelIndex then

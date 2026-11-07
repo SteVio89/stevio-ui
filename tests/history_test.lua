@@ -151,3 +151,9 @@ check(bob.unread == 3, "unread adds up")
 check(whisperStore:Get("bn:7") ~= nil, "Battle.net whispers stay")
 whisperStore:MigrateWhispers(nil)
 print("whisper names ok")
+
+-- Battle.net whispers are keyed by BattleTag
+check(History.BattleTagName("Stevio#2345") == "Stevio", "BattleTag name")
+check(History.BattleTagName("Plain") == "Plain", "no number")
+check(History.BattleNetKey("Stevio#2345") == "bn:Stevio#2345", "BattleTag key")
+print("battle.net names ok")
