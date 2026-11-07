@@ -22,8 +22,9 @@ until it is needed, and as much as possible can be done from the keyboard.
 
 - **Unit frames** – player, target, pet and target-of-target as slim bars with
   own cast bars and combo point segments.
-- **Group grid** – up to 40 players; class colours, resource, dispellable debuffs,
-  role, range, death, aggro and target highlight.
+- **Group grid** – up to 40 players; class colours, the name as a faint
+  watermark, resource, incoming heals and absorb shields, dispellable debuffs,
+  your own HoTs and buffs along the top, role, range, death, aggro and target highlight.
 - **Keyboard healing** – the arrow keys move a cursor over the group grid and set
   your real target, so heals can be cast without a mouse. Works in combat.
 - **Quickjump** – two-letter labels on dialogs, gossip, quest windows, flight
