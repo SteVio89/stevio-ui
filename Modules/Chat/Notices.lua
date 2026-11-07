@@ -46,8 +46,17 @@ local function OnGuildMotd(_, motd)
 	end
 end
 
+-- Worded like Blizzard's chat (its helpers for this are local to its own file).
+local function RegionalChatText(available)
+	local mentor = DoesActivePlayerHaveMentorStatus()
+	if available then
+		return mentor and NPEV2_CHAT_AVAILABLE or NPEV2_REGIONAL_CHAT_AVAILABLE
+	end
+	return mentor and NPEV2_CHAT_UNAVAILABLE or NPEV2_REGIONAL_CHAT_UNAVAILABLE
+end
+
 local function OnRegionalStatus(_, isServiceAvailable)
-	AddSystem(isServiceAvailable and GetRegionalChatAvailableString() or GetRegionalChatUnavailableString())
+	AddSystem(RegionalChatText(isServiceAvailable))
 end
 
 local function OnChatSuppressed()
@@ -87,7 +96,7 @@ local handlers = {
 	end,
 	CHAT_REGIONAL_STATUS_CHANGED = OnRegionalStatus,
 	CHAT_REGIONAL_SEND_FAILED = function()
-		AddSystem(GetRegionalChatUnavailableString())
+		AddSystem(RegionalChatText(false))
 	end,
 	NOTIFY_CHAT_SUPPRESSED = OnChatSuppressed,
 }

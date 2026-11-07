@@ -271,7 +271,7 @@ function C.Send(text)
 	end
 	if channel.clubId then
 		C_Club.SendMessage(channel.clubId, channel.streamId, text)
-	elseif channel.bnetID or channel.battleTag then
+	elseif channel.bnetID or channel.battleTag or channel.chatType == "BN_WHISPER" then
 		local bnetID = CurrentBattleNetID(channel)
 		if bnetID then
 			C_BattleNet.SendWhisper(bnetID, text)
@@ -354,6 +354,13 @@ function Chat:OnEnable()
 	StevioUIChatHistory = StevioUIChatHistory or {}
 	C.store = ns.ChatHistory.New(StevioUIChatHistory, config.historyLimit)
 	C.store:MigrateWhispers(GetNormalizedRealmName())
+	-- Battle.net account ids from an earlier session may belong to someone else
+	-- now; channels without a BattleTag can't look theirs up again, so they lose it.
+	for _, channel in pairs(StevioUIChatHistory.channels) do
+		if channel.bnetID and not channel.battleTag then
+			channel.bnetID = nil
+		end
+	end
 	C.CreateChannelView()
 	C.CreateBadge()
 

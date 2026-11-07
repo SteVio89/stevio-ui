@@ -5,10 +5,11 @@ local Parse = ns.ChatParse
 
 -- Slash commands typed into the channel view's input. Blizzard only runs
 -- protected commands (/cast, /target, /focus, ...) from its own input box on a
--- key press, so those are handed over to it, pre-filled: Enter runs them.
--- Everything else runs right here from Blizzard's own command tables, without
--- touching the state of Blizzard's input box, so later protected commands
--- typed there are unaffected.
+-- key press, so those are handed over to it, pre-filled: Enter runs them. So
+-- are Blizzard's own other commands (/who, /roll, /macro, ...): run from addon
+-- code they would open Blizzard panels tainted, which can block actions later.
+-- Chat (/p, /w Bob, /r, /1, ...), emotes and addon commands (/sui, ...) run
+-- right here, without touching the state of Blizzard's input box.
 
 -- Opens Blizzard's input box (under the channel view) with `text`.
 local function HandOff(text)
@@ -19,14 +20,17 @@ local function IsBattleNetName(name)
 	return BNet_GetBNetIDAccount(name) ~= nil
 end
 
+-- Also remembered as last told target, so Blizzard's input box offers it too.
 local function Whisper(target, message, isBattleNet)
 	if isBattleNet then
 		local bnetID = BNet_GetBNetIDAccount(target)
 		if bnetID then
 			C_BattleNet.SendWhisper(bnetID, message)
+			ChatFrameUtil.SetLastToldTarget(target, "BN_WHISPER")
 		end
 	else
 		C_ChatInfo.SendChatMessage(message, "WHISPER", nil, target)
+		ChatFrameUtil.SetLastToldTarget(target, "WHISPER")
 	end
 end
 
@@ -100,8 +104,10 @@ function C.RunCommand(text)
 		return
 	end
 
+	-- Commands registered by Blizzard's own code are secure variables; addon
+	-- commands are not.
 	local handler = hash_SlashCmdList[command]
-	if handler then
+	if handler and not issecurevariable(hash_SlashCmdList, command) then
 		handler(message, DEFAULT_CHAT_FRAME.editBox)
 		return
 	end
