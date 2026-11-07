@@ -22,13 +22,17 @@ ns.config.lootTicker = {
 	-- Lowest item quality shown (0 poor, 1 common, 2 uncommon, 3 rare, 4 epic, ...).
 	minQuality = 0,
 
-	-- Loot of the other group members, as "Name: item" with the name in its
-	-- class color, from groupMinQuality up; their lines are dimmed to groupAlpha.
+	-- Loot of the other group members, as "item  Name" with the name in its
+	-- class color, from groupMinQuality up; their lines are dimmed to
+	-- groupAlpha and stay groupHoldTime seconds instead of holdTime.
 	showGroupLoot = true,
 	groupMinQuality = 3,
 	groupAlpha = 0.75,
-	-- Every group loot roll message (selections, rolls, winners, all passed);
-	-- those about other players are dimmed like their loot.
+	groupHoldTime = 5,
+	-- Group loot rolls from the loot history, one line per drop that changes
+	-- as the roll goes on: "rolling · you: Need", then the winner with their
+	-- roll and yours. Rolls you passed on or didn't join are dimmed like
+	-- group loot; the winner's loot message adds no second line.
 	showRolls = true,
 	showCurrency = true,
 	-- Looted gold, silver and copper, all on one line.

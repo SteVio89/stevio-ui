@@ -121,6 +121,7 @@ local labels = {
 	group = { "Group", "Gruppe" },
 	groupAlpha = { "Group lines opacity", "Deckkraft Gruppenzeilen" },
 	groupGap = { "Group gap", "Gruppenabstand" },
+	groupHoldTime = { "Group lines hold (s)", "Haltezeit Gruppenzeilen (s)" },
 	groupMinQuality = {
 		"Group loot min. quality",
 		"Mindestqualität Gruppenbeute",
