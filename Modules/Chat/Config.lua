@@ -190,10 +190,10 @@ ns.config.chat = {
 		system = system,
 	},
 
-	-- Addon output (/sui commands) and the /played reply: Blizzard's chat is
-	-- never shown, so they go to "System" and, being an answer to something
-	-- just typed, open that channel (`focus`) even while another one is open.
-	-- Other addons' print() output only counts as unread (`system` above).
+	-- Addon output (/sui commands): Blizzard's chat is never shown, so it goes
+	-- to "System" and, being an answer to something just typed, opens that
+	-- channel (`focus`) even while another one is open. Other addons' print()
+	-- output and the /played reply only count as unread (`system` above).
 	print = With(system, { quiet = false, focus = true }),
 
 	-- Size and base colors come from ns.config.style.badge.

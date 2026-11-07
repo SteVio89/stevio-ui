@@ -74,8 +74,7 @@ local function RunChatType(chatType, message)
 	return true
 end
 
--- Runs `text` (a line starting with "/"); unknown commands go to Blizzard's
--- input box, which answers them with its help text.
+-- Runs `text` (a line starting with "/"); unknown commands get a hint in System.
 function C.RunCommand(text)
 	local command, message = Parse.Command(text)
 	if not command then
@@ -117,5 +116,6 @@ function C.RunCommand(text)
 		C_ChatInfo.PerformEmote(token, message ~= "" and message or nil)
 		return
 	end
-	HandOff(text)
+	-- Blizzard would answer into its hidden chat window, so the hint goes to System.
+	ns.Print((C.german and "Unbekannter Befehl: %s" or "Unknown command: %s"):format(command:lower()))
 end

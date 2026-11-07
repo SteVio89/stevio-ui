@@ -99,58 +99,9 @@ function History.WhisperKey(fullName)
 	return "whisper:" .. fullName
 end
 
--- Puts the messages of an older channel `from` in front of those of `into`
--- (keeping the newest `limit`) and adds up unread counts.
-local function MergeInto(store, from, into)
-	local merged = {}
-	for _, entry in ipairs(from.messages) do
-		merged[#merged + 1] = entry
-	end
-	for _, entry in ipairs(into.messages) do
-		merged[#merged + 1] = entry
-	end
-	while #merged > store.limit do
-		table.remove(merged, 1)
-	end
-	into.messages = merged
-	into.unread = into.unread + from.unread
-	into.last = math.max(into.last, from.last)
-end
-
--- Whisper channels used to be keyed by the short name. Renames those to the
--- full name on `realm`; when a channel of that name exists already, the older
--- messages go in front of its own (keeping the newest `limit`).
-function Store:MigrateWhispers(realm)
-	if not realm or realm == "" then
-		return
-	end
-	local channels = self.db.channels
-	local old = {}
-	for key, channel in pairs(channels) do
-		local name = key:match("^whisper:(.+)$")
-		if name and not name:find("-", 1, true) and not channel.bnetID then
-			old[#old + 1] = key
-		end
-	end
-	for _, key in ipairs(old) do
-		local channel = channels[key]
-		channels[key] = nil
-		local full = History.FullName(key:sub(#"whisper:" + 1), realm)
-		local newKey = History.WhisperKey(full)
-		local existing = channels[newKey]
-		if existing then
-			MergeInto(self, channel, existing)
-		else
-			channel.key = newKey
-			channel.target = full
-			channels[newKey] = channel
-		end
-	end
-end
-
 -- Battle.net whisper partners are keyed by BattleTag ("Name#1234"): the
--- account id and the Real ID name in chat events only hold for one session,
--- the BattleTag stays. Lines and labels show its name part.
+-- account id may change between sessions and the Real ID name in chat events
+-- can't be saved; the BattleTag stays. Lines and labels show its name part.
 function History.BattleTagName(battleTag)
 	return battleTag:match("^([^#]+)") or battleTag
 end

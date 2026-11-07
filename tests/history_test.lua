@@ -130,26 +130,6 @@ print("communities ok")
 check(History.FullName("Bob", "Aegwynn") == "Bob-Aegwynn", "own realm is added")
 check(History.FullName("Bob-Thrall", "Aegwynn") == "Bob-Thrall", "other realm is kept")
 check(History.FullName("Bob", nil) == "Bob", "unknown realm leaves the name")
-local whisperSaved = {}
-local whisperStore = History.New(whisperSaved, 3)
-local bobOpts = { kind = "whisper", chatType = "WHISPER", label = "Bob", target = "Bob" }
-whisperStore:Add("whisper:Bob", bobOpts, { time = 1, text = "old1" }, true)
-whisperStore:Add("whisper:Bob", bobOpts, { time = 2, text = "old2" }, true)
-whisperStore:Add("whisper:Al", { kind = "whisper", chatType = "WHISPER", label = "Al", target = "Al" }, { time = 3, text = "al" }, false)
-whisperStore:Add("whisper:Bob-Aegwynn", { kind = "whisper", chatType = "WHISPER", label = "Bob", target = "Bob-Aegwynn" }, { time = 4, text = "new1" }, true)
-whisperStore:Add("whisper:Bob-Aegwynn", bobOpts, { time = 5, text = "new2" }, false)
-whisperStore:Add("bn:7", { kind = "whisper", chatType = "BN_WHISPER", label = "K", bnetID = 7 }, { time = 6, text = "bn" }, false)
-whisperStore:MigrateWhispers("Aegwynn")
-check(whisperStore:Get("whisper:Bob") == nil and whisperStore:Get("whisper:Al") == nil, "short keys are gone")
-local al = whisperStore:Get("whisper:Al-Aegwynn")
-check(al and al.key == "whisper:Al-Aegwynn" and al.target == "Al-Aegwynn" and al.label == "Al", "renamed with full target")
-local bob = whisperStore:Get("whisper:Bob-Aegwynn")
-local texts = {}
-for _, e in ipairs(bob.messages) do texts[#texts + 1] = e.text end
-check(table.concat(texts, ",") == "old2,new1,new2", "merged, oldest first, capped: " .. table.concat(texts, ","))
-check(bob.unread == 3, "unread adds up")
-check(whisperStore:Get("bn:7") ~= nil, "Battle.net whispers stay")
-whisperStore:MigrateWhispers(nil)
 print("whisper names ok")
 
 -- Battle.net whispers are keyed by BattleTag

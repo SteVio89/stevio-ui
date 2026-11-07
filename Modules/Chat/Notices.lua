@@ -32,11 +32,11 @@ local function OnLevelChanged(_, oldLevel, newLevel, real)
 	Add(config.notices.levelUp, text, "SYSTEM")
 end
 
--- /played answers a command, so it opens System like /sui output does.
+-- /played only counts as unread: addons also ask for it silently at login.
 local function OnTimePlayed(_, totalTime, levelTime)
 	for _, pair in ipairs({ { TIME_PLAYED_TOTAL, totalTime }, { TIME_PLAYED_LEVEL, levelTime } }) do
 		local d, h, m, s = ChatFrameUtil.TimeBreakDown(pair[2])
-		Add(config.print, format(pair[1], format(TIME_DAYHOURMINUTESECOND, d, h, m, s)), "SYSTEM")
+		AddSystem(format(pair[1], format(TIME_DAYHOURMINUTESECOND, d, h, m, s)))
 	end
 end
 
