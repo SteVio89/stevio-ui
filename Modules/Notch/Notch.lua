@@ -8,31 +8,33 @@ local Notch = ns:RegisterModule("notch", {})
 -- Nothing is visible until the cursor reaches the notch; then a black island
 -- grows out of it with information that is only needed now and then.
 
-local L = GetLocale() == "deDE" and {
-	level = "Stufe %d",
-	rested = "Erholt",
-	gold = "Gold",
-	bags = "Taschen",
-	bagsValue = "%d / %d frei",
-	durability = "Haltbarkeit",
-	time = "Uhrzeit",
-	system = "System",
-	online = "Online",
-	friends = "Freunde %d",
-	guild = "Gilde %d",
-} or {
-	level = "Level %d",
-	rested = "Rested",
-	gold = "Gold",
-	bags = "Bags",
-	bagsValue = "%d / %d free",
-	durability = "Durability",
-	time = "Time",
-	system = "System",
-	online = "Online",
-	friends = "Friends %d",
-	guild = "Guild %d",
-}
+local L = ns.isGerman
+		and {
+			level = "Stufe %d",
+			rested = "Erholt",
+			gold = "Gold",
+			bags = "Taschen",
+			bagsValue = "%d / %d frei",
+			durability = "Haltbarkeit",
+			time = "Uhrzeit",
+			system = "System",
+			online = "Online",
+			friends = "Freunde %d",
+			guild = "Gilde %d",
+		}
+	or {
+		level = "Level %d",
+		rested = "Rested",
+		gold = "Gold",
+		bags = "Bags",
+		bagsValue = "%d / %d free",
+		durability = "Durability",
+		time = "Time",
+		system = "System",
+		online = "Online",
+		friends = "Friends %d",
+		guild = "Guild %d",
+	}
 
 local Zone = ns.NotchZone
 
@@ -63,7 +65,12 @@ local function UpdateXP(row)
 	local rested = GetXPExhaustion() or 0
 	local color = GetRestState() == 1 and colors.xpRested or colors.xp
 	row.label:SetFormattedText(L.level, UnitLevel("player"))
-	row.value:SetFormattedText("%d %% · %s / %s", floor(current / max * 100), BreakUpLargeNumbers(current), BreakUpLargeNumbers(max))
+	row.value:SetFormattedText(
+		"%d %% · %s / %s",
+		floor(current / max * 100),
+		BreakUpLargeNumbers(current),
+		BreakUpLargeNumbers(max)
+	)
 	SetBar(row, 0, max, current, math.min(current + rested, max), unpack(color))
 	return true
 end
@@ -88,7 +95,12 @@ local function UpdateReputation(row)
 	row.label:SetText(data.name)
 	-- The top standing has no next threshold; show it as a full bar.
 	if max > min then
-		row.value:SetFormattedText("%s · %s / %s", standing, BreakUpLargeNumbers(value - min), BreakUpLargeNumbers(max - min))
+		row.value:SetFormattedText(
+			"%s · %s / %s",
+			standing,
+			BreakUpLargeNumbers(value - min),
+			BreakUpLargeNumbers(max - min)
+		)
 	else
 		row.value:SetText(standing)
 		min, max, value = 0, 1, 1
@@ -340,7 +352,8 @@ local function CreateIsland()
 		input.notch = notchRect
 		input.island = nil
 		if island:IsShown() then
-			islandRect.left, islandRect.right, islandRect.bottom = island:GetLeft(), island:GetRight(), island:GetBottom()
+			islandRect.left, islandRect.right, islandRect.bottom =
+				island:GetLeft(), island:GetRight(), island:GetBottom()
 			input.island = islandRect
 		end
 		island:SetShown(Zone.Step(state, input, sinceCheck, options))
@@ -355,8 +368,16 @@ local function DumpGeometry()
 		("physical: %d x %d"):format(physicalWidth, physicalHeight),
 		"left ear: " .. strjoin(", ", tostringall(C_UI.GetTopLeftNotchSafeRegion())),
 		"right ear: " .. strjoin(", ", tostringall(C_UI.GetTopRightNotchSafeRegion())),
-		("avoid notch: %s, NotchedDisplayMode: %s"):format(tostring(C_UI.ShouldUIParentAvoidNotch()), tostring(C_CVar.GetCVar("NotchedDisplayMode"))),
-		("UIParent: %.1f x %.1f, top %.1f, effective scale %.3f"):format(UIParent:GetWidth(), UIParent:GetHeight(), UIParent:GetTop(), UIParent:GetEffectiveScale()),
+		("avoid notch: %s, NotchedDisplayMode: %s"):format(
+			tostring(C_UI.ShouldUIParentAvoidNotch()),
+			tostring(C_CVar.GetCVar("NotchedDisplayMode"))
+		),
+		("UIParent: %.1f x %.1f, top %.1f, effective scale %.3f"):format(
+			UIParent:GetWidth(),
+			UIParent:GetHeight(),
+			UIParent:GetTop(),
+			UIParent:GetEffectiveScale()
+		),
 		("notch: left %.1f, right %.1f, height %.1f, top offset %.1f"):format(GetNotchRect()),
 		("trigger: left %.1f, right %.1f, bottom %.1f"):format(notchRect.left, notchRect.right, notchRect.bottom),
 		("cursor: %.1f, %.1f"):format(GetCursorPosition()),

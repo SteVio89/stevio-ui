@@ -112,7 +112,6 @@ ns.config.settings.profile = {
 		-- Interfacefunktionen
 		["ESCAPE"] = "TOGGLEGAMEMENU",
 		["B"] = "TOGGLEBACKPACK",
-		["F12"] = "TOGGLEBACKPACK",
 		["F8"] = "TOGGLEBAG1",
 		["F9"] = "TOGGLEBAG2",
 		["F10"] = "TOGGLEBAG3",
@@ -151,8 +150,6 @@ ns.config.settings.profile = {
 		["MOUSEWHEELDOWN"] = "CAMERAZOOMOUT",
 		-- Fahrzeugsteuerung
 		["NUMPAD5"] = "VEHICLEEXIT",
-		-- PTR
-		["F6"] = "Open Issue Report",
 		-- Interfacefunktionen
 		["I"] = "TOGGLEGROUPFINDER",
 		-- stevio-ui

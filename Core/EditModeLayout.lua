@@ -9,6 +9,11 @@ local LAYOUT_NAME = addonName
 
 local desiredSystems = {}
 
+-- Edit Mode stores icon sizes (action bars, auras) as steps of 10 above 50%.
+function ns.EditModeIconSize(percent)
+	return (percent - 50) / 10
+end
+
 function ns:SetEditModeSystem(system, systemIndex, layout, settings)
 	desiredSystems[#desiredSystems + 1] = {
 		system = system,

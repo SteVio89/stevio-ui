@@ -1,15 +1,17 @@
-local addonName, ns = ...
+local _, ns = ...
 
 local config = ns.config.group
 local style = ns.config.style
 
-local UNITS_PER_GROUP = 5
-local MAX_UNITS = 40
+local UNITS_PER_GROUP = ns.UNITS_PER_GROUP
+local MAX_UNITS = ns.MAX_GROUPS * ns.UNITS_PER_GROUP
 
 local CLASSES = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }
 local POWER_BY_CLASS = { WARRIOR = "RAGE", ROGUE = "ENERGY" }
 local DISPELLABLE_ICON = "Interface\\Icons\\Spell_Holy_DispelMagic"
 local OTHER_ICON = "Interface\\Icons\\Spell_Shadow_ShadowWordPain"
+local OWN_ICON = "Interface\\Icons\\Spell_Holy_Renew"
+local NAMES = { "Stevio", "Aldric", "Brunhilde", "Cassian", "Dagna", "Elowen", "Fenwick", "Grimbold", "Hilde" }
 
 local preview
 
@@ -29,6 +31,8 @@ local function FakeMember(index)
 		role = (index % 5 == 1 and "TANK") or (index % 5 == 2 and "HEALER") or "DAMAGER",
 		dispellable = index % 4 == 0 and 2 or (index % 3 == 0 and 1 or 0),
 		other = index % 5 == 0 and 2 or (index % 2 == 0 and 1 or 0),
+		own = index % 6,
+		name = NAMES[(index - 1) % #NAMES + 1],
 	}
 end
 
@@ -64,6 +68,8 @@ local function ShowMember(cell, member)
 	cell.roleIcon:Show()
 	ShowIcons(cell.leftIcons, member.dispellable, DISPELLABLE_ICON)
 	ShowIcons(cell.rightIcons, member.other, OTHER_ICON)
+	ShowIcons(cell.ownIcons, member.own, OWN_ICON)
+	cell.nameText:SetText(member.name)
 end
 
 local function CreatePreview()
@@ -119,6 +125,6 @@ ns:RegisterSlashCommand("test", function(input)
 		ShowPreview(math.min(math.floor(count), MAX_UNITS))
 	else
 		HidePreview()
-		print(("|cff33ff99%s|r: /sui test 5|10|25|40 – /sui test (aus)"):format(addonName))
+		ns.Print(ns.T("/sui test 5|10|25|40 – /sui test (off)", "/sui test 5|10|25|40 – /sui test (aus)"))
 	end
 end)

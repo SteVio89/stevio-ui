@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lua 5.1 and luacheck
+        run: sudo apt-get update && sudo apt-get install -y lua5.1 lua-check
+
+      - name: Install StyLua
+        run: |
+          curl -sSL -o stylua.zip https://github.com/JohnnyMorganz/StyLua/releases/download/v2.0.2/stylua-linux-x86_64.zip
+          unzip -q stylua.zip -d "$HOME/.local/bin"
+          chmod +x "$HOME/.local/bin/stylua"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Checks
+        run: tests/run.sh

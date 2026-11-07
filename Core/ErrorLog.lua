@@ -55,18 +55,25 @@ ns:RegisterSlashCommand("errors", function(input)
 		if ScriptErrorsFrame then
 			firstSessionIndex = #ScriptErrorsFrame.errorData + 1
 		end
-		print(("|cff33ff99%s|r: error log cleared"):format(addonName))
+		ns.Print(ns.T("error log cleared", "Fehlerprotokoll geleert"))
 		return
 	end
 
 	local all = AllErrors()
 	if #all == 0 then
-		print(("|cff33ff99%s|r: no errors logged – /sui errors clear"):format(addonName))
+		ns.Print(ns.T("no errors logged – /sui errors clear", "keine Fehler protokolliert – /sui errors clear"))
 		return
 	end
 	local parts = {}
 	for i, entry in ipairs(all) do
-		parts[i] = ("#%d  %s  x%d\n%s\n%s\nLocals:\n%s"):format(i, entry.time, entry.count, entry.message, entry.stack, entry.locals)
+		parts[i] = ("#%d  %s  x%d\n%s\n%s\nLocals:\n%s"):format(
+			i,
+			entry.time,
+			entry.count,
+			entry.message,
+			entry.stack,
+			entry.locals
+		)
 	end
 	ns.ShowExportWindow(table.concat(parts, "\n\n"))
 end)

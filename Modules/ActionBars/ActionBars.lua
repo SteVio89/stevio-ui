@@ -10,8 +10,14 @@ local ActionBars = ns:RegisterModule("actionbars", {})
 -- secret-value restrictions without any code of ours involved.
 
 local deadButtonParts = {
-	"NormalTexture", "SlotBackground", "SlotArt", "Border", "IconMask",
-	"NewActionTexture", "SpellHighlightTexture", "Name",
+	"NormalTexture",
+	"SlotBackground",
+	"SlotArt",
+	"Border",
+	"IconMask",
+	"NewActionTexture",
+	"SpellHighlightTexture",
+	"Name",
 }
 
 local function StyleButton(button)
@@ -84,18 +90,13 @@ local barSystemIndices = {
 	Enum.EditModeActionBarSystemIndices.Bar3,
 }
 
--- Edit Mode stores icon size as steps of 10 above 50%.
-local function IconSizeSetting(percent)
-	return (percent - 50) / 10
-end
-
 local function PlaceBars()
 	local Setting = Enum.EditModeActionBarSetting
 	local barSettings = {
 		[Setting.Orientation] = Enum.ActionBarOrientation.Horizontal,
 		[Setting.NumRows] = 1,
 		[Setting.NumIcons] = 12,
-		[Setting.IconSize] = IconSizeSetting(config.iconSize),
+		[Setting.IconSize] = ns.EditModeIconSize(config.iconSize),
 		[Setting.IconPadding] = config.iconPadding,
 		[Setting.HideBarArt] = 1,
 	}
@@ -103,8 +104,16 @@ local function PlaceBars()
 		ns:SetEditModeSystem(Enum.EditModeSystem.ActionBar, systemIndex, ns.layout.actionBars[index], barSettings)
 	end
 
-	ns:SetEditModeSystem(Enum.EditModeSystem.ActionBar, Enum.EditModeActionBarSystemIndices.StanceBar, ns.layout.stanceBar)
-	ns:SetEditModeSystem(Enum.EditModeSystem.ActionBar, Enum.EditModeActionBarSystemIndices.PetActionBar, ns.layout.petBar)
+	ns:SetEditModeSystem(
+		Enum.EditModeSystem.ActionBar,
+		Enum.EditModeActionBarSystemIndices.StanceBar,
+		ns.layout.stanceBar
+	)
+	ns:SetEditModeSystem(
+		Enum.EditModeSystem.ActionBar,
+		Enum.EditModeActionBarSystemIndices.PetActionBar,
+		ns.layout.petBar
+	)
 end
 
 function ActionBars:OnEnable()

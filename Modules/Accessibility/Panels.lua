@@ -17,7 +17,14 @@ local DEDICATED = {
 }
 
 local STRATA_RANK = {
-	BACKGROUND = 1, LOW = 2, MEDIUM = 3, HIGH = 4, DIALOG = 5, FULLSCREEN = 6, FULLSCREEN_DIALOG = 7, TOOLTIP = 8,
+	BACKGROUND = 1,
+	LOW = 2,
+	MEDIUM = 3,
+	HIGH = 4,
+	DIALOG = 5,
+	FULLSCREEN = 6,
+	FULLSCREEN_DIALOG = 7,
+	TOOLTIP = 8,
 }
 
 local MAX_CONTAINER_FRAMES = 13
@@ -28,7 +35,13 @@ local hookedPanels = {}
 local function OpenPanels()
 	local seen, panels = {}, {}
 	local function Add(frame)
-		if frame and not seen[frame] and not frame:IsForbidden() and frame:IsVisible() and not DEDICATED[frame:GetName() or ""] then
+		if
+			frame
+			and not seen[frame]
+			and not frame:IsForbidden()
+			and frame:IsVisible()
+			and not DEDICATED[frame:GetName() or ""]
+		then
 			seen[frame] = true
 			panels[#panels + 1] = frame
 		end
@@ -83,7 +96,8 @@ local function IsClickable(frame)
 	if not frame:IsMouseEnabled() or frame:IsObjectType("ScrollFrame") then
 		return false
 	end
-	return frame:GetScript("OnClick") ~= nil or frame:GetScript("OnMouseUp") ~= nil
+	return frame:GetScript("OnClick") ~= nil
+		or frame:GetScript("OnMouseUp") ~= nil
 		or frame:GetScript("OnMouseDown") ~= nil
 end
 
@@ -97,8 +111,11 @@ local function CollectButtons(frame, clipRegion, result)
 			if IsScrollBar(child) then
 				result.scrollBar = result.scrollBar or child
 			else
-				if IsClickable(child) and not IsCloseButton(child)
-					and (not clipRegion or IsInside(child, clipRegion)) then
+				if
+					IsClickable(child)
+					and not IsCloseButton(child)
+					and (not clipRegion or IsInside(child, clipRegion))
+				then
 					result[#result + 1] = child
 				end
 				CollectButtons(child, ClipsChildren(child) and child or clipRegion, result)

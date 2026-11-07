@@ -1,5 +1,51 @@
 local _, ns = ...
 
+-- Channel definitions shared by several events; `With` copies one and adds
+-- fields, so every event has a table of its own the options panel can change.
+local function With(base, fields)
+	local def = {}
+	for key, value in pairs(base) do
+		def[key] = value
+	end
+	for key, value in pairs(fields or {}) do
+		def[key] = value
+	end
+	return def
+end
+
+local guild = { kind = "guild", key = "guild", chatType = "GUILD", label = "Guild" }
+local say = { kind = "public", key = "say", chatType = "SAY", label = "Say", quiet = true }
+
+-- Read-only channels of finished lines without a sender; `format` names how a
+-- line is worded (see Format.lua).
+local system = {
+	kind = "system",
+	key = "system",
+	chatType = "SYSTEM",
+	label = "System",
+	readOnly = true,
+	quiet = true,
+	format = "plain",
+}
+local npc = {
+	kind = "npc",
+	key = "npc",
+	chatType = "MONSTER_SAY",
+	label = "NPC",
+	readOnly = true,
+	quiet = true,
+	format = "get",
+}
+local progress = {
+	kind = "progress",
+	key = "progress",
+	chatType = "LOOT",
+	label = "Loot & Progress",
+	readOnly = true,
+	quiet = true,
+	format = "plain",
+}
+
 ns.config.chat = {
 	enabled = true,
 
@@ -41,18 +87,29 @@ ns.config.chat = {
 	scrollStep = 3,
 
 	-- Sidebar order of the channel kinds.
-	kindOrder = { group = 1, guild = 2, whisper = 3, public = 4, other = 5, system = 6 },
+	kindOrder = {
+		group = 1,
+		guild = 2,
+		community = 3,
+		whisper = 4,
+		public = 5,
+		other = 6,
+		npc = 7,
+		progress = 8,
+		system = 9,
+	},
 
 	-- Numbered chat channels (base name, case-insensitive) that get their own
 	-- sidebar channel; messages from all other channels end up in "Other".
+	-- Community streams added to the chat always get their own channel.
 	publicChannels = { "General", "Trade", "Allgemein", "Handel" },
 
 	-- Chat events that feed the channels. Group channels (party, raid, instance)
 	-- are one channel each, whispers get one channel per partner.
 	-- Each message also briefly shows the hidden chat and lights its badge segment,
-	-- except `quiet` ones (say, yell, chat channels, system): they only count as unread.
-	-- `system` messages (players coming online / going offline, ...) have no
-	-- sender and go to the read-only "System" channel.
+	-- except `quiet` ones (say, yell, chat channels, NPC, loot, system): they only
+	-- count as unread. Events not listed here (other players joining or leaving
+	-- channels, channel member lists, pet battle combat log, voice-to-text) are ignored.
 	events = {
 		CHAT_MSG_PARTY = { kind = "group", key = "party", chatType = "PARTY", label = "Party" },
 		CHAT_MSG_PARTY_LEADER = { kind = "group", key = "party", chatType = "PARTY", label = "Party" },
@@ -60,68 +117,90 @@ ns.config.chat = {
 		CHAT_MSG_RAID_LEADER = { kind = "group", key = "raid", chatType = "RAID", label = "Raid" },
 		CHAT_MSG_RAID_WARNING = { kind = "group", key = "raid", chatType = "RAID", label = "Raid", prefix = "[RW] " },
 		CHAT_MSG_INSTANCE_CHAT = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT", label = "Instance" },
-		CHAT_MSG_INSTANCE_CHAT_LEADER = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT", label = "Instance" },
-		CHAT_MSG_GUILD = { kind = "guild", key = "guild", chatType = "GUILD", label = "Guild" },
-		CHAT_MSG_OFFICER = { kind = "guild", key = "guild", chatType = "GUILD", label = "Guild", prefix = "[O] " },
-		CHAT_MSG_SAY = { kind = "public", key = "say", chatType = "SAY", label = "Say", quiet = true },
+		CHAT_MSG_INSTANCE_CHAT_LEADER = {
+			kind = "group",
+			key = "instance",
+			chatType = "INSTANCE_CHAT",
+			label = "Instance",
+		},
+		CHAT_MSG_GUILD = With(guild),
+		CHAT_MSG_OFFICER = With(guild, { prefix = "[O] " }),
+		CHAT_MSG_GUILD_DISCORD = With(guild),
+		CHAT_MSG_SAY = With(say),
 		CHAT_MSG_YELL = { kind = "public", key = "yell", chatType = "YELL", label = "Yell", quiet = true },
 		-- Emotes are local like say, so they share its channel: /e (`emote`) gives the
 		-- action without the name, /dance etc. (`textEmote`) the whole sentence.
-		CHAT_MSG_EMOTE = {
-			kind = "public",
-			key = "say",
-			chatType = "SAY",
-			label = "Say",
-			quiet = true,
-			emote = true,
-		},
-		CHAT_MSG_TEXT_EMOTE = {
-			kind = "public",
-			key = "say",
-			chatType = "SAY",
-			label = "Say",
-			quiet = true,
-			emote = true,
-			textEmote = true,
-		},
+		CHAT_MSG_EMOTE = With(say, { emote = true }),
+		CHAT_MSG_TEXT_EMOTE = With(say, { emote = true, textEmote = true }),
 		CHAT_MSG_CHANNEL = { kind = "public", chatType = "CHANNEL", channel = true, quiet = true },
+		CHAT_MSG_COMMUNITIES_CHANNEL = { kind = "public", chatType = "CHANNEL", channel = true, quiet = true },
 		CHAT_MSG_WHISPER = { kind = "whisper", chatType = "WHISPER" },
 		CHAT_MSG_WHISPER_INFORM = { kind = "whisper", chatType = "WHISPER", outgoing = true },
 		CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", bnet = true },
 		CHAT_MSG_BN_WHISPER_INFORM = { kind = "whisper", chatType = "BN_WHISPER", bnet = true, outgoing = true },
-		CHAT_MSG_SYSTEM = {
-			kind = "system",
-			key = "system",
-			chatType = "SYSTEM",
-			label = "System",
-			system = true,
-			readOnly = true,
-			quiet = true,
-		},
+
+		CHAT_MSG_MONSTER_SAY = With(npc),
+		CHAT_MSG_MONSTER_YELL = With(npc),
+		CHAT_MSG_MONSTER_EMOTE = With(npc),
+		CHAT_MSG_MONSTER_WHISPER = With(npc),
+		CHAT_MSG_MONSTER_PARTY = With(npc),
+		CHAT_MSG_RAID_BOSS_EMOTE = With(npc),
+		CHAT_MSG_RAID_BOSS_WHISPER = With(npc),
+
+		CHAT_MSG_LOOT = With(progress),
+		CHAT_MSG_MONEY = With(progress),
+		CHAT_MSG_CURRENCY = With(progress),
+		CHAT_MSG_COMBAT_XP_GAIN = With(progress),
+		CHAT_MSG_COMBAT_HONOR_GAIN = With(progress),
+		CHAT_MSG_COMBAT_FACTION_CHANGE = With(progress),
+		CHAT_MSG_COMBAT_MISC_INFO = With(progress),
+		CHAT_MSG_SKILL = With(progress),
+		CHAT_MSG_OPENING = With(progress),
+		CHAT_MSG_COLLECTED_APPEARANCE = With(progress),
+		CHAT_MSG_ACHIEVEMENT = With(progress, { format = "name" }),
+		CHAT_MSG_GUILD_ACHIEVEMENT = With(progress, { format = "name" }),
+		CHAT_MSG_GUILD_ITEM_LOOTED = With(progress, { format = "guildLoot" }),
+
+		-- Players coming online / going offline, /who results and other notices.
+		CHAT_MSG_SYSTEM = With(system),
+		CHAT_MSG_AFK = With(system, { format = "get" }),
+		CHAT_MSG_DND = With(system, { format = "get" }),
+		CHAT_MSG_IGNORED = With(system, { format = "ignored" }),
+		CHAT_MSG_FILTERED = With(system, { format = "filtered" }),
+		CHAT_MSG_RESTRICTED = With(system, { format = "restricted" }),
+		CHAT_MSG_CHANNEL_NOTICE = With(system, { format = "notice" }),
+		CHAT_MSG_CHANNEL_NOTICE_USER = With(system, { format = "noticeUser" }),
+		CHAT_MSG_TRADESKILLS = With(system),
+		CHAT_MSG_PET_INFO = With(system),
+		CHAT_MSG_PET_BATTLE_INFO = With(system),
+		CHAT_MSG_BG_SYSTEM_HORDE = With(system),
+		CHAT_MSG_BG_SYSTEM_ALLIANCE = With(system),
+		CHAT_MSG_BG_SYSTEM_NEUTRAL = With(system),
+		CHAT_MSG_TARGETICONS = With(system),
+		CHAT_MSG_PING = With(system, { format = "ping" }),
+		CHAT_MSG_BN_WHISPER_PLAYER_OFFLINE = With(system),
 		-- Battle.net friends coming online / going offline.
-		CHAT_MSG_BN_INLINE_TOAST_ALERT = {
-			kind = "system",
-			key = "system",
-			chatType = "SYSTEM",
-			label = "System",
-			system = true,
+		CHAT_MSG_BN_INLINE_TOAST_ALERT = With(system, {
+			format = "toast",
 			toast = { FRIEND_ONLINE = true, FRIEND_OFFLINE = true },
-			readOnly = true,
-			quiet = true,
-		},
+		}),
+		CHAT_MSG_BN_INLINE_TOAST_BROADCAST = With(system, { format = "broadcast" }),
+		CHAT_MSG_BN_INLINE_TOAST_BROADCAST_INFORM = With(system, { format = "broadcastInform" }),
 	},
 
-	-- Addon output (print(), e.g. /sui commands): Blizzard's chat is never shown,
-	-- so it goes to "System" and, being an answer to something just typed,
-	-- opens that channel (`focus`) even while another one is open.
-	print = {
-		kind = "system",
-		key = "system",
-		chatType = "SYSTEM",
-		label = "System",
-		readOnly = true,
-		focus = true,
+	-- Lines Blizzard writes into its chat window without a chat event; each
+	-- names its channel definition (see Chat.lua for the wording).
+	notices = {
+		levelUp = With(progress),
+		guildMotd = With(guild, { quiet = true }),
+		system = With(system),
 	},
+
+	-- Addon output (/sui commands): Blizzard's chat is never shown, so it goes
+	-- to "System" and, being an answer to something just typed, opens that
+	-- channel (`focus`) even while another one is open. Other addons' print()
+	-- output and the /played reply only count as unread (`system` above).
+	print = With(system, { quiet = false, focus = true }),
 
 	-- Size and base colors come from ns.config.style.badge.
 	badge = {

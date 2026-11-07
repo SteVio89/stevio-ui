@@ -5,11 +5,12 @@
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\stevio-ui\Media\Icon
 ## X-License: MIT
-## SavedVariables: StevioUIState, StevioUIExport, StevioUIDebug, StevioUIErrors
+## SavedVariables: StevioUIState, StevioUIConfig, StevioUIExport, StevioUIDebug, StevioUIErrors
 ## SavedVariablesPerCharacter: StevioUIChatHistory
 ## X-Curse-Project-ID: 1739367
 
 Core\Init.lua
+Core\Overrides.lua
 Core\ErrorLog.lua
 Core\Consent.lua
 Core\Config.lua
@@ -50,10 +51,16 @@ Modules\Notch\Notch.lua
 
 Modules\Chat\Config.lua
 Modules\Chat\History.lua
+Modules\Chat\Shared.lua
+Modules\Chat\Blizzard.lua
+Modules\Chat\View.lua
+Modules\Chat\Copy.lua
+Modules\Chat\Badge.lua
+Modules\Chat\Format.lua
+Modules\Chat\Notices.lua
+Modules\Chat\Parse.lua
+Modules\Chat\Commands.lua
 Modules\Chat\Chat.lua
-
-Modules\DamageMeter\Config.lua
-Modules\DamageMeter\DamageMeter.lua
 
 Modules\Auras\Config.lua
 Modules\Auras\Auras.lua
@@ -76,3 +83,6 @@ Modules\Settings\Config.lua
 Modules\Settings\Profile.lua
 Modules\Settings\Export.lua
 Modules\Settings\Settings.lua
+Modules\Settings\Labels.lua
+Modules\Settings\Editor.lua
+Modules\Settings\Panel.lua

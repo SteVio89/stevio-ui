@@ -1,0 +1,219 @@
+local _, ns = ...
+
+local config = ns.config.chat
+local style = ns.config.style
+local C = ns.ChatInternal
+
+-- The channel view: sidebar with the channels, header, messages and input line.
+
+-- "time [channel] sender: text"; the channel only shows in "Other", the sender
+-- is missing on system messages. Channel and sender take their channel's color;
+-- emotes ("time Bob waves.") are colored as a whole in the emote color.
+-- Returns the line and its base color: finished lines without a sender (loot,
+-- NPC, system, ...) take their kind's chat color, like in Blizzard's chat;
+-- System lines stored before they carried a kind count as SYSTEM.
+local function FormatEntry(channel, entry)
+	local stamp = "|cff808080" .. (entry.time and date("%H:%M", entry.time) or "--:--") .. "|r"
+	local colorType = entry.colorType or (channel.kind == "system" and not entry.sender and "SYSTEM")
+	if colorType then
+		return ns.ChatHistory.Line(entry, stamp), C.TypeColor(colorType)
+	end
+	if entry.emote then
+		local body = entry.sender and (entry.sender .. " " .. entry.text) or entry.text
+		return stamp .. " " .. C.ColorCode(C.TypeColor("EMOTE")) .. body .. "|r"
+	end
+	local source = entry.source
+		and (C.ColorCode(C.TypeColor(entry.sourceType or channel.chatType)) .. entry.source .. "|r")
+	local sender = entry.sender and (C.ColorCode(C.ChannelColor(channel)) .. entry.sender .. "|r")
+	return ns.ChatHistory.Line(entry, stamp, source, sender)
+end
+
+local function DayLine(entry)
+	return "|cff808080-- " .. C.Day(entry.time) .. " --|r"
+end
+
+-- Adds `entry` to the message frame, after a date line when it starts a new
+-- day; `previous` is the last message shown before it.
+function C.ShowEntry(channel, previous, entry)
+	if ns.ChatHistory.StartsDay(previous, entry, C.Day) then
+		C.ui.messages:AddMessage(DayLine(entry))
+	end
+	local line, r, g, b = FormatEntry(channel, entry)
+	C.ui.messages:AddMessage(line, r or 1, g or 1, b or 1)
+end
+
+-- The last message with a time before index `index` (nil when there is none).
+function C.PreviousTimed(messages, index)
+	for i = index - 1, 1, -1 do
+		if messages[i].time then
+			return messages[i]
+		end
+	end
+end
+
+function C.RenderMessages(channel)
+	local messages = C.ui.messages
+	messages:Clear()
+	if not channel then
+		return
+	end
+	local previous
+	for _, entry in ipairs(channel.messages) do
+		C.ShowEntry(channel, previous, entry)
+		previous = entry.time and entry or previous
+	end
+	messages:ScrollToBottom()
+end
+
+local function CreateRow(index)
+	local ui = C.ui
+	local row = CreateFrame("Button", nil, ui.sidebar)
+	row:SetHeight(config.rowHeight)
+	row:SetPoint("TOPLEFT", 0, -(index - 1) * config.rowHeight)
+	row:SetPoint("TOPRIGHT", 0, -(index - 1) * config.rowHeight)
+
+	row.highlight = row:CreateTexture(nil, "BACKGROUND")
+	row.highlight:SetAllPoints()
+	row.highlight:SetColorTexture(unpack(config.selectedColor))
+
+	row.text = ns.CreateFontString(row, nil, "LEFT")
+	row.text:SetPoint("LEFT", 4, 0)
+	row.text:SetPoint("RIGHT", -config.rowHeight, 0)
+
+	row.delete = CreateFrame("Button", nil, row)
+	row.delete:SetSize(config.rowHeight, config.rowHeight)
+	row.delete:SetPoint("RIGHT")
+	row.delete.text = ns.CreateFontString(row.delete, nil, "CENTER")
+	row.delete.text:SetAllPoints()
+	row.delete.text:SetText("x")
+	row.delete.text:SetTextColor(unpack(config.deleteColor))
+	row.delete:SetScript("OnClick", function()
+		C.DeleteChannel(row.key)
+	end)
+
+	row:SetScript("OnClick", function()
+		C.Select(row.key)
+	end)
+	return row
+end
+
+function C.RefreshSidebar()
+	local ui, store = C.ui, C.store
+	local channels = store:Sorted(config.kindOrder)
+	for index, channel in ipairs(channels) do
+		local row = ui.rows[index] or CreateRow(index)
+		ui.rows[index] = row
+		row.key = channel.key
+		local r, g, b = C.ChannelColor(channel)
+		local text = C.Label(channel)
+		if channel.unread > 0 then
+			text = ("%s (%d)"):format(text, channel.unread)
+		end
+		row.text:SetText(text)
+		row.text:SetTextColor(r, g, b, channel.unread > 0 and 1 or 0.7)
+		row.highlight:SetShown(channel.key == C.state.selected)
+		row.delete:SetShown(store.IsDeletable(channel))
+		row:Show()
+	end
+	for index = #channels + 1, #ui.rows do
+		ui.rows[index]:Hide()
+	end
+
+	local channel = C.Selected()
+	if channel then
+		local r, g, b = C.ChannelColor(channel)
+		ui.header:SetText(C.Label(channel))
+		ui.header:SetTextColor(r, g, b)
+	else
+		ui.header:SetText("")
+	end
+end
+
+local function CreateInput(frame)
+	local ui = C.ui
+	local input = CreateFrame("EditBox", nil, frame)
+	input:SetFont(style.font, config.fontSize, style.fontFlags)
+	input:SetAutoFocus(false)
+	input:SetHeight(math.max(config.rowHeight, config.fontSize + 6))
+	input:SetPoint("BOTTOMLEFT", ui.sidebar, "BOTTOMRIGHT", 6, 2)
+	input:SetPoint("BOTTOMRIGHT", -6, 2)
+	input:SetMaxLetters(255)
+	input:SetScript("OnEnterPressed", function(self)
+		local text = self:GetText()
+		self:SetText("")
+		self:ClearFocus()
+		C.Send(text)
+	end)
+	input:SetScript("OnEscapePressed", input.ClearFocus)
+	input:SetScript("OnTabPressed", function()
+		C.CycleChannel(IsShiftKeyDown() and -1 or 1)
+	end)
+	input:SetScript("OnEditFocusGained", function()
+		C.state.typing = true
+		C.Update()
+	end)
+	input:SetScript("OnEditFocusLost", function()
+		C.state.typing = false
+		C.Update()
+	end)
+	ui.input = input
+end
+
+local function CreateMessages(frame)
+	local ui = C.ui
+	local messages = CreateFrame("ScrollingMessageFrame", nil, frame)
+	messages:SetFont(style.font, config.fontSize, style.fontFlags)
+	messages:SetJustifyH("LEFT")
+	messages:SetFading(false)
+	messages:SetMaxLines(config.historyLimit)
+	messages:SetPoint("TOPLEFT", ui.header, "BOTTOMLEFT", 0, -4)
+	messages:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, 4)
+	messages:EnableMouseWheel(true)
+	messages:SetScript("OnMouseWheel", function(self, delta)
+		for _ = 1, config.scrollStep do
+			if delta > 0 then
+				self:ScrollUp()
+			else
+				self:ScrollDown()
+			end
+		end
+	end)
+	messages:SetHyperlinksEnabled(true)
+	messages:SetScript("OnHyperlinkClick", function(self, link, text, button)
+		SetItemRef(link, text, button, self)
+	end)
+	ui.messages = messages
+end
+
+function C.CreateChannelView()
+	local ui = C.ui
+	local frame = CreateFrame("Frame", "StevioUI_Chat", UIParent)
+	frame:SetSize(C.ChatWidth(), config.height)
+	ns.SetPoint(frame, ns.layout.chat)
+	frame:SetFrameStrata("MEDIUM")
+	frame:EnableMouse(true)
+	frame:Hide()
+	local background = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
+	background:SetAllPoints()
+	background:SetColorTexture(unpack(config.backgroundColor))
+	ns.CreateBorder(frame)
+	ui.frame = frame
+	ui.rows = {}
+
+	ui.sidebar = CreateFrame("Frame", nil, frame)
+	ui.sidebar:SetWidth(config.sidebarWidth)
+	ui.sidebar:SetPoint("TOPLEFT", 0, -4)
+	ui.sidebar:SetPoint("BOTTOMLEFT")
+	local divider = frame:CreateTexture(nil, "ARTWORK")
+	divider:SetColorTexture(unpack(config.dividerColor))
+	divider:SetWidth(ns.PixelSize(frame))
+	divider:SetPoint("TOPLEFT", ui.sidebar, "TOPRIGHT")
+	divider:SetPoint("BOTTOMLEFT", ui.sidebar, "BOTTOMRIGHT")
+
+	ui.header = ns.CreateFontString(frame, nil, "LEFT")
+	ui.header:SetPoint("TOPLEFT", ui.sidebar, "TOPRIGHT", 6, 0)
+
+	CreateInput(frame)
+	CreateMessages(frame)
+	C.CreateCopyView(frame)
+end

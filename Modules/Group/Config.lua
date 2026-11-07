@@ -14,6 +14,21 @@ ns.config.group = {
 	iconSize = 14,
 	iconsPerSide = 2,
 
+	-- Own buffs and HoTs in a row along the top edge of the health bar.
+	ownAuraFilter = "HELPFUL|PLAYER",
+	ownAuraSize = 12,
+	ownAurasMax = 5,
+
+	-- The player name as a watermark on the health bar, behind icons and role.
+	nameFontSize = 16,
+	nameColor = { 0, 0, 0, 0.45 },
+
+	-- Incoming heals (own, others') and absorb shields on the health bar, like
+	-- Blizzard's raid frames; absorbs are drawn white under a striped overlay.
+	myHealColor = { 11 / 255, 136 / 255, 105 / 255, 1 },
+	otherHealColor = { 21 / 255, 89 / 255, 72 / 255, 1 },
+	absorbColor = { 1, 1, 1, 0.35 },
+
 	-- Centered between the debuff sides; must stay narrow enough for 40-player cells.
 	roleIconSize = 14,
 

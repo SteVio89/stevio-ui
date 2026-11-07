@@ -11,7 +11,13 @@ end
 
 function ns.SetPoint(frame, layout, relativeTo)
 	frame:ClearAllPoints()
-	frame:SetPoint(layout.point, relativeTo or UIParent, layout.relativePoint or layout.point, layout.x or 0, layout.y or 0)
+	frame:SetPoint(
+		layout.point,
+		relativeTo or UIParent,
+		layout.relativePoint or layout.point,
+		layout.x or 0,
+		layout.y or 0
+	)
 end
 
 local Border = {}

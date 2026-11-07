@@ -84,6 +84,45 @@ function History.PublicChannel(baseName, explicit)
 	return "other", "Other", false
 end
 
+-- Full "Name-Realm" of a player: chat events name players of the own realm
+-- without the realm on some clients, so it is added to tell same-named players
+-- of different realms apart and to whisper the right one. `realm` may be nil
+-- (not known yet), which leaves the name as it is.
+function History.FullName(name, realm)
+	if name:find("-", 1, true) or not realm or realm == "" then
+		return name
+	end
+	return name .. "-" .. realm
+end
+
+function History.WhisperKey(fullName)
+	return "whisper:" .. fullName
+end
+
+-- Battle.net whisper partners are keyed by BattleTag ("Name#1234"): the
+-- account id may change between sessions and the Real ID name in chat events
+-- can't be saved; the BattleTag stays. Lines and labels show its name part.
+function History.BattleTagName(battleTag)
+	return battleTag:match("^([^#]+)") or battleTag
+end
+
+function History.BattleNetKey(battleTag)
+	return "bn:" .. battleTag
+end
+
+-- Community streams added to the chat are chat channels named
+-- "Community:<clubId>:<streamId>". Returns both ids as numbers, or nil.
+function History.CommunityIds(baseName)
+	local clubId, streamId = baseName:match("^Community:(%d+):(%d+)$")
+	if clubId then
+		return tonumber(clubId), tonumber(streamId)
+	end
+end
+
+function History.CommunityKey(clubId, streamId)
+	return "community:" .. clubId .. ":" .. streamId
+end
+
 -- `saved` is the SavedVariables table (may be empty); `limit` caps messages per channel.
 function History.New(saved, limit)
 	saved.channels = saved.channels or {}
@@ -94,8 +133,9 @@ function Store:Get(key)
 	return self.db.channels[key]
 end
 
--- opts: kind, chatType, label, bnetID, target, channelIndex, readOnly.
--- Created on first use; the channel number and color follow the latest message.
+-- opts: kind, chatType, label, bnetID, battleTag, target, channelIndex, readOnly, clubId,
+-- streamId, relabel. Created on first use; the channel number and color follow
+-- the latest message, and so does the label with `relabel` (a renamed community).
 function Store:Ensure(key, opts)
 	local channel = self.db.channels[key]
 	if not channel then
@@ -114,6 +154,9 @@ function Store:Ensure(key, opts)
 	if opts.bnetID then
 		channel.bnetID = opts.bnetID
 	end
+	if opts.battleTag then
+		channel.battleTag = opts.battleTag
+	end
 	if opts.target then
 		channel.target = opts.target
 	end
@@ -121,12 +164,21 @@ function Store:Ensure(key, opts)
 		channel.channelIndex = opts.channelIndex
 		channel.chatType = opts.chatType
 	end
+	if opts.clubId then
+		channel.clubId, channel.streamId = opts.clubId, opts.streamId
+		channel.chatType = opts.chatType
+	end
+	if opts.relabel then
+		channel.label = opts.label
+	end
 	return channel
 end
 
--- entry: { time, sender, text, outgoing, source, sourceType, emote }: `sender` is
--- nil for system messages and text emotes, `emote` marks emotes, `source` names the chat channel of a message in "Other" and
--- `sourceType` its chat type (for its color). Returns the channel.
+-- entry: { time, sender, text, outgoing, source, sourceType, emote, colorType }:
+-- `sender` is nil for finished lines (system, NPC, loot, ...) and text emotes,
+-- `emote` marks emotes, `source` names the chat channel of a message in "Other"
+-- and `sourceType` its chat type (for its color); `colorType` is the chat type
+-- whose color a finished line takes. Returns the channel.
 function Store:Add(key, opts, entry, markUnread)
 	local channel = self:Ensure(key, opts)
 	local messages = channel.messages
@@ -184,7 +236,10 @@ end
 function Store:MostRecent()
 	local best
 	for _, channel in pairs(self.db.channels) do
-		if channel.last > 0 and (not best or channel.last > best.last or (channel.last == best.last and channel.key < best.key)) then
+		if
+			channel.last > 0
+			and (not best or channel.last > best.last or (channel.last == best.last and channel.key < best.key))
+		then
 			best = channel
 		end
 	end

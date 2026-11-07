@@ -6,6 +6,17 @@ StevioUI = ns
 ns.name = addonName
 ns.config = {}
 
+-- Texts come in German and English, picked by the client language.
+ns.isGerman = GetLocale() == "deDE"
+
+function ns.T(english, german)
+	return ns.isGerman and german or english
+end
+
+-- A raid has up to 8 groups of 5; the group grid and keyboard healing share these.
+ns.MAX_GROUPS = 8
+ns.UNITS_PER_GROUP = 5
+
 local modules = {}
 
 function ns:RegisterModule(name, module)
@@ -31,6 +42,26 @@ function ns:RegisterEvent(event, handler)
 	table.insert(handlers[event], handler)
 end
 
+-- Addon output: "stevio-ui: text", or a further line without the prefix.
+-- `ns.printing` marks it as ours while it runs through print(), so the chat
+-- can open on it (an answer to something just typed) but not on other addons' output.
+local function PrintMarked(line)
+	ns.printing = true
+	local ok, err = pcall(print, line)
+	ns.printing = false
+	if not ok then
+		error(err, 0)
+	end
+end
+
+function ns.Print(text)
+	PrintMarked(("|cff33ff99%s|r: %s"):format(addonName, text))
+end
+
+function ns.PrintLine(text)
+	PrintMarked(text)
+end
+
 local slashCommands = {}
 
 function ns:RegisterSlashCommand(name, handler)
@@ -46,7 +77,7 @@ SlashCmdList.STEVIOUI = function(input)
 	else
 		local names = GetKeysArray(slashCommands)
 		table.sort(names)
-		print(("|cff33ff99%s|r: /sui %s"):format(addonName, table.concat(names, " | ")))
+		ns.Print("/sui " .. table.concat(names, " | "))
 	end
 end
 

@@ -26,7 +26,8 @@
             packages = with pkgs; [
               lua-language-server
               stylua
-              lua
+              lua5_1
+              lua51Packages.luacheck
               # devhelper:packages
             ];
           };

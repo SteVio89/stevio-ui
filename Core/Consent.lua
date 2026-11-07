@@ -7,7 +7,7 @@ local addonName, ns = ...
 local DIALOG = "STEVIOUI_CONSENT"
 
 local text
-if GetLocale() == "deDE" then
+if ns.isGerman then
 	text = {
 		body = "%s ist eine komplette UI und überschreibt account-weit deine Tastenbelegungen, Grafik- und Interface-Einstellungen, Aktionsleisten und das Edit-Mode-Layout.\n\nDeine bisherigen Einstellungen werden vorher gesichert. /sui restore stellt sie wieder her und deaktiviert das Addon.",
 		accept = "Übernehmen",

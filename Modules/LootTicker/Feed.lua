@@ -31,22 +31,55 @@ function Feed.Patterns(...)
 	return patterns
 end
 
--- Returns the link and count of a loot message matching one of `patterns`.
+-- Sorts the captures of a match: the one holding a link, a number, and any
+-- other (a player name).
+local function SortCaptures(captures)
+	local link, number, name
+	for _, capture in ipairs(captures) do
+		if capture:find("|H", 1, true) then
+			link = capture
+		elseif capture:match("^%d+$") then
+			number = tonumber(capture)
+		else
+			name = capture
+		end
+	end
+	return link, number, name
+end
+
+-- Returns link, count and player name (nil for own loot) of a loot message
+-- matching one of `patterns`, plus the index of the matching pattern.
 function Feed.Parse(text, patterns)
-	for _, pattern in ipairs(patterns) do
+	for index, pattern in ipairs(patterns) do
 		local captures = { text:match(pattern) }
 		if captures[1] then
-			local link, count
-			for _, capture in ipairs(captures) do
-				if capture:find("|H", 1, true) then
-					link = capture
-				elseif capture:match("^%d+$") then
-					count = tonumber(capture)
-				end
-			end
+			local link, count, name = SortCaptures(captures)
 			if link then
-				return link, count or 1
+				return link, count or 1, name, index
 			end
+		end
+	end
+end
+
+-- Group loot roll messages ("Bob won: [Sword]", "Need Roll - 87 for [Sword]
+-- by Bob", "You passed on: [Sword]"): returns the item link and the player
+-- name in it (nil in messages about yourself). The number in them is a roll,
+-- not a count.
+function Feed.ParseRoll(text, patterns)
+	local link, _, name = Feed.Parse(text, patterns)
+	return link, name
+end
+
+-- Item quality from the color of a link ("ffa335ee"), using `qualityHex`
+-- ({ [quality] = "ffa335ee" }); nil when no quality has that color.
+function Feed.QualityFromColor(hex, qualityHex)
+	if not hex then
+		return nil
+	end
+	hex = hex:lower()
+	for quality, qualityColor in pairs(qualityHex) do
+		if qualityColor:lower() == hex then
+			return quality
 		end
 	end
 end
@@ -120,12 +153,14 @@ function Feed.New(maxEntries)
 end
 
 -- entries[1] is the newest. Adding to a full feed drops the oldest entry.
--- With `merge`, an entry for the same link is replaced and its count added.
+-- With `merge`, an entry with the same `key` (an item looted by the same
+-- player, all money) is replaced and its count added; entries without a key
+-- (roll messages) never merge.
 function Feed:Add(entry, now, merge)
 	entry.time = now
-	if merge then
+	if merge and entry.key then
 		for i, old in ipairs(self.entries) do
-			if old.link == entry.link then
+			if old.key == entry.key then
 				table.remove(self.entries, i)
 				entry.count = entry.count + old.count
 				entry.y = old.y

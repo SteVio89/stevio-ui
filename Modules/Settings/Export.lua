@@ -2,7 +2,8 @@ local addonName, ns = ...
 
 local config = ns.config.settings
 
-local function IsIgnoredCVar(name)
+-- CVars holding client state rather than preferences (config.ignoredCVars).
+function ns.IsIgnoredCVar(name)
 	for _, pattern in ipairs(config.ignoredCVars) do
 		if name:find(pattern) then
 			return true
@@ -48,17 +49,27 @@ local function AppendBindings(lines)
 	lines[#lines + 1] = "\t},"
 end
 
-local function AppendCVars(lines)
-	local entries = {}
+-- Calls `callback(name, value, defaultValue)` for every CVar the player can
+-- change (not locked, secure or read-only).
+function ns.ForEachCVar(callback)
 	for _, info in ipairs(ConsoleGetAllCommands()) do
-		local name = info.command
-		if info.commandType == Enum.ConsoleCommandType.Cvar and not IsIgnoredCVar(name) then
+		if info.commandType == Enum.ConsoleCommandType.Cvar then
+			local name = info.command
 			local value, defaultValue, _, _, isLocked, isSecure, isReadOnly = C_CVar.GetCVarInfo(name)
-			if value and value ~= defaultValue and not isLocked and not isSecure and not isReadOnly then
-				entries[#entries + 1] = ("\t\t%s = %q,"):format(LuaKey(name), value)
+			if value and not isLocked and not isSecure and not isReadOnly then
+				callback(name, value, defaultValue)
 			end
 		end
 	end
+end
+
+local function AppendCVars(lines)
+	local entries = {}
+	ns.ForEachCVar(function(name, value, defaultValue)
+		if value ~= defaultValue and not ns.IsIgnoredCVar(name) then
+			entries[#entries + 1] = ("\t\t%s = %q,"):format(LuaKey(name), value)
+		end
+	end)
 	table.sort(entries)
 
 	lines[#lines + 1] = "\tcvars = {"
@@ -99,7 +110,11 @@ local function CreateWindow()
 
 	local title = ns.CreateFontString(frame, 12)
 	title:SetPoint("TOPLEFT", 10, -10)
-	title:SetText(("%s – Profile.lua (Cmd+A, Cmd+C)"):format(addonName))
+	-- Shared by the profile export, the error log and debug dumps.
+	title:SetText(
+		ns.T("%s – select all and copy (Cmd+A, Cmd+C)", "%s – alles markieren und kopieren (Cmd+A, Cmd+C)")
+			:format(addonName)
+	)
 
 	local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
 	close:SetPoint("TOPRIGHT", 2, 2)

@@ -2,8 +2,12 @@ local _, ns = ...
 
 local config = ns.config.units.castBar
 
-local castColor = CreateColor(unpack(config.color))
-local notInterruptibleColor = CreateColor(unpack(config.notInterruptibleColor))
+-- Created with the first cast bar: the options panel's overrides only reach
+-- the config once the saved variables are loaded, after this file ran.
+local castColor, notInterruptibleColor
+
+-- How often the remaining time text is redrawn.
+local TIME_INTERVAL = 0.05
 
 local startEvents = {
 	UNIT_SPELLCAST_START = false,
@@ -21,6 +25,12 @@ local stopEvents = {
 	UNIT_SPELLCAST_CHANNEL_STOP = true,
 }
 
+-- Unit changes that start over with whatever the new unit is casting.
+local unitChangeEvents = {
+	target = "PLAYER_TARGET_CHANGED",
+	focus = "PLAYER_FOCUS_CHANGED",
+}
+
 -- The notInterruptible flag may be secret, and secret booleans can't be branched on;
 -- the FromBoolean setter lets the client resolve the color instead.
 local function ApplyColor(texture, notInterruptible)
@@ -32,14 +42,17 @@ local function ApplyColor(texture, notInterruptible)
 	end
 end
 
+-- Spell name and remaining seconds may be secret; the font strings take them as they are.
 local function Start(castBar, isChannel)
 	local unit = castBar.unit
-	local isTradeskill, notInterruptible, duration
+	local name, isTradeskill, notInterruptible, duration
 	if isChannel then
+		name = UnitChannelInfo(unit)
 		isTradeskill, notInterruptible = select(6, UnitChannelInfo(unit))
 		duration = UnitChannelDuration(unit)
 	else
 		local _
+		name = UnitCastingInfo(unit)
 		isTradeskill, _, notInterruptible = select(6, UnitCastingInfo(unit))
 		duration = UnitCastingDuration(unit)
 	end
@@ -51,8 +64,12 @@ local function Start(castBar, isChannel)
 	end
 
 	ApplyColor(castBar:GetStatusBarTexture(), notInterruptible)
-	local direction = isChannel and Enum.StatusBarTimerDirection.RemainingTime or Enum.StatusBarTimerDirection.ElapsedTime
+	local direction = isChannel and Enum.StatusBarTimerDirection.RemainingTime
+		or Enum.StatusBarTimerDirection.ElapsedTime
 	castBar:SetTimerDuration(duration, Enum.StatusBarInterpolation.Immediate, direction)
+	castBar.duration = duration
+	castBar.spellName:SetText(name)
+	castBar.elapsed = TIME_INTERVAL
 	castBar:Show()
 end
 
@@ -73,13 +90,33 @@ local function OnEvent(castBar, event)
 	end
 end
 
-function ns.CreateCastBar(unit, sizeFrame, anchor, align)
+local function OnUpdate(castBar, elapsed)
+	castBar.elapsed = castBar.elapsed + elapsed
+	if castBar.elapsed < TIME_INTERVAL or not castBar.duration then
+		return
+	end
+	castBar.elapsed = 0
+	castBar.time:SetFormattedText("%.1f", castBar.duration:GetRemainingDuration())
+end
+
+-- `options`: height and fontSize (default: the castBar config).
+function ns.CreateCastBar(unit, sizeFrame, anchor, align, options)
+	options = options or {}
+	castColor = castColor or CreateColor(unpack(config.color))
+	notInterruptibleColor = notInterruptibleColor or CreateColor(unpack(config.notInterruptibleColor))
 	local castBar = ns.CreateStatusBar(UIParent)
 	castBar.unit = unit
-	castBar:SetSize(sizeFrame:GetWidth(), config.height)
+	castBar:SetSize(sizeFrame:GetWidth(), options.height or config.height)
 	castBar:SetPoint("TOP" .. align, anchor, "BOTTOM" .. align, 0, -config.gap)
 	ns.CreateBackground(castBar)
 	ns.CreateBorder(castBar)
+
+	local fontSize = options.fontSize or config.fontSize
+	castBar.time = ns.CreateFontString(castBar, fontSize, "RIGHT")
+	castBar.time:SetPoint("RIGHT", -3, 0)
+	castBar.spellName = ns.CreateFontString(castBar, fontSize, "LEFT")
+	castBar.spellName:SetPoint("LEFT", 3, 0)
+	castBar.spellName:SetPoint("RIGHT", castBar.time, "LEFT", -4, 0)
 	castBar:Hide()
 
 	for event in pairs(startEvents) do
@@ -88,10 +125,11 @@ function ns.CreateCastBar(unit, sizeFrame, anchor, align)
 	for event in pairs(stopEvents) do
 		castBar:RegisterUnitEvent(event, unit)
 	end
-	if unit == "target" then
-		castBar:RegisterEvent("PLAYER_TARGET_CHANGED")
+	if unitChangeEvents[unit] then
+		castBar:RegisterEvent(unitChangeEvents[unit])
 	end
 	castBar:SetScript("OnEvent", OnEvent)
+	castBar:SetScript("OnUpdate", OnUpdate)
 
 	return castBar
 end

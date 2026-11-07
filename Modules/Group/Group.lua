@@ -4,8 +4,8 @@ local config = ns.config.group
 
 local Group = ns:RegisterModule("group", {})
 
-local MAX_GROUPS = 8
-local UNITS_PER_GROUP = 5
+local MAX_GROUPS = ns.MAX_GROUPS
+local UNITS_PER_GROUP = ns.UNITS_PER_GROUP
 local CELL_TEMPLATE = "StevioUIGroupCellTemplate"
 
 function ns.GetGroupCellSize()
