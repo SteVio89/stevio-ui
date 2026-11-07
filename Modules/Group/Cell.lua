@@ -73,12 +73,15 @@ local function UpdateRole(cell)
 	UnitFrameUtil.UpdateUnitFrameRoleIcon(cell)
 end
 
+-- The name comes first so a failing update further down can't leave the
+-- previous occupant's name on the cell.
 local function UpdateAll(cell)
 	if not cell.unit or not UnitExists(cell.unit) then
+		cell.nameText:SetText("")
 		return
 	end
-	UpdateHealth(cell)
 	UpdateName(cell)
+	UpdateHealth(cell)
 	UpdatePower(cell)
 	UpdatePowerColor(cell)
 	UpdateRange(cell)
@@ -109,7 +112,12 @@ local unitEvents = {
 local globalEvents = {
 	PLAYER_TARGET_CHANGED = UpdateTarget,
 	PLAYER_ROLES_ASSIGNED = UpdateRole,
-	GROUP_ROSTER_UPDATE = UpdateAll,
+	-- The headers reassign units in their own handler, which may run after
+	-- this one, so the cell refreshes again once they are done.
+	GROUP_ROSTER_UPDATE = function(cell)
+		UpdateAll(cell)
+		C_Timer.After(0, cell.refresh)
+	end,
 }
 
 local function OnEvent(cell, event)
@@ -124,6 +132,7 @@ local function SetUnit(cell, unit)
 	cell.unit = unit
 	cell:UnregisterAllEvents()
 	if not unit then
+		cell.nameText:SetText("")
 		return
 	end
 	for _, container in ipairs(cell.auraContainers) do
@@ -138,9 +147,17 @@ local function SetUnit(cell, unit)
 	UpdateAll(cell)
 end
 
+-- Unit tokens belong to roster positions, not players: after someone leaves,
+-- "party1" or "raid3" may be someone else while the header hands the cell the
+-- same token again. So a repeated token still refreshes everything.
 local function OnAttributeChanged(cell, name, value)
-	if name == "unit" and value ~= cell.unit then
+	if name ~= "unit" then
+		return
+	end
+	if value ~= cell.unit then
 		SetUnit(cell, value)
+	elseif value then
+		UpdateAll(cell)
 	end
 end
 
@@ -346,6 +363,9 @@ function ns.InitGroupCell(cell)
 			config.ownAuraSize
 		),
 	}
+	cell.refresh = function()
+		UpdateAll(cell)
+	end
 	cell:SetScript("OnEvent", OnEvent)
 	cell:HookScript("OnAttributeChanged", OnAttributeChanged)
 	cell:HookScript("OnShow", UpdateAll)
