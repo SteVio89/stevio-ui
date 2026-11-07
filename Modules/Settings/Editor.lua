@@ -17,6 +17,7 @@ local INDENT = 16
 local CONTROL_X = 300
 local OVERRIDDEN_COLOR = { 1, 0.82, 0 }
 local DEFAULT_COLOR = { 0.9, 0.9, 0.9 }
+local HEADING_COLOR = { 0.6, 0.8, 1 }
 
 local T = ns.T
 
@@ -236,7 +237,7 @@ end
 
 -- Rendering -----------------------------------------------------------------
 
-local Visit
+local Visit, ShowHeading
 
 local function SetLabel(row, path, text, depth, help)
 	row.path = path
@@ -281,6 +282,18 @@ local function AddToList(page, path)
 	list[#list + 1] = last ~= nil and Overrides.DeepCopy(last) or ""
 	page.collapsed[Overrides.Encode(path)] = false
 	Commit(page, path)
+end
+
+-- A plain title row between sections, e.g. "Position" on a module page.
+function ShowHeading(page, text)
+	local row = AcquireRow(page)
+	row.path = nil
+	row.toggle:ClearAllPoints()
+	row.toggle:SetPoint("BOTTOMLEFT", 0, 2)
+	row.toggle:SetWidth(CONTROL_X)
+	row.label:SetWidth(CONTROL_X)
+	row.label:SetText(text)
+	row.label:SetTextColor(unpack(HEADING_COLOR))
 end
 
 -- `labelOverride` names a page section's top row instead of its key.
@@ -352,9 +365,18 @@ local function Render(page)
 	page.rendering = true
 	page.used = 0
 	for _, section in ipairs(page.sections) do
-		local value = Overrides.Get(ns.overrideRoots, section.path)
-		if value ~= nil then
-			Visit(page, section.path, value, section.depth or 0, nil, nil, section.label)
+		if section.heading then
+			ShowHeading(page, section.heading)
+		else
+			local value = Overrides.Get(ns.overrideRoots, section.path)
+			if value ~= nil and section.flatten and type(value) == "table" then
+				-- The table's own header row is left out (the page title names it).
+				for _, childKey in ipairs(SortedKeys(value)) do
+					Visit(page, Copy(section.path, childKey), value[childKey], section.depth or 0)
+				end
+			elseif value ~= nil then
+				Visit(page, section.path, value, section.depth or 0, nil, nil, section.label)
+			end
 		end
 	end
 	for i = page.used + 1, #page.rows do
@@ -371,8 +393,12 @@ end
 -- Page frame ----------------------------------------------------------------
 
 -- A scrollable page with a title, a reload hint and button, and the rows of
--- `sections` ({ path = {...}, label = optional name of its top row } each). `extra(page, top)` may add own controls
--- below the title and returns the height it used.
+-- `sections`, each one of
+--   { path = {...}, label = optional name of its top row }
+--   { path = {...}, flatten = true }: the table's values without its own header row
+--   { heading = "text" }: a title row
+-- `extra(page, top)` may add own controls below the title and returns the
+-- height it used.
 function Editor.CreatePage(title, sections, extra)
 	local page = CreateFrame("Frame")
 	page.sections = sections
@@ -407,8 +433,16 @@ function Editor.CreatePage(title, sections, extra)
 		page.content:SetWidth(width)
 	end)
 
+	-- A parentless frame starts out shown, so the first time Blizzard's panel
+	-- displays it there is no OnShow and the page stayed empty until it was
+	-- hidden and shown again. Starting hidden makes every display an OnShow;
+	-- OnRefresh is what the settings panel calls on canvas pages, and a first
+	-- render here fills the page even if neither ever comes.
+	page:Hide()
 	page:SetScript("OnShow", function(self)
 		self:Render()
 	end)
+	page.OnRefresh = page.Render
+	page:Render()
 	return page
 end
