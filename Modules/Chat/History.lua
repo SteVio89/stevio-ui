@@ -84,6 +84,19 @@ function History.PublicChannel(baseName, explicit)
 	return "other", "Other", false
 end
 
+-- Community streams added to the chat are chat channels named
+-- "Community:<clubId>:<streamId>". Returns both ids as numbers, or nil.
+function History.CommunityIds(baseName)
+	local clubId, streamId = baseName:match("^Community:(%d+):(%d+)$")
+	if clubId then
+		return tonumber(clubId), tonumber(streamId)
+	end
+end
+
+function History.CommunityKey(clubId, streamId)
+	return "community:" .. clubId .. ":" .. streamId
+end
+
 -- `saved` is the SavedVariables table (may be empty); `limit` caps messages per channel.
 function History.New(saved, limit)
 	saved.channels = saved.channels or {}
@@ -94,8 +107,9 @@ function Store:Get(key)
 	return self.db.channels[key]
 end
 
--- opts: kind, chatType, label, bnetID, target, channelIndex, readOnly.
--- Created on first use; the channel number and color follow the latest message.
+-- opts: kind, chatType, label, bnetID, target, channelIndex, readOnly, clubId,
+-- streamId, relabel. Created on first use; the channel number and color follow
+-- the latest message, and so does the label with `relabel` (a renamed community).
 function Store:Ensure(key, opts)
 	local channel = self.db.channels[key]
 	if not channel then
@@ -121,12 +135,21 @@ function Store:Ensure(key, opts)
 		channel.channelIndex = opts.channelIndex
 		channel.chatType = opts.chatType
 	end
+	if opts.clubId then
+		channel.clubId, channel.streamId = opts.clubId, opts.streamId
+		channel.chatType = opts.chatType
+	end
+	if opts.relabel then
+		channel.label = opts.label
+	end
 	return channel
 end
 
--- entry: { time, sender, text, outgoing, source, sourceType, emote }: `sender` is
--- nil for system messages and text emotes, `emote` marks emotes, `source` names the chat channel of a message in "Other" and
--- `sourceType` its chat type (for its color). Returns the channel.
+-- entry: { time, sender, text, outgoing, source, sourceType, emote, colorType }:
+-- `sender` is nil for finished lines (system, NPC, loot, ...) and text emotes,
+-- `emote` marks emotes, `source` names the chat channel of a message in "Other"
+-- and `sourceType` its chat type (for its color); `colorType` is the chat type
+-- whose color a finished line takes. Returns the channel.
 function Store:Add(key, opts, entry, markUnread)
 	local channel = self:Ensure(key, opts)
 	local messages = channel.messages

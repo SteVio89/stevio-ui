@@ -34,15 +34,23 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Minimap** – square, borderless, mouse-wheel zoom, size derived from the
   screen.
 - **Channel chat and objective tracker** – chat is organised in channels like
-  Slack/Teams (party/raid/instance, guild, one per whisper partner, say
-  (including emotes such as `/e` and `/dance`), yell and the chat channels listed in `publicChannels`, e.g. General and Trade;
-  every other chat channel is collected read-only in "Other", each line
-  naming its channel before the sender; system messages such as players
-  coming online or going offline are collected read-only in "System", together
-  with addon output such as `/sui` replies, which opens that channel) with a
-  persistent per-character history, a date line before the first message of
-  each day (`dateFormat`); `x` deletes any channel but guild with
-  its history. Say, emotes, yell, chat channels and system messages only count as unread and don't pop
+  Slack/Teams, with a persistent per-character history and a date line before
+  the first message of each day (`dateFormat`):
+  - party, raid and instance; guild (with officer chat, Guild Discord and the
+    message of the day); one channel per community stream; one per whisper
+    partner; say (including emotes such as `/e` and `/dance`), yell and the chat
+    channels listed in `publicChannels`, e.g. General and Trade;
+  - "Other" collects every other chat channel read-only, each line naming its
+    channel before the sender;
+  - "NPC" collects NPC and boss speech, "Loot & Progress" loot (also other
+    players'), money, currencies, XP, honor, reputation, skill-ups,
+    achievements and level-ups, and "System" everything else Blizzard's chat
+    shows (players coming online or going offline, AFK replies, channel
+    notices, ...) together with addon output such as `/sui` replies, which
+    opens that channel. These three are read-only and coloured like Blizzard's chat.
+
+  `x` deletes any channel but guild with its history. Say, emotes, yell, chat
+  and community channels, NPC, Loot & Progress and System only count as unread and don't pop
   up the chat. Hidden by default, toggled by key, with edge
   badges that light up on new whispers, party or guild messages; it opens on
   the channel with the latest activity. Blizzard's chat stays hidden; only its

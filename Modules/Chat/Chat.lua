@@ -104,6 +104,19 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 		if issecretvalue(baseName) or issecretvalue(channelIndex) or not baseName then
 			return nil
 		end
+		local clubId, streamId = ns.ChatHistory.CommunityIds(baseName)
+		if clubId then
+			local resolve = ChatFrameUtil and ChatFrameUtil.ResolveChannelName
+			local label = resolve and resolve(baseName) or baseName
+			return ns.ChatHistory.CommunityKey(clubId, streamId), {
+				kind = "community",
+				chatType = "CHANNEL" .. channelIndex,
+				label = label,
+				relabel = true,
+				clubId = clubId,
+				streamId = streamId,
+			}
+		end
 		local key, label, own = ns.ChatHistory.PublicChannel(baseName, config.publicChannels)
 		if own then
 			return key, { kind = def.kind, chatType = "CHANNEL" .. channelIndex, label = label, channelIndex = channelIndex }
@@ -120,20 +133,9 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	return "whisper:" .. sender, { kind = def.kind, chatType = def.chatType, label = sender, target = sender }
 end
 
--- Battle.net notices arrive as a token (e.g. "FRIEND_ONLINE") plus the friend's
--- name; Blizzard's text for it is a global. Only the tokens listed in `toast`
--- are shown, others (broadcasts, requests) take different arguments.
-local function SystemText(def, text, sender)
-	if def.toast then
-		local template = def.toast[text] and _G["BN_INLINE_TOAST_" .. text]
-		return template and template:format(sender)
-	end
-	return text
-end
-
 -- Stores a message (`entry`, nil when its contents are secret) in channel `key`
 -- and shows it according to `def` (see config.events).
-local function Receive(def, key, opts, entry)
+function C.Receive(def, key, opts, entry)
 	local viewing = C.Attended() and state.selected == key
 	if not entry then
 		C.store:AddUnreadOnly(key, opts, time())
@@ -167,17 +169,20 @@ end
 -- only light up the channel as unread.
 local function OnChatMessage(event, text, sender, ...)
 	local def = config.events[event]
-	local channelIndex, baseName = select(6, ...)
+	local _, channelName, otherPlayer, _, _, channelIndex, baseName = ...
 	local bnetID = select(11, ...)
 	local secret = issecretvalue(text) or issecretvalue(sender)
-	if def.system or def.textEmote then
-		if def.system and not secret then
-			text = SystemText(def, text, sender)
+	local chatType = event:sub(10)
+	if def.format then
+		if not secret then
+			text = C.FormatLine(def, chatType, text, sender, channelName, otherPlayer, channelIndex)
 			if not text then
-				return -- a Battle.net notice that isn't shown as text
+				return -- a notice that isn't shown as text
 			end
 		end
-		sender = nil -- system messages have none, text emotes name it in their text
+		sender = nil -- finished lines name whoever they are about in their text
+	elseif def.textEmote then
+		sender = nil -- text emotes name the sender in their text
 	elseif not issecretvalue(sender) and not def.bnet then
 		sender = Ambiguate(sender, "short")
 	end
@@ -193,11 +198,13 @@ local function OnChatMessage(event, text, sender, ...)
 			text = (def.prefix or "") .. text,
 			outgoing = def.outgoing,
 			emote = def.emote,
+			-- Finished lines take the color of their own kind (loot, boss emote, ...).
+			colorType = def.format and chatType,
 			-- "Other" mixes channels, so each line names its own.
 			source = source,
 			sourceType = sourceType,
 		}
-	Receive(def, key, opts, entry)
+	C.Receive(def, key, opts, entry)
 end
 
 -- Addon output (print(), e.g. /sui) normally lands in Blizzard's chat, which is
@@ -208,12 +215,12 @@ local function OnPrint(...)
 	for i = 1, select("#", ...) do
 		local value = select(i, ...)
 		if issecretvalue(value) then
-			Receive(config.print, config.print.key, config.print, nil)
+			C.Receive(config.print, config.print.key, config.print, nil)
 			return
 		end
 		parts[i] = tostring(value)
 	end
-	Receive(config.print, config.print.key, config.print, { time = time(), text = table.concat(parts, " ") })
+	C.Receive(config.print, config.print.key, config.print, { time = time(), text = table.concat(parts, " "), colorType = "SYSTEM" })
 end
 
 function C.Send(text)
@@ -222,14 +229,16 @@ function C.Send(text)
 	if not channel or text == "" or channel.readOnly then
 		return
 	end
-	if channel.bnetID then
-		BNSendWhisper(channel.bnetID, text)
+	if channel.clubId then
+		C_Club.SendMessage(channel.clubId, channel.streamId, text)
+	elseif channel.bnetID then
+		C_BattleNet.SendWhisper(channel.bnetID, text)
 	elseif channel.kind == "whisper" then
-		SendChatMessage(text, "WHISPER", nil, channel.target)
+		C_ChatInfo.SendChatMessage(text, "WHISPER", nil, channel.target)
 	elseif channel.channelIndex then
-		SendChatMessage(text, "CHANNEL", nil, channel.channelIndex)
+		C_ChatInfo.SendChatMessage(text, "CHANNEL", nil, channel.channelIndex)
 	else
-		SendChatMessage(text, channel.chatType)
+		C_ChatInfo.SendChatMessage(text, channel.chatType)
 	end
 end
 
@@ -312,6 +321,7 @@ function Chat:OnEnable()
 	hooksecurefunc("print", OnPrint)
 
 	C.SetupBlizzardChat()
+	C.SetupNotices()
 
 	C.Update()
 end

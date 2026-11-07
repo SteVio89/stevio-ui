@@ -55,6 +55,8 @@ Modules\Chat\Blizzard.lua
 Modules\Chat\View.lua
 Modules\Chat\Copy.lua
 Modules\Chat\Badge.lua
+Modules\Chat\Format.lua
+Modules\Chat\Notices.lua
 Modules\Chat\Chat.lua
 
 Modules\DamageMeter\Config.lua

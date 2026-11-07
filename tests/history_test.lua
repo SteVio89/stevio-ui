@@ -112,3 +112,16 @@ transcript = History.Transcript({ messages = {
 check(transcript == "-- d0 --\n[t10] A: x\n[t20] B: y\n[--:--] C: z\n-- d1 --\n[t120] A: w", "transcript with dates: " .. transcript)
 check(History.Transcript({ messages = { { time = 1, text = "a" } } }, nil) == "[1] a", "no date lines without day")
 print("dates ok")
+
+-- community streams added to the chat
+local clubId, streamId = History.CommunityIds("Community:123:4")
+check(clubId == 123 and streamId == 4, "community ids")
+check(History.CommunityIds("Trade") == nil, "not a community")
+check(History.CommunityKey(123, 4) == "community:123:4", "community key")
+local communityStore = History.New({}, 3)
+communityStore:Add("community:1:2", { kind = "community", chatType = "CHANNEL3", label = "Old", relabel = true, clubId = 1, streamId = 2 }, { time = 1, text = "a" }, true)
+communityStore:Add("community:1:2", { kind = "community", chatType = "CHANNEL4", label = "New", relabel = true, clubId = 1, streamId = 2 }, { time = 2, text = "b" }, true)
+local community = communityStore:Get("community:1:2")
+check(community.label == "New" and community.clubId == 1 and community.streamId == 2, "community follows its name")
+check(community.chatType == "CHANNEL4", "community color follows the channel number")
+print("communities ok")
