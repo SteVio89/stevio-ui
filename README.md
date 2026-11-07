@@ -53,7 +53,11 @@ until it is needed, and as much as possible can be done from the keyboard.
   and community channels, NPC, Loot & Progress and System only count as unread and don't pop
   up the chat. Hidden by default, toggled by key, with edge
   badges that light up on new whispers, party or guild messages; it opens on
-  the channel with the latest activity. Blizzard's chat stays hidden; only its
+  the channel with the latest activity. Slash commands typed into the channel
+  view's own input run there (`/w Bob hi`, `/p`, `/dance`, `/sui`, ...);
+  protected ones such as `/cast` or `/target`, which Blizzard only runs from its
+  own input, are handed to that input pre-filled, and Enter runs them.
+  Blizzard's chat stays hidden; only its
   input box (Enter, slash commands) is used, shown right under the channel view
   and hidden together with it. Blizzard's chat toasts (e.g. a Battle.net friend
   coming online) pop up right under that input box.

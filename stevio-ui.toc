@@ -57,6 +57,8 @@ Modules\Chat\Copy.lua
 Modules\Chat\Badge.lua
 Modules\Chat\Format.lua
 Modules\Chat\Notices.lua
+Modules\Chat\Parse.lua
+Modules\Chat\Commands.lua
 Modules\Chat\Chat.lua
 
 Modules\DamageMeter\Config.lua

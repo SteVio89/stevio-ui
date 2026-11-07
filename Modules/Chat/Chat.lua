@@ -259,6 +259,11 @@ local function CurrentBattleNetID(channel)
 end
 
 function C.Send(text)
+	-- Slash commands run in any channel, read-only ones included (see Commands.lua).
+	if text:sub(1, 1) == "/" then
+		C.RunCommand(text)
+		return
+	end
 	local channel = C.Selected()
 	-- "Other" mixes several channels and "System" has no sender: no one to answer to.
 	if not channel or text == "" or channel.readOnly then
