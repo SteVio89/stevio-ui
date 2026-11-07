@@ -20,8 +20,10 @@ until it is needed, and as much as possible can be done from the keyboard.
 
 ## Features
 
-- **Unit frames** – player, target, pet and target-of-target as slim bars with
-  own cast bars and combo point segments.
+- **Unit frames** – player, target, focus, pet and target-of-target as slim
+  bars with health text ("12.3k · 87%"), own cast bars with spell name and
+  remaining time (focus has a smaller one), combo point segments and your own
+  debuffs on the target in a row above it.
 - **Group grid** – up to 40 players; class colours, the name as a faint
   watermark, resource, incoming heals and absorb shields, dispellable debuffs,
   your own HoTs and buffs along the top, role, range, death, aggro and target highlight.

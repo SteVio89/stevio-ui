@@ -7,6 +7,9 @@ local _, ns = ...
 local barBlockWidth = 454  -- 12 buttons at Edit Mode icon size 80% plus padding
 local barBlockTop = 152    -- top edge of the third action bar row
 local sideGap = 16
+-- Half the width of the group grid (8 columns of 80, see Cell.xml, with 7 gaps
+-- of 3): what sits above the unit frames stays outside it.
+local groupHalfWidth = 331
 
 ns.layout = {
 	barBlockWidth = barBlockWidth,
@@ -22,6 +25,13 @@ ns.layout = {
 
 	player = { point = "TOPRIGHT", relativePoint = "BOTTOM", x = -(barBlockWidth / 2 + sideGap), y = barBlockTop },
 	target = { point = "TOPLEFT", relativePoint = "BOTTOM", x = barBlockWidth / 2 + sideGap, y = barBlockTop },
+	-- Above the target's name line (which ends at about barBlockTop + 17),
+	-- right of the group grid, running towards the minimap.
+	targetAuras = { point = "BOTTOMLEFT", relativePoint = "BOTTOM", x = groupHalfWidth + 4, y = barBlockTop + 20 },
+	-- Above the player's name line, left of the group grid: its cast bar
+	-- (10 high, 6 below it) ends where the player's name line ends. Overlaps
+	-- the loot ticker, which is click-through.
+	focus = { point = "BOTTOMRIGHT", relativePoint = "BOTTOM", x = -(groupHalfWidth + 4), y = barBlockTop + 36 },
 
 	group = { point = "BOTTOM", x = 0, y = barBlockTop + 24 },
 

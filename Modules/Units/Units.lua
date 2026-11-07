@@ -9,10 +9,18 @@ Units.frames = {}
 -- Health, power and names may be secret values in combat. They can be passed
 -- straight into widgets, but never compared or used in arithmetic.
 
+-- "12.3k · 87%": health and its percentage may be secret, so both go straight
+-- into the font string, abbreviated and scaled by the client.
 local function UpdateHealth(frame)
 	local unit = frame.unit
+	local health = UnitHealth(unit)
 	frame.health:SetMinMaxValues(0, UnitHealthMax(unit))
-	frame.health:SetValue(UnitHealth(unit))
+	frame.health:SetValue(health)
+	frame.healthText:SetFormattedText(
+		"%s · %d%%",
+		AbbreviateNumbers(health),
+		UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
+	)
 end
 
 local function UpdateHealthColor(frame)
@@ -132,6 +140,9 @@ local function CreateUnitFrame(spec)
 	frame.health:SetPoint("TOPRIGHT")
 	frame.health:SetHeight(spec.healthHeight)
 
+	frame.healthText = ns.CreateFontString(frame.health, spec.healthTextSize, "RIGHT")
+	frame.healthText:SetPoint("RIGHT", -3, 0)
+
 	if hasPower then
 		frame.power = ns.CreateStatusBar(frame)
 		frame.power:SetPoint("BOTTOMLEFT")
@@ -186,6 +197,8 @@ local function CreateUnitFrame(spec)
 		end
 		if unit == "target" then
 			frame:RegisterEvent("PLAYER_TARGET_CHANGED")
+		elseif unit == "focus" then
+			frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
 		elseif unit == "pet" then
 			frame:RegisterUnitEvent("UNIT_PET", "player")
 		end
@@ -213,6 +226,59 @@ local function HideBlizzardFrames()
 	ns.HideBlizzard(PetCastingBarFrame)
 end
 
+-- Runs once per button before Blizzard locks it against tainted access while
+-- auras are secret, so this is the only place our code may touch it.
+local function InitTargetAura(button)
+	local size = config.targetAuras.size
+	button:EnableMouse(false)
+	button:SetSize(size, size)
+
+	button.texture = button:CreateTexture(nil, "ARTWORK")
+	button.texture:SetAllPoints()
+	button.texture:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+	button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+	button.cooldown:SetAllPoints()
+	button.cooldown:SetReverse(true)
+	button.cooldown:SetDrawEdge(false)
+	button.cooldown:SetHideCountdownNumbers(true)
+
+	button.count = ns.CreateFontString(button, 10, "RIGHT")
+	button.count:SetPoint("BOTTOMRIGHT", 1, -1)
+	ns.CreateBorder(button)
+
+	button:SetIcon(button.texture)
+	button:SetDurationCooldown(button.cooldown)
+	button:SetApplicationCount(button.count)
+end
+
+-- Own debuffs on the target: target auras turn secret in combat, so
+-- Blizzard's secure container reads and tracks them (see Group/Cell.lua).
+local function CreateTargetAuras()
+	local options = config.targetAuras
+	local container = CreateFrame("AuraContainer", nil, UIParent, "CustomAuraContainerTemplate")
+	container:SetSize(options.max * (options.size + options.spacing), options.size)
+	ns.SetPoint(container, ns.layout.targetAuras)
+	container:SetEditModePreviewEnabled(false)
+	container:SetFlowLayoutAnchorPoint("TOPLEFT")
+	container:SetFlowLayoutGrowthDirection(AnchorUtil.FlowDirection.Right, AnchorUtil.FlowDirection.Down)
+	container:AddAuraGroup("own", options.filter, {
+		maxFrameCount = options.max,
+		layout = { elementSpacing = options.spacing },
+		initializeFrame = InitTargetAura,
+	})
+	container:SetUnit("target")
+	container:SetEnabled(true)
+	-- A new target brings a new set of auras; the container exposes
+	-- UpdateAllAuras for such outside triggers and is left untouched otherwise.
+	local watcher = CreateFrame("Frame")
+	watcher:RegisterEvent("PLAYER_TARGET_CHANGED")
+	watcher:SetScript("OnEvent", function()
+		container:UpdateAllAuras()
+	end)
+	return container
+end
+
 function Units:OnEnable()
 	HideBlizzardFrames()
 
@@ -223,4 +289,11 @@ function Units:OnEnable()
 	ns.CreateClassPower(self.frames.player)
 	ns.CreateCastBar("player", self.frames.player, self.frames.pet, "RIGHT")
 	ns.CreateCastBar("target", self.frames.target, self.frames.targettarget, "LEFT")
+	if self.frames.focus then
+		ns.CreateCastBar("focus", self.frames.focus, self.frames.focus, "RIGHT", {
+			height = config.castBar.focusHeight,
+			fontSize = config.castBar.focusFontSize,
+		})
+	end
+	CreateTargetAuras()
 end
