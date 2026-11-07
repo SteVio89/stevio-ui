@@ -207,6 +207,25 @@ local function OnCVarChanged(_, name)
 	end
 end
 
+-- Applies the effective bindings and CVars right away (out of combat), after
+-- the options panel changed an override; `cvarName` is first set to `cvarValue`
+-- (a CVar that stopped being managed, back to its default).
+function ns.ApplyOverridesNow(cvarName, cvarValue)
+	ns:RunAfterCombat(function()
+		if cvarName and cvarValue then
+			applying = true
+			SetCVar(cvarName, cvarValue)
+			applying = false
+		end
+		if config.profile.cvars then
+			ApplyCVars(ns.EffectiveCVars())
+		end
+		if config.profile.bindings then
+			ApplyBindings(ns.EffectiveBindings())
+		end
+	end)
+end
+
 ns:RegisterEvent("UPDATE_BINDINGS", OnBindingsChanged)
 ns:RegisterEvent("CVAR_UPDATE", OnCVarChanged)
 
@@ -235,6 +254,7 @@ function Settings:OnEnable()
 	if config.consoleKey then
 		SetConsoleKey(config.consoleKey)
 	end
+	ns.SetupOptionsPanel()
 
 	ns:RegisterSlashCommand("export", function()
 		local text = ns.BuildProfileExport()

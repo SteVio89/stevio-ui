@@ -83,3 +83,6 @@ Modules\Settings\Config.lua
 Modules\Settings\Profile.lua
 Modules\Settings\Export.lua
 Modules\Settings\Settings.lua
+Modules\Settings\Labels.lua
+Modules\Settings\Editor.lua
+Modules\Settings\Panel.lua
