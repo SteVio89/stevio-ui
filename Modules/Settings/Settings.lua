@@ -90,7 +90,7 @@ end
 local function Restore()
 	local backup = StevioUIState and StevioUIState.backup
 	if not backup then
-		print(("|cff33ff99%s|r: Keine Sicherung vorhanden."):format(addonName))
+		ns.Print("Keine Sicherung vorhanden.")
 		return
 	end
 	ApplyActionBars(backup.actionBars)
@@ -116,7 +116,7 @@ local function ApplyProfile()
 		changed[#changed + 1] = "bindings"
 	end
 	if #changed > 0 then
-		print(("|cff33ff99%s|r: Profil angewendet (%s)."):format(addonName, table.concat(changed, ", ")))
+		ns.Print(("Profil angewendet (%s)."):format(table.concat(changed, ", ")))
 	end
 end
 

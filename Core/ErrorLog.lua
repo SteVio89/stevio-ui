@@ -55,13 +55,13 @@ ns:RegisterSlashCommand("errors", function(input)
 		if ScriptErrorsFrame then
 			firstSessionIndex = #ScriptErrorsFrame.errorData + 1
 		end
-		print(("|cff33ff99%s|r: error log cleared"):format(addonName))
+		ns.Print("error log cleared")
 		return
 	end
 
 	local all = AllErrors()
 	if #all == 0 then
-		print(("|cff33ff99%s|r: no errors logged – /sui errors clear"):format(addonName))
+		ns.Print("no errors logged – /sui errors clear")
 		return
 	end
 	local parts = {}

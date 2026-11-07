@@ -224,20 +224,22 @@ local function OnChatMessage(event, text, sender, ...)
 	C.Receive(def, key, opts, entry)
 end
 
--- Addon output (print(), e.g. /sui) normally lands in Blizzard's chat, which is
--- never shown; it goes to the System channel instead and opens it, since it
--- usually answers something just typed.
+-- Addon output (print()) normally lands in Blizzard's chat, which is never
+-- shown; it goes to the System channel instead. Our own (/sui replies, see
+-- ns.Print) opens it, since it answers something just typed; other addons'
+-- output only counts as unread.
 local function OnPrint(...)
+	local def = ns.printing and config.print or config.notices.system
 	local parts = {}
 	for i = 1, select("#", ...) do
 		local value = select(i, ...)
 		if issecretvalue(value) then
-			C.Receive(config.print, config.print.key, config.print, nil)
+			C.Receive(def, def.key, def, nil)
 			return
 		end
 		parts[i] = tostring(value)
 	end
-	C.Receive(config.print, config.print.key, config.print, { time = time(), text = table.concat(parts, " "), colorType = "SYSTEM" })
+	C.Receive(def, def.key, def, { time = time(), text = table.concat(parts, " "), colorType = "SYSTEM" })
 end
 
 -- The account id may change between sessions, so channels with a BattleTag
@@ -328,9 +330,9 @@ end
 -- /sui chat: what the channel store holds, to check messages arrive at all.
 local function PrintChannels()
 	local channels = C.store:Sorted(config.kindOrder)
-	print(("|cff33ff99%s|r: %d chat channels"):format(ns.name, #channels))
+	ns.Print(("%d chat channels"):format(#channels))
 	for _, channel in ipairs(channels) do
-		print(
+		ns.PrintLine(
 			("  %s%s|r [%s] %d messages, %d unread%s"):format(
 				C.ColorCode(C.ChannelColor(channel)),
 				channel.label,

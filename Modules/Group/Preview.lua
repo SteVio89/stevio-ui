@@ -1,4 +1,4 @@
-local addonName, ns = ...
+local _, ns = ...
 
 local config = ns.config.group
 local style = ns.config.style
@@ -119,6 +119,6 @@ ns:RegisterSlashCommand("test", function(input)
 		ShowPreview(math.min(math.floor(count), MAX_UNITS))
 	else
 		HidePreview()
-		print(("|cff33ff99%s|r: /sui test 5|10|25|40 – /sui test (aus)"):format(addonName))
+		ns.Print("/sui test 5|10|25|40 – /sui test (aus)")
 	end
 end)

@@ -46,8 +46,8 @@ until it is needed, and as much as possible can be done from the keyboard.
     players'), money, currencies, XP, honor, reputation, skill-ups,
     achievements and level-ups, and "System" everything else Blizzard's chat
     shows (players coming online or going offline, AFK replies, channel
-    notices, ...) together with addon output such as `/sui` replies, which
-    opens that channel. These three are read-only and coloured like Blizzard's chat.
+    notices, ...) together with addon output: `/sui` replies open that
+    channel, other addons' output only counts as unread. These three are read-only and coloured like Blizzard's chat.
 
   `x` deletes any channel but guild with its history. Say, emotes, yell, chat
   and community channels, NPC, Loot & Progress and System only count as unread and don't pop

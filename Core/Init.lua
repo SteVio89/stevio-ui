@@ -31,6 +31,26 @@ function ns:RegisterEvent(event, handler)
 	table.insert(handlers[event], handler)
 end
 
+-- Addon output: "stevio-ui: text", or a further line without the prefix.
+-- `ns.printing` marks it as ours while it runs through print(), so the chat
+-- can open on it (an answer to something just typed) but not on other addons' output.
+local function PrintMarked(line)
+	ns.printing = true
+	local ok, err = pcall(print, line)
+	ns.printing = false
+	if not ok then
+		error(err, 0)
+	end
+end
+
+function ns.Print(text)
+	PrintMarked(("|cff33ff99%s|r: %s"):format(addonName, text))
+end
+
+function ns.PrintLine(text)
+	PrintMarked(text)
+end
+
 local slashCommands = {}
 
 function ns:RegisterSlashCommand(name, handler)
@@ -46,7 +66,7 @@ SlashCmdList.STEVIOUI = function(input)
 	else
 		local names = GetKeysArray(slashCommands)
 		table.sort(names)
-		print(("|cff33ff99%s|r: /sui %s"):format(addonName, table.concat(names, " | ")))
+		ns.Print("/sui " .. table.concat(names, " | "))
 	end
 end
 
