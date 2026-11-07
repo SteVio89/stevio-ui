@@ -111,6 +111,7 @@ rolls:Add({ link = link, key = "Bob" .. link, count = 1 }, 2, false)
 local decided = rolls:Add({ link = link, key = "drop:1:1", replace = true, roll = true, count = 1 }, 3, false)
 check(#rolls.entries == 2 and rolls.entries[2] == decided, "roll keeps its row")
 check(decided.count == 1 and decided.y == 0 and decided.time == 3, "roll replaced, not added up")
+check(rolls:Find("drop:1:1") == decided and rolls:Find("drop:9:9") == nil, "find by key")
 
 -- Loot history drops.
 local State = Feed.RollState

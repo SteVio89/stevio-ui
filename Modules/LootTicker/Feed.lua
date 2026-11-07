@@ -187,6 +187,15 @@ function Feed:Add(entry, now, merge)
 	return entry
 end
 
+-- The entry with `key`, or nil.
+function Feed:Find(key)
+	for _, entry in ipairs(self.entries) do
+		if entry.key == key then
+			return entry
+		end
+	end
+end
+
 -- Drops entries that have faded out and returns how many are left.
 function Feed:Expire(now, options)
 	for i = #self.entries, 1, -1 do
