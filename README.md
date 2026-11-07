@@ -61,10 +61,13 @@ until it is needed, and as much as possible can be done from the keyboard.
   input box (Enter, slash commands) is used, shown right under the channel view
   and hidden together with it. Blizzard's chat toasts (e.g. a Battle.net friend
   coming online) pop up right under that input box.
-- **Loot ticker** – your last ten looted items, currencies and gold above the
+- **Loot ticker** – your last 24 looted items, currencies and gold above the
   bags, with icon, name in quality colour and count; gold is shown with coin
-  icons on one line. New loot enters at the bottom
-  and pushes older lines up; when all ten rows are taken the oldest drops out,
+  icons on one line. Other group members' loot from rare quality up
+  (`groupMinQuality`) appears as "Name: item" with the name in class colour,
+  and every group loot roll message (selections, rolls, winners) is listed
+  too; lines about other players are dimmed. New loot enters at the bottom
+  and pushes older lines up; when all rows are taken the oldest drops out,
   and every line fades out slowly after a few seconds. Looting more of
   something still listed adds to that line.
 - **Quest rewards** – marks the choice with the highest vendor value.
