@@ -90,28 +90,6 @@ l2, _, name = Feed.Parse("Anna erhält Beute: " .. link .. ".", others)
 check(l2 == link and name == "Anna", "others' loot, positional")
 check(select(3, Feed.Parse("You receive loot: " .. link .. ".", patterns)) == nil, "own loot has no name")
 
--- Roll messages: the roll number isn't a count, the name is the roller.
--- Messages about yourself come first: "%s won" would also match "You won".
-local rolls = Feed.Patterns(
-	"You won: %s",
-	"%1$s won: %3$s |cff818181(Need - %2$d)|r",
-	"Need Roll - %d for %s by %s + Role Bonus",
-	"Need Roll - %d for %s by %s",
-	"%s won: %s",
-	"Everyone passed on: %s"
-)
-local rollLink, roller = Feed.ParseRoll("Bob won: " .. link .. " |cff818181(Need - 87)|r", rolls)
-check(rollLink == link and roller == "Bob", "won, with roll")
-rollLink, roller = Feed.ParseRoll("Need Roll - 87 for " .. link .. " by Anna", rolls)
-check(rollLink == link and roller == "Anna", "rolled")
-rollLink, roller = Feed.ParseRoll("Need Roll - 5 for " .. link .. " by Anna + Role Bonus", rolls)
-check(rollLink == link and roller == "Anna", "rolled with role bonus")
-rollLink, roller = Feed.ParseRoll("You won: " .. link, rolls)
-check(rollLink == link and roller == nil, "own win has no name")
-rollLink, roller = Feed.ParseRoll("Everyone passed on: " .. link, rolls)
-check(rollLink == link and roller == nil, "everyone passed")
-check(Feed.ParseRoll("You receive loot: " .. link .. ".", rolls) == nil, "loot is no roll")
-
 local qualityHex = { [2] = "ff1eff00", [3] = "ff0070dd", [4] = "ffa335ee" }
 check(Feed.QualityFromColor("ff0070dd", qualityHex) == 3, "quality from link color")
 check(Feed.QualityFromColor("FFA335EE", qualityHex) == 4, "case-insensitive")
@@ -124,8 +102,83 @@ group:Add({ link = link, key = "Bob" .. link, count = 1 }, 1, true)
 group:Add({ link = link, key = "Al" .. link, count = 1 }, 2, true)
 group:Add({ link = link, key = "Bob" .. link, count = 2 }, 3, true)
 check(#group.entries == 2 and group.entries[1].count == 3, "merged per player")
-group:Add({ link = link, roll = true, count = 1 }, 4, true)
-group:Add({ link = link, roll = true, count = 1 }, 5, true)
-check(#group.entries == 4, "rolls don't merge")
+
+-- A roll replaces the row of its drop in place, without adding counts,
+-- even when repeats don't merge.
+local rolls = Feed.New(5)
+rolls:Add({ link = link, key = "drop:1:1", replace = true, roll = true, count = 1, y = 0 }, 1, false)
+rolls:Add({ link = link, key = "Bob" .. link, count = 1 }, 2, false)
+local decided = rolls:Add({ link = link, key = "drop:1:1", replace = true, roll = true, count = 1 }, 3, false)
+check(#rolls.entries == 2 and rolls.entries[2] == decided, "roll keeps its row")
+check(decided.count == 1 and decided.y == 0 and decided.time == 3, "roll replaced, not added up")
+
+-- Loot history drops.
+local State = Feed.RollState
+check(Feed.ShortName("Bob-Antonidas") == "Bob" and Feed.ShortName("Bob") == "Bob", "short name")
+check(Feed.ShortName(nil) == nil, "no name")
+
+local open = Feed.RollSummary({
+	itemHyperlink = link,
+	playerRollState = State.NeedMainSpec,
+	allPassed = false,
+	rollInfos = {
+		{ playerName = "Bob", playerClass = "MAGE", isSelf = false, state = State.Greed },
+		{ playerName = "Me", playerClass = "PRIEST", isSelf = true, state = State.NeedMainSpec },
+	},
+})
+check(open.pending and not open.winner, "open roll")
+check(open.mine and open.mine.state == State.NeedMainSpec and open.mine.roll == nil, "own choice, no number yet")
+
+local undecided = Feed.RollSummary({ playerRollState = State.NoRoll, rollInfos = {} })
+check(undecided.pending and undecided.mine == nil, "not chosen yet")
+check(
+	Feed.RollSummary({ playerRollState = State.Pass, rollInfos = {} }).mine.state == State.Pass,
+	"own pass from state"
+)
+
+local won = Feed.RollSummary({
+	playerRollState = State.Greed,
+	winner = { playerName = "Bob-Realm", playerClass = "MAGE", isSelf = false, state = State.NeedMainSpec, roll = 98 },
+	rollInfos = {
+		{ playerName = "Bob-Realm", playerClass = "MAGE", isSelf = false, state = State.NeedMainSpec, roll = 98 },
+		{ playerName = "Me", playerClass = "PRIEST", isSelf = true, state = State.Greed, roll = 45 },
+	},
+})
+check(not won.pending and won.winner.name == "Bob" and won.winner.roll == 98, "winner without realm")
+check(won.mine.roll == 45, "own roll number")
+local passed = Feed.RollSummary({ allPassed = true, playerRollState = State.Pass, rollInfos = {} })
+check(passed.allPassed and not passed.pending, "all passed")
+
+-- A loot message for a won item belongs to its roll row; the loot line it
+-- would have made before the roll was decided is taken back.
+local drops = Feed.New(5)
+drops:Add({ link = link, key = "drop:1:2", replace = true, roll = true, count = 1, winner = won.winner }, 1)
+check(drops:RollFor(link, "Bob-Realm") == drops.entries[1], "loot of the winner")
+check(drops:RollFor(link, "Anna") == nil, "loot of someone else")
+check(drops:RollFor(link, nil) == nil, "own loot of an item Bob won")
+check(drops:RollFor(currency, "Bob") == nil, "other item")
+drops.entries[1].received = true
+check(drops:RollFor(link, "Bob") == nil, "each roll claims one message")
+local mine = Feed.New(5)
+mine:Add({ link = link, key = "drop:1:3", replace = true, roll = true, count = 1, winner = { isSelf = true } }, 1)
+check(mine:RollFor(link, nil) ~= nil and mine:RollFor(link, "Bob") == nil, "own win")
+
+local early = Feed.New(5)
+early:Add({ link = link, key = "Bob" .. link, count = 1, looter = "Bob-Realm" }, 10)
+early:Add({ link = link, key = link, count = 1 }, 10)
+check(not early:TakeLoot(link, "Bob", 20, 5), "too old to take back")
+check(early:TakeLoot(link, "Bob", 12, 5) and #early.entries == 1, "winner's line taken back")
+check(early.entries[1].looter == nil, "own line stays")
+check(early:TakeLoot(link, nil, 12, 5) and #early.entries == 0, "own line taken back")
+
+-- Fading: group lines stay shorter, open rolls stay until they end.
+local opts = { fadeInTime = 0.2, holdTime = 10, fadeOutTime = 5, groupHoldTime = 3 }
+check(Feed.EntryAlpha({ time = 0 }, 8, opts) == 1, "own line held")
+check(Feed.EntryAlpha({ time = 0, other = true }, 9, opts) == nil, "group line gone")
+local pending = { time = 0, pendingUntil = 60 }
+check(Feed.EntryAlpha(pending, 0.1, opts) == 0.5, "open roll fades in")
+check(Feed.EntryAlpha(pending, 59, opts) == 1, "open roll held")
+check(Feed.EntryAlpha(pending, 65, opts) == 1, "held after it timed out")
+check(Feed.EntryAlpha(pending, 76, opts) == nil, "then fades out")
 
 print("loot feed tests passed")
