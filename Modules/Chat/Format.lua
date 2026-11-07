@@ -11,6 +11,14 @@ local C = ns.ChatInternal
 
 local formatters = {}
 
+-- Player names as Blizzard's chat shows them: the realm only for other realms.
+local function PlayerName(sender)
+	if not sender or sender == "" then
+		return sender
+	end
+	return Ambiguate(sender, "none")
+end
+
 function formatters.plain(_, text)
 	return text
 end
@@ -19,6 +27,7 @@ end
 -- the name as "%s" in their own text, so prefix and text are formatted together;
 -- text with a stray "%" (a player's AFK reply) falls back to the prefix alone.
 function formatters.get(chatType, text, sender)
+	sender = PlayerName(sender)
 	local prefix = _G["CHAT_" .. chatType .. "_GET"] or "%s: "
 	local ok, line = pcall(format, prefix .. text, sender, sender)
 	if ok then
@@ -29,7 +38,7 @@ end
 
 -- Achievements name the player as "%s" inside the text.
 function formatters.name(_, text, sender)
-	local ok, line = pcall(format, text, "[" .. Ambiguate(sender, "none") .. "]")
+	local ok, line = pcall(format, text, "[" .. PlayerName(sender) .. "]")
 	return ok and line or text
 end
 
@@ -39,15 +48,15 @@ function formatters.guildLoot(_, text, sender)
 	if not from then
 		return text
 	end
-	return text:sub(1, from - 1) .. "[" .. Ambiguate(sender, "none") .. "]" .. text:sub(to + 1)
+	return text:sub(1, from - 1) .. "[" .. PlayerName(sender) .. "]" .. text:sub(to + 1)
 end
 
 function formatters.ignored(_, _, sender)
-	return format(CHAT_IGNORED, sender)
+	return format(CHAT_IGNORED, PlayerName(sender))
 end
 
 function formatters.filtered(_, _, sender)
-	return format(CHAT_FILTERED, sender)
+	return format(CHAT_FILTERED, PlayerName(sender))
 end
 
 function formatters.restricted()
