@@ -5,29 +5,74 @@ local _, ns = ...
 -- style, layout, reset) and pages for the keybinding and CVar overrides.
 -- Everything saved here lives in StevioUIConfig, account-wide.
 
-local Overrides = ns.Overrides
 local Editor = ns.ConfigEditor
 local config = ns.config.settings
 
 local T = ns.T
 
--- Module pages in sidebar order: config key and title.
+-- Module pages in sidebar order: config key, titles and the Layout.lua
+-- positions the module places, shown on its page below its options.
 local MODULES = {
-	{ "units", "Unit frames", "Einheitenfenster" },
-	{ "group", "Group grid", "Gruppenraster" },
+	{ "units", "Unit frames", "Einheitenfenster", layout = { "player", "target", "focus", "targetAuras" } },
+	{ "group", "Group grid", "Gruppenraster", layout = { "group" } },
 	{ "keyboardHealing", "Keyboard healing", "Tastaturheilung" },
-	{ "actionbars", "Action bars", "Aktionsleisten" },
-	{ "minimap", "Minimap", "Minikarte" },
+	{
+		"actionbars",
+		"Action bars",
+		"Aktionsleisten",
+		layout = { "actionBars", "stanceBar", "petBar", "menubar", "bags" },
+	},
+	{ "minimap", "Minimap", "Minikarte", layout = { "minimap" } },
 	{ "tooltip", "Tooltip", "Tooltip" },
-	{ "auras", "Auras", "Auren" },
-	{ "tracker", "Objective tracker", "Questverfolgung" },
-	{ "chat", "Chat", "Chat" },
-	{ "lootTicker", "Loot ticker", "Beuteticker" },
+	{ "auras", "Auras", "Auren", layout = { "buffs", "debuffs" } },
+	{ "tracker", "Objective tracker", "Questverfolgung", layout = { "tracker", "trackerBadge" } },
+	{ "chat", "Chat", "Chat", layout = { "chat", "chatBadge" } },
+	{ "lootTicker", "Loot ticker", "Beuteticker", layout = { "lootTicker" } },
 	{ "notch", "Notch", "Notch" },
 	{ "questRewards", "Quest rewards", "Questbelohnungen" },
 	{ "accessibility", "Quickjump", "Schnellsprung" },
 	{ "settings", "Profile", "Profil" },
 }
+
+local function ModuleTitle(module)
+	return ns.isGerman and module[3] or module[2]
+end
+
+-- The module's options without the redundant top row, then its positions.
+local function ModuleSections(module)
+	local sections = { { path = { "config", module[1] }, flatten = true } }
+	local positions = {}
+	for _, key in ipairs(module.layout or {}) do
+		if ns.layout[key] ~= nil then
+			positions[#positions + 1] = { path = { "layout", key } }
+		end
+	end
+	if #positions > 0 then
+		sections[#sections + 1] = { heading = T("Position", "Position") }
+		for _, section in ipairs(positions) do
+			sections[#sections + 1] = section
+		end
+	end
+	return sections
+end
+
+-- Layout.lua positions no module page shows; they stay on the General page.
+local function UnclaimedLayout()
+	local claimed = {}
+	for _, module in ipairs(MODULES) do
+		for _, key in ipairs(module.layout or {}) do
+			claimed[key] = true
+		end
+	end
+	local keys = {}
+	for key in pairs(ns.layout) do
+		if not claimed[key] then
+			keys[#keys + 1] = key
+		end
+	end
+	table.sort(keys)
+	return keys
+end
 
 local RESET_DIALOG = "STEVIOUI_RESET_CONFIG"
 
@@ -65,16 +110,23 @@ end
 
 local function CreateGeneralPage()
 	local sections = {}
+	sections[1] = { heading = T("Modules", "Module") }
 	for _, module in ipairs(MODULES) do
 		if module[1] ~= "settings" and ns.config[module[1]] and ns.config[module[1]].enabled ~= nil then
 			sections[#sections + 1] = {
 				path = { "config", module[1], "enabled" },
-				label = ns.isGerman and module[3] or module[2],
+				label = ModuleTitle(module),
 			}
 		end
 	end
 	sections[#sections + 1] = { path = { "config", "style" } }
-	sections[#sections + 1] = { path = { "layout" } }
+	local unclaimed = UnclaimedLayout()
+	if #unclaimed > 0 then
+		sections[#sections + 1] = { heading = T("Other positions", "Weitere Positionen") }
+		for _, key in ipairs(unclaimed) do
+			sections[#sections + 1] = { path = { "layout", key } }
+		end
+	end
 
 	return Editor.CreatePage("stevio-ui", sections, function(page, top)
 		local reset = CreateButton(page, T("Reset all options", "Alle Optionen zurücksetzen"), 200)
@@ -99,6 +151,8 @@ end
 -- A list of override rows for a flat map (key -> command, CVar -> value).
 local function CreateListPage(title, extra, fillRow)
 	local page = CreateFrame("Frame")
+	-- Starts hidden so the first display fires OnShow (see Editor.CreatePage).
+	page:Hide()
 	page.rows = {}
 	local heading = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	heading:SetPoint("TOPLEFT", 16, -16)
@@ -275,6 +329,7 @@ local function CreateBindingsPage()
 		self:Render(SortedKeys(StevioUIConfig.bindings))
 	end
 	page:SetScript("OnShow", page.Refresh)
+	page.OnRefresh = page.Refresh
 	return page
 end
 
@@ -343,6 +398,7 @@ local function CreateCVarsPage()
 		self:Render(SortedKeys(StevioUIConfig.cvars))
 	end
 	page:SetScript("OnShow", page.Refresh)
+	page.OnRefresh = page.Refresh
 	return page
 end
 
@@ -354,12 +410,8 @@ function ns.SetupOptionsPanel()
 	rootCategory = Settings.RegisterCanvasLayoutCategory(CreateGeneralPage(), "stevio-ui")
 	for _, module in ipairs(MODULES) do
 		if ns.config[module[1]] then
-			local page = Editor.CreatePage(ns.isGerman and module[3] or module[2], {
-				{ path = { "config", module[1] } },
-			})
-			-- The module's own table opens expanded.
-			page.collapsed[Overrides.Encode({ "config", module[1] })] = false
-			Settings.RegisterCanvasLayoutSubcategory(rootCategory, page, ns.isGerman and module[3] or module[2])
+			local page = Editor.CreatePage(ModuleTitle(module), ModuleSections(module))
+			Settings.RegisterCanvasLayoutSubcategory(rootCategory, page, ModuleTitle(module))
 		end
 	end
 	Settings.RegisterCanvasLayoutSubcategory(rootCategory, CreateBindingsPage(), T("Keybindings", "Tastenbelegung"))

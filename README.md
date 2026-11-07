@@ -137,9 +137,9 @@ turns it off), the global look lives in `Core/Config.lua`, all positions in
 
 The options panel (Options → AddOns → stevio-ui, or `/sui config`) changes
 them account-wide without touching the code: a page per module generated from
-its config (every value, including lists, which can grow and shrink), a
-General page with the modules, style and layout, and pages for keybindings
-and graphics settings. Changed values are highlighted and take effect after
+its config (every value, including lists, which can grow and shrink) followed
+by the positions it places, a General page with the modules, style and any
+remaining positions, and pages for keybindings and graphics settings. Changed values are highlighted and take effect after
 `Reload UI`. Keybindings and settings changed in Blizzard's own menus are kept
 as well instead of being reverted at the next login. `/sui reset` (or "Reset
 all options") goes back to the code.
