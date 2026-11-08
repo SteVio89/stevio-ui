@@ -12,6 +12,12 @@ local C = ns.ChatInternal
 -- Returns the line and its base color: finished lines without a sender (loot,
 -- NPC, system, ...) take their kind's chat color, like in Blizzard's chat;
 -- System lines stored before they carried a kind count as SYSTEM.
+-- The sender's name (`text`, already formatted) as a link that opens a whisper
+-- when the message came from another character (see OnHyperlinkClick below).
+local function Sender(entry, text)
+	return entry.player and ns.ChatHistory.PlayerLink(entry.player, text) or text
+end
+
 local function FormatEntry(channel, entry)
 	local stamp = "|cff808080" .. (entry.time and date("%H:%M", entry.time) or "--:--") .. "|r"
 	local colorType = entry.colorType or (channel.kind == "system" and not entry.sender and "SYSTEM")
@@ -19,12 +25,12 @@ local function FormatEntry(channel, entry)
 		return ns.ChatHistory.Line(entry, stamp), C.TypeColor(colorType)
 	end
 	if entry.emote then
-		local body = entry.sender and (entry.sender .. " " .. entry.text) or entry.text
+		local body = entry.sender and (Sender(entry, entry.sender) .. " " .. entry.text) or entry.text
 		return stamp .. " " .. C.ColorCode(C.TypeColor("EMOTE")) .. body .. "|r"
 	end
 	local source = entry.source
 		and (C.ColorCode(C.TypeColor(entry.sourceType or channel.chatType)) .. entry.source .. "|r")
-	local sender = entry.sender and (C.ColorCode(C.ChannelColor(channel)) .. entry.sender .. "|r")
+	local sender = entry.sender and Sender(entry, C.ColorCode(C.ChannelColor(channel)) .. entry.sender .. "|r")
 	return ns.ChatHistory.Line(entry, stamp, source, sender)
 end
 
@@ -179,7 +185,14 @@ local function CreateMessages(frame)
 		end
 	end)
 	messages:SetHyperlinksEnabled(true)
+	-- A left click on a player's name opens the whisper channel with them;
+	-- other clicks (right click menu, shift click, ...) and links stay Blizzard's.
 	messages:SetScript("OnHyperlinkClick", function(self, link, text, button)
+		local player = ns.ChatHistory.LinkedPlayer(link)
+		if player and button == "LeftButton" and not IsModifierKeyDown() then
+			C.OpenWhisper(player)
+			return
+		end
 		SetItemRef(link, text, button, self)
 	end)
 	ui.messages = messages

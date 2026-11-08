@@ -200,3 +200,16 @@ check(History.BattleTagName("Stevio#2345") == "Stevio", "BattleTag name")
 check(History.BattleTagName("Plain") == "Plain", "no number")
 check(History.BattleNetKey("Stevio#2345") == "bn:Stevio#2345", "BattleTag key")
 print("battle.net names ok")
+
+-- clickable player names open a whisper
+local link = History.PlayerLink("Bob-Thrall", "|cffffffffBob|r")
+check(link == "|Hplayer:Bob-Thrall|h|cffffffffBob|r|h", "player link: " .. link)
+check(History.LinkedPlayer("player:Bob-Thrall") == "Bob-Thrall", "own player link")
+check(History.LinkedPlayer("player:Bob-Thrall:42:PARTY:") == "Bob-Thrall", "Blizzard's player link")
+check(History.LinkedPlayer("item:1234") == nil, "other links name no player")
+check(History.LinkedPlayer("player:") == nil, "empty player link")
+check(
+	History.StripMarkup(History.Line({ sender = "Bob", text = "hi" }, "[12:00]", nil, link)) == "[12:00] Bob: hi",
+	"copied lines drop the link"
+)
+print("player links ok")
