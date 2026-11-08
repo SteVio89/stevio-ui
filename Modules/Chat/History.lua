@@ -99,6 +99,22 @@ function History.WhisperKey(fullName)
 	return "whisper:" .. fullName
 end
 
+-- A clickable player name in a message line: Blizzard's "player" hyperlink
+-- around `text` (the already formatted name), naming `fullName`.
+function History.PlayerLink(fullName, text)
+	return "|Hplayer:" .. fullName .. "|h" .. text .. "|h"
+end
+
+-- The full name a "player" hyperlink (as passed to OnHyperlinkClick) names,
+-- or nil for other links. Blizzard's own links carry more fields after the
+-- name ("player:Name-Realm:lineID:chatType:target").
+function History.LinkedPlayer(link)
+	local name = link:match("^player:([^:]+)")
+	if name and name ~= "" then
+		return name
+	end
+end
+
 -- Battle.net whisper partners are keyed by BattleTag ("Name#1234"): the
 -- account id may change between sessions and the Real ID name in chat events
 -- can't be saved; the BattleTag stays. Lines and labels show its name part.
@@ -174,8 +190,9 @@ function Store:Ensure(key, opts)
 	return channel
 end
 
--- entry: { time, sender, text, outgoing, source, sourceType, emote, colorType }:
+-- entry: { time, sender, player, text, outgoing, source, sourceType, emote, colorType }:
 -- `sender` is nil for finished lines (system, NPC, loot, ...) and text emotes,
+-- `player` is the sender's full "Name-Realm" when it is another character,
 -- `emote` marks emotes, `source` names the chat channel of a message in "Other"
 -- and `sourceType` its chat type (for its color); `colorType` is the chat type
 -- whose color a finished line takes. Returns the channel.
