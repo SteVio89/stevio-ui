@@ -202,6 +202,15 @@ local function OnChatMessage(event, text, sender, ...)
 		sender = nil -- text emotes name the sender in their text
 	end
 
+	-- Character names are clickable (see View.lua); Battle.net names and our own aren't.
+	local player = not secret
+		and not def.format
+		and not def.textEmote
+		and not def.bnet
+		and not def.outgoing
+		and sender
+		and sender ~= ""
+		and ns.ChatHistory.FullName(sender, GetNormalizedRealmName())
 	local key, opts, source, sourceType, displayName = ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	-- Lines show whisper partners with the realm when it isn't the own one, everyone else by name only.
 	if not def.format and not def.textEmote and not def.bnet and not issecretvalue(sender) then
@@ -215,6 +224,7 @@ local function OnChatMessage(event, text, sender, ...)
 		and {
 			time = time(),
 			sender = def.outgoing and UnitName("player") or sender,
+			player = player or nil,
 			text = (def.prefix or "") .. text,
 			outgoing = def.outgoing,
 			emote = def.emote,
@@ -286,6 +296,22 @@ function C.Send(text)
 	else
 		C_ChatInfo.SendChatMessage(text, channel.chatType)
 	end
+end
+
+-- Opens the whisper channel with `fullName` ("Name-Realm"), creating it when
+-- there is none yet, and starts typing into it: what a click on a player's
+-- name in the chat does.
+function C.OpenWhisper(fullName)
+	local key = ns.ChatHistory.WhisperKey(fullName)
+	C.store:Ensure(key, {
+		kind = "whisper",
+		chatType = "WHISPER",
+		label = Ambiguate(fullName, "none"),
+		target = fullName,
+	})
+	-- Opened first: opening a hidden chat moves on from an empty channel.
+	ns.FocusChatInput()
+	C.Select(key)
 end
 
 function C.CycleChannel(step)
