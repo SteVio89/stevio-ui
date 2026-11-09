@@ -80,8 +80,10 @@ local UPDATE_CURSOR = [[
 		cursor:ClearAllPoints()
 		cursor:SetAllPoints(cell)
 		cursor:SetFrameLevel(cell:GetFrameLevel() + 20)
+		cursor:SetAttribute("unit", cell:GetAttribute("unit"))
 		cursor:Show()
 	else
+		cursor:SetAttribute("unit", nil)
 		cursor:Hide()
 	end
 ]]
@@ -98,14 +100,40 @@ local SYNC_FROM_CLICK = [[
 local MAX_GROUPS = ns.MAX_GROUPS
 
 local controller
+local cursor
 local testCells = {}
 local testActive = false
 
+-- The cursor stays on its cell when the target moves elsewhere (an enemy,
+-- loot, or nothing); then it switches to the thinner, dimmer idle border, so
+-- it still shows where the arrow keys continue without looking like the target.
+-- Only the border textures change, which is allowed on a secure frame in combat.
+local function UpdateCursorState()
+	local unit = cursor:GetAttribute("unit")
+	local isTarget = unit ~= nil and UnitIsUnit(unit, "target")
+	if issecretvalue(isTarget) then
+		cursor.activeBorder:SetShownFromBoolean(isTarget)
+		cursor.idleBorder:SetHiddenFromBoolean(isTarget)
+	else
+		cursor.activeBorder:SetShown(isTarget)
+		cursor.idleBorder:SetShown(not isTarget)
+	end
+end
+
 local function CreateCursor(config)
-	local cursor = CreateFrame("Frame", nil, UIParent, "SecureFrameTemplate")
-	local border = ns.CreateBorder(cursor, 7, config.cursorSize)
-	border:SetColor(unpack(config.cursorColor))
+	cursor = CreateFrame("Frame", nil, UIParent, "SecureFrameTemplate")
+	cursor.activeBorder = ns.CreateBorder(cursor, 7, config.cursorSize)
+	cursor.activeBorder:SetColor(unpack(config.cursorColor))
+	cursor.idleBorder = ns.CreateBorder(cursor, 6, config.idleCursorSize)
+	cursor.idleBorder:SetColor(unpack(config.idleCursorColor))
+	-- Runs after the snippet that moved the cursor set the unit of its new cell.
+	cursor:HookScript("OnAttributeChanged", function(_, name)
+		if name == "unit" then
+			UpdateCursorState()
+		end
+	end)
 	cursor:Hide()
+	UpdateCursorState()
 	return cursor
 end
 
@@ -236,9 +264,11 @@ function ns.OnGroupPreviewChanged(previewCells, count, mode)
 end
 
 -- The headers fill their cells in their own GROUP_ROSTER_UPDATE handler, so
--- the cursor waits a frame for them.
+-- the cursor waits a frame for them. In combat the cursor keeps its slot, whose
+-- unit may now be someone else, so the border is checked against the target again.
 local function RequestReset()
 	C_Timer.After(0, function()
+		UpdateCursorState()
 		ns:RunAfterCombat(ResetCursor)
 	end)
 end
@@ -264,5 +294,6 @@ function KeyboardHealing:OnEnable(config)
 	end
 
 	ns:RegisterEvent("GROUP_ROSTER_UPDATE", RequestReset)
+	ns:RegisterEvent("PLAYER_TARGET_CHANGED", UpdateCursorState)
 	RequestReset()
 end

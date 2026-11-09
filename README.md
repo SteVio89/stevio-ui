@@ -29,6 +29,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   your own HoTs and buffs along the top, role, range, death, aggro and target highlight.
 - **Keyboard healing** – the arrow keys move a cursor over the group grid and set
   your real target, so heals can be cast without a mouse. Works in combat.
+  When you target something else (an enemy, loot, nothing), the cursor stays
+  on its cell with a thinner, dimmer border.
 - **Quickjump** – two-letter labels on dialogs, gossip, quest windows, flight
   maps and other panels; type the letters to click. Shift on the first letter
   right-clicks.

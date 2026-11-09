@@ -159,6 +159,8 @@ local labels = {
 	iconSize = { "Icon size", "Symbolgröße" },
 	iconsPerRow = { "Icons per row", "Symbole pro Reihe" },
 	iconsPerSide = { "Icons per side", "Symbole pro Seite" },
+	idleCursorColor = { "Cursor colour off target", "Cursorfarbe ohne Ziel" },
+	idleCursorSize = { "Cursor thickness off target", "Cursorstärke ohne Ziel" },
 	ignoredCVars = {
 		"Ignored CVars",
 		"Ignorierte CVars",
