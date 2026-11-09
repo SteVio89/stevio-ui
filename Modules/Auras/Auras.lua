@@ -8,7 +8,7 @@ local config = ns.config.auras
 -- right corner and the tracker fits below them.
 
 -- Older clients have one IconLimit setting, newer ones one per frame.
-local function Settings(options, limitSetting)
+local function AuraSettings(options, limitSetting)
 	local Setting = Enum.EditModeAuraFrameSetting
 	local settings = {
 		[Setting.IconSize] = ns.EditModeStep(options.iconSize, 50, 10),
@@ -26,12 +26,12 @@ function Auras:OnEnable()
 		Enum.EditModeSystem.AuraFrame,
 		indices.BuffFrame,
 		ns.layout.buffs,
-		Settings(config.buffs, "IconLimitBuffFrame")
+		AuraSettings(config.buffs, "IconLimitBuffFrame")
 	)
 	ns.SetEditModeSystem(
 		Enum.EditModeSystem.AuraFrame,
 		indices.DebuffFrame,
 		ns.layout.debuffs,
-		Settings(config.debuffs, "IconLimitDebuffFrame")
+		AuraSettings(config.debuffs, "IconLimitDebuffFrame")
 	)
 end
