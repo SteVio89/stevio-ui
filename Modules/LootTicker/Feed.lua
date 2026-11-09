@@ -122,6 +122,11 @@ function Feed.LinkColor(link)
 	return link:match("|c(%x%x%x%x%x%x%x%x)")
 end
 
+-- Red, green and blue (0 to 1) of a color as "ffrrggbb".
+function Feed.HexToRGB(hex)
+	return tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255, tonumber(hex:sub(7, 8), 16) / 255
+end
+
 -- Opacity of an entry `age` seconds old, or nil once it has faded out. It
 -- stays for `holdTime` (default options.holdTime) after fading in.
 function Feed.Alpha(age, options, holdTime)

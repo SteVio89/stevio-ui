@@ -57,7 +57,7 @@ local function QualityColor(quality, link)
 	end
 	local hex = Feed.LinkColor(link)
 	if hex then
-		return tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255, tonumber(hex:sub(7, 8), 16) / 255
+		return Feed.HexToRGB(hex)
 	end
 	return 1, 1, 1
 end

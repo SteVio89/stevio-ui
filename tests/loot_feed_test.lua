@@ -51,6 +51,10 @@ check(Feed.ParseMoney("2 Gold", Feed.MoneyPatterns("%1$d Gold", "%1$d Silver", "
 
 check(Feed.LinkName(link) == "Linen Cloth", "name without brackets")
 check(Feed.LinkColor(link) == "ff0070dd", "link color")
+local r, g, b = Feed.HexToRGB("ff0070dd")
+check(r == 0 and g == 0x70 / 255 and b == 0xdd / 255, "link color as RGB")
+r, g, b = Feed.HexToRGB("FFFFFFFF")
+check(r == 1 and g == 1 and b == 1, "uppercase hex")
 
 local options = { fadeInTime = 0.2, holdTime = 10, fadeOutTime = 5 }
 check(Feed.Alpha(0, options) == 0, "starts invisible")
