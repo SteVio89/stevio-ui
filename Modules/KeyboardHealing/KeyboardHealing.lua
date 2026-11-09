@@ -9,7 +9,7 @@ local config = ns.config.keyboardHealing
 -- returns to the cursor's unit; moving starts with the next one.
 --
 -- All of it has to keep working in combat, so the logic lives in restricted
--- snippets; Lua only sets things up out of combat. Snippet state (gridMode,
+-- snippets (Snippets.lua); Lua only sets things up out of combat. Snippet state (gridMode,
 -- cursorGroup, cursorSlot) lives in the controller's environment, which every
 -- snippet wrapped against it shares.
 
