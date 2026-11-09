@@ -237,8 +237,6 @@ end
 
 -- Rendering -----------------------------------------------------------------
 
-local Visit, ShowHeading
-
 local function SetLabel(row, path, text, depth, help)
 	row.path = path
 	row.toggle:ClearAllPoints()
@@ -285,7 +283,7 @@ local function AddToList(page, path)
 end
 
 -- A plain title row between sections, e.g. "Position" on a module page.
-function ShowHeading(page, text)
+local function ShowHeading(page, text)
 	local row = AcquireRow(page)
 	row.path = nil
 	row.toggle:ClearAllPoints()
@@ -297,7 +295,7 @@ function ShowHeading(page, text)
 end
 
 -- `labelOverride` names a page section's top row instead of its key.
-function Visit(page, path, value, depth, listPath, index, labelOverride)
+local function Visit(page, path, value, depth, listPath, index, labelOverride)
 	local encoded = Overrides.Encode(path)
 	if HIDDEN[encoded] then
 		return
@@ -372,10 +370,10 @@ local function Render(page)
 			if value ~= nil and section.flatten and type(value) == "table" then
 				-- The table's own header row is left out (the page title names it).
 				for _, childKey in ipairs(SortedKeys(value)) do
-					Visit(page, Copy(section.path, childKey), value[childKey], section.depth or 0)
+					Visit(page, Copy(section.path, childKey), value[childKey], 0)
 				end
 			elseif value ~= nil then
-				Visit(page, section.path, value, section.depth or 0, nil, nil, section.label)
+				Visit(page, section.path, value, 0, nil, nil, section.label)
 			end
 		end
 	end
