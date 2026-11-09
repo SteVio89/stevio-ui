@@ -145,7 +145,7 @@ local function CreateRow()
 	row.icon = row:CreateTexture(nil, "ARTWORK")
 	row.icon:SetSize(config.iconSize, config.iconSize)
 	row.icon:SetPoint("LEFT")
-	row.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+	ns.CropIcon(row.icon)
 
 	-- The details size to their text; the item name takes the space left.
 	row.detail = ns.CreateFontString(row, config.fontSize, "RIGHT")

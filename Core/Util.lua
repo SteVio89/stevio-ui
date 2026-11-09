@@ -35,34 +35,33 @@ function Border:SetShown(shown)
 	end
 end
 
--- Lets the client resolve possibly-secret booleans (e.g. UnitIsUnit in combat).
-function Border:SetShownFromBoolean(value)
+-- Lets the client resolve possibly-secret booleans (e.g. UnitIsUnit in combat):
+-- the edges are shown while `value` equals `shownWhen`.
+local function SetShownWhen(border, value, shownWhen)
 	if issecretvalue(value) then
-		for _, edge in ipairs(self) do
+		for _, edge in ipairs(border) do
 			edge:Show()
-			edge:SetAlphaFromBoolean(value, 1, 0)
+			edge:SetAlphaFromBoolean(value, shownWhen and 1 or 0, shownWhen and 0 or 1)
 		end
 	else
-		for _, edge in ipairs(self) do
+		for _, edge in ipairs(border) do
 			edge:SetAlpha(1)
 		end
-		self:SetShown(value)
+		if shownWhen then
+			border:SetShown(value)
+		else
+			border:SetShown(not value)
+		end
 	end
+end
+
+function Border:SetShownFromBoolean(value)
+	SetShownWhen(self, value, true)
 end
 
 -- The opposite of SetShownFromBoolean: shown while the value is false.
 function Border:SetHiddenFromBoolean(value)
-	if issecretvalue(value) then
-		for _, edge in ipairs(self) do
-			edge:Show()
-			edge:SetAlphaFromBoolean(value, 0, 1)
-		end
-	else
-		for _, edge in ipairs(self) do
-			edge:SetAlpha(1)
-		end
-		self:SetShown(not value)
-	end
+	SetShownWhen(self, value, false)
 end
 
 -- Edges sit outside the frame so the border never covers bar content.
@@ -92,11 +91,30 @@ function ns.CreateBorder(frame, sublevel, size)
 	return border
 end
 
-function ns.CreateBackground(frame)
-	local bg = frame:CreateTexture(nil, "BACKGROUND")
+-- Near-black backdrop of small overlay panels (Quickjump badges, flight list).
+ns.PANEL_COLOR = { 0, 0, 0, 0.9 }
+
+-- `color` defaults to the style's background colour.
+function ns.CreateBackground(frame, color, sublevel)
+	local bg = frame:CreateTexture(nil, "BACKGROUND", nil, sublevel)
 	bg:SetAllPoints()
-	bg:SetColorTexture(unpack(style.backgroundColor))
+	bg:SetColorTexture(unpack(color or style.backgroundColor))
 	return bg
+end
+
+-- Crops the built-in border off a square icon texture.
+function ns.CropIcon(texture)
+	texture:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+end
+
+-- A button at a screen edge (chat, tracker) that toggles what it belongs to.
+function ns.CreateEdgeBadge(name, layout, onClick)
+	local badge = style.badge
+	local button = CreateFrame("Button", name, UIParent)
+	button:SetSize(badge.width, badge.height)
+	ns.SetPoint(button, layout)
+	button:SetScript("OnClick", onClick)
+	return button
 end
 
 function ns.CreateStatusBar(parent)

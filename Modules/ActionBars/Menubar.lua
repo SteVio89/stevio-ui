@@ -4,7 +4,7 @@ local _, ns = ...
 local MICRO_MIN, BAGS_MIN, STEP = 70, 75, 5
 
 local function SizeSetting(percent, minimum)
-	return math.floor((percent - minimum) / STEP + 0.5)
+	return math.floor(ns.EditModeStep(percent, minimum, STEP) + 0.5)
 end
 
 -- Bag buttons are drawn larger than micro buttons at the same percentage, so

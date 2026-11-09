@@ -230,9 +230,7 @@ function C.CreateChannelView()
 	frame:SetFrameStrata("MEDIUM")
 	frame:EnableMouse(true)
 	frame:Hide()
-	local background = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
-	background:SetAllPoints()
-	background:SetColorTexture(unpack(config.backgroundColor))
+	ns.CreateBackground(frame, config.backgroundColor, -8)
 	ns.CreateBorder(frame)
 	ui.frame = frame
 	ui.rows = {}

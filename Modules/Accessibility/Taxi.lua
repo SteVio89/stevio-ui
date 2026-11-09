@@ -101,7 +101,7 @@ function ns.SetupTaxiList()
 	panel = CreateFrame("Frame", "StevioUI_TaxiList", UIParent)
 	panel:SetWidth(config.width)
 	panel:SetFrameStrata("HIGH")
-	ns.CreateBackground(panel):SetColorTexture(0, 0, 0, 0.9)
+	ns.CreateBackground(panel, ns.PANEL_COLOR)
 	ns.CreateBorder(panel)
 	panel:Hide()
 

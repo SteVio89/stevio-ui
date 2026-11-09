@@ -32,24 +32,16 @@ function ns.ToggleTracker()
 end
 
 local function CreateBadge()
-	local button = CreateFrame("Button", "StevioUI_TrackerBadge", UIParent)
-	button:SetSize(badgeStyle.width, badgeStyle.height)
-	ns.SetPoint(button, ns.layout.trackerBadge)
+	local button = ns.CreateEdgeBadge("StevioUI_TrackerBadge", ns.layout.trackerBadge, ns.ToggleTracker)
 	button.texture = button:CreateTexture(nil, "ARTWORK")
 	button.texture:SetAllPoints()
 	ns.CreateBorder(button)
-	button:SetScript("OnClick", ns.ToggleTracker)
 	return button
-end
-
--- Edit Mode stores the height as steps of 10 above 400.
-local function HeightSetting(height)
-	return (height - 400) / 10
 end
 
 function Tracker:OnEnable()
 	ns.SetEditModeSystem(Enum.EditModeSystem.ObjectiveTracker, nil, ns.layout.tracker, {
-		[Enum.EditModeObjectiveTrackerSetting.Height] = HeightSetting(config.height),
+		[Enum.EditModeObjectiveTrackerSetting.Height] = ns.EditModeStep(config.height, 400, 10),
 	})
 
 	-- Blizzard re-shows the tracker on its own (quest updates, layout passes).

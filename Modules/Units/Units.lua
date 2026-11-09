@@ -235,7 +235,7 @@ local function InitTargetAura(button)
 
 	button.texture = button:CreateTexture(nil, "ARTWORK")
 	button.texture:SetAllPoints()
-	button.texture:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+	ns.CropIcon(button.texture)
 
 	button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
 	button.cooldown:SetAllPoints()

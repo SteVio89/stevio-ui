@@ -11,7 +11,7 @@ local config = ns.config.auras
 local function Settings(options, limitSetting)
 	local Setting = Enum.EditModeAuraFrameSetting
 	local settings = {
-		[Setting.IconSize] = ns.EditModeIconSize(options.iconSize),
+		[Setting.IconSize] = ns.EditModeStep(options.iconSize, 50, 10),
 	}
 	local limit = Setting[limitSetting] or Setting.IconLimit
 	if limit then

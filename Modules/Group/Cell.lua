@@ -168,7 +168,7 @@ local function StyleIcon(icon, size)
 
 	icon.texture = icon:CreateTexture(nil, "ARTWORK")
 	icon.texture:SetAllPoints()
-	icon.texture:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+	ns.CropIcon(icon.texture)
 
 	icon.cooldown = CreateFrame("Cooldown", nil, icon, "CooldownFrameTemplate")
 	icon.cooldown:SetAllPoints()
