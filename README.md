@@ -28,18 +28,26 @@ until it is needed, and as much as possible can be done from the keyboard.
   watermark, resource, incoming heals and absorb shields, dispellable debuffs,
   your own HoTs and buffs along the top, role, range, death, aggro and target highlight.
   Left-click a cell to target that player, right-click for their menu.
-- **Keyboard healing** – the arrow keys move a cursor over the group grid and set
+- **Keyboard healing** – the arrow keys (`keys` in the keyboard healing
+  options; they lose their normal binding) move a cursor over the group grid and set
   your real target, so heals can be cast without a mouse. Works in combat.
+  While your target isn't friendly, the first press only returns to the
+  cursor's player; moving starts with the next one.
   When you target something else (an enemy, loot, nothing), the cursor stays
   on its cell with a thinner, dimmer border.
 - **Quickjump** – two-letter labels on dialogs, gossip, quest windows, flight
   maps and other panels; type the letters to click. Shift on the first letter
-  right-clicks.
+  right-clicks. Pressing `,` again moves the labels to the next open window,
+  topmost first, and after the last one hides them; popups get their labels
+  first. Flight masters get a sorted list of destinations next to the map.
+  `J`/`K` scroll the labelled window if it has a scroll bar. Windows with more
+  targets than the usual letters can label also use D S A E W Q as first letters.
 - **Action bars, menu and bags** – Blizzard's secure buttons, stripped down and
   placed via a dedicated Edit Mode layout named `stevio-ui`.
 - **Action sets** – switchable sets of actions for the same bars, e.g.
   "Leveling" and "Healing" (`sets` in the action bar options). The button left
-  of the bars (or `/sui bars <name>`, or a key) switches all bars and pages at
+  of the bars (left click: next set, right click: previous set; or
+  `/sui bars <name>`, or a key) switches all bars and pages at
   once, out of combat only; slots and keybindings stay the same, only the
   spells, items and macros in them change. Leaving a set remembers what its
   bars hold, so a set is edited simply by changing the bars while it is active.
@@ -50,8 +58,18 @@ until it is needed, and as much as possible can be done from the keyboard.
   button in its lower left corner, size derived from the screen. Other
   addons' minimap buttons move into the notch island (the black panel that
   opens when the cursor reaches the top of the screen), in a clickable grid
-  below its other rows (`minimapButtons` in the notch options).
-- **Channel chat and objective tracker** – chat is organised in channels like
+  below its other rows (`minimapButtons` in the notch options). The mail and
+  tracking icons stay on the map, the vehicle leave button sits below it.
+- **Notch island** – a black panel that grows out of the notch when the cursor
+  reaches the top of the screen (not while mouselooking) and hides again
+  shortly after it leaves: level and XP bar with rested XP, the watched
+  reputation, gold, free bag slots, lowest durability (yellow/red when low),
+  zone with coordinates, time, FPS and latency, online friends and guild
+  members, and the other addons' minimap buttons.
+- **Tooltip** – Blizzard's default tooltip position is moved above the minimap.
+- **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
+  or the badge at the right screen edge, placed below the auras.
+- **Channel chat** – chat is organised in channels like
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
   - "Main" shows party, raid, instance, guild and whispers together, each
@@ -79,9 +97,13 @@ until it is needed, and as much as possible can be done from the keyboard.
   and starts typing into it; right click keeps Blizzard's player menu.
   `x` deletes any channel but guild and Main with its history. Say, emotes, yell, chat
   and community channels, NPC, Loot & Progress and System only count as unread and don't pop
-  up the chat. Hidden by default, toggled by key, with edge
-  badges that light up on new whispers, party or guild messages; it opens on
-  the channel with the latest activity. Chat commands, emotes and addon
+  up the chat. Hidden by default, toggled by key or by the badge at the left
+  screen edge, whose three segments light up on new whispers, group (party,
+  raid, instance) or guild messages. A new message that pops up the chat
+  switches to its channel (or Main); otherwise the chat reopens on the
+  channel last shown. Raid warnings and officer chat are marked `[RW]` and
+  `[O]`. The mouse wheel scrolls (`scrollStep`), and the Copy button in the
+  header shows the channel as plain text to copy. Chat commands, emotes and addon
   commands typed into the channel view's own input run there (`/w Bob hi`,
   `/p hi`, `/dance`, `/sui`, ...); Blizzard's other commands (`/cast`,
   `/target`, `/roll`, `/who`, ...), which only work safely from its own input,
@@ -103,7 +125,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   and pushes older lines up; when all rows are taken the oldest drops out,
   and every line fades out slowly after a few seconds. Looting more of
   something still listed adds to that line.
-- **Quest rewards** – marks the choice with the highest vendor value.
+- **Quest rewards** – on the turn-in page with at least two item choices,
+  a gold coin marks the one with the highest vendor value (sell price × count).
 - **Auras** – Blizzard's own, compacted to two rows of buffs and two rows of debuffs in the top right corner, with the objective tracker below them. Blizzard's damage meter is turned
   off (`damageMeterEnabled` in the profile); the loot ticker uses its space at the bottom left.
 
@@ -136,24 +159,28 @@ first login.
 | `.` | Toggle chat |
 | *(unbound)* | Chat: write message, next / previous channel (`Tab` / `Shift-Tab` in the input) |
 | `-` | Toggle objective tracker |
+| `F12` | Game console (`consoleKey` in the settings options) |
 | *(unbound)* | Next action set |
 
 ## Commands
 
 | Command | Action |
 | --- | --- |
-| `/sui test 5\|10\|25\|40` | Preview the group grid |
+| `/sui test 1-40` | Preview the group grid with that many players (e.g. 5, 10, 25, 40); `/sui test` alone turns it off |
 | `/sui loot` | Preview the loot ticker with a few items from your bags |
 | `/sui bars [name\|number\|next]` | List the action sets or switch to one |
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui qj` | List the current Quickjump targets |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |
-| `/sui errors` | Show stevio-ui's logged Lua errors (`/sui errors clear` empties the log) |
+| `/sui errors` | Show stevio-ui's logged Lua errors, kept across sessions (`/sui errors clear` empties the log) |
 | `/sui config` | Open the options panel |
 | `/sui reset` | Reset all options to the defaults in code |
-| `/sui export` | Export your current bindings and settings as a profile |
+| `/sui export` | Export your current bindings and settings as a profile (also saved to `StevioUIExport` in the WTF folder) |
 | `/sui apply` | Re-apply the profile |
 | `/sui restore` | Restore the settings from before stevio-ui and disable it |
+
+`/sui` alone lists all commands. `config`, `reset`, `export`, `apply` and
+`restore` only exist once you have accepted the first-login dialog.
 
 ## Configuration
 
