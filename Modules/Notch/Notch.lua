@@ -38,6 +38,7 @@ local L = ns.isGerman
 
 local Zone = ns.NotchZone
 local Buttons = ns.NotchButtons
+local Layout = ns.NotchLayout
 
 local island
 local notchHeight = 0
@@ -143,12 +144,7 @@ local function UpdateDurability(row)
 	if not lowest then
 		return false
 	end
-	local color = colors.value
-	if lowest <= config.durabilityCritical then
-		color = colors.critical
-	elseif lowest <= config.durabilityWarn then
-		color = colors.warn
-	end
+	local color = colors[Layout.DurabilityLevel(lowest, config.durabilityWarn, config.durabilityCritical)]
 	row.label:SetText(L.durability)
 	row.value:SetFormattedText("%d %%", floor(lowest * 100))
 	row.value:SetTextColor(unpack(color))
@@ -157,7 +153,7 @@ end
 
 local function UpdateZone(row)
 	local zone, subZone = GetZoneText(), GetSubZoneText()
-	row.label:SetText((subZone ~= "" and subZone ~= zone) and (zone .. " – " .. subZone) or zone)
+	row.label:SetText(Layout.ZoneLabel(zone, subZone))
 	-- Instances have no player position.
 	local mapID = C_Map.GetBestMapForUnit("player")
 	local position = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
@@ -258,24 +254,27 @@ local function CreateRow(spec)
 	return row
 end
 
+-- Reused on every refresh: { shown, height, groupStart } per row.
+local stack = {}
+
 local function Refresh()
-	-- Content starts below the notch, whose area is covered by the hardware.
-	local y = notchHeight + config.padding
-	local first = true
-	for _, row in ipairs(rows) do
+	for index, row in ipairs(rows) do
 		local shown = row.spec.update(row)
 		row:SetShown(shown)
-		if shown then
-			if not first then
-				y = y + (row.spec.groupStart and config.groupGap or config.rowGap)
-			end
+		local entry = stack[index] or {}
+		entry.shown, entry.height, entry.groupStart = shown, shown and row:GetHeight() or 0, row.spec.groupStart
+		stack[index] = entry
+	end
+	-- Content starts below the notch, whose area is covered by the hardware.
+	local tops, bottom = Layout.StackRows(stack, notchHeight + config.padding, config.rowGap, config.groupGap)
+	for index, row in ipairs(rows) do
+		local y = tops[index]
+		if y then
 			row:SetPoint("TOPLEFT", island, "TOPLEFT", config.padding, -y)
 			row:SetPoint("TOPRIGHT", island, "TOPRIGHT", -config.padding, -y)
-			y = y + row:GetHeight()
-			first = false
 		end
 	end
-	island:SetHeight(y + config.padding)
+	island:SetHeight(bottom + config.padding)
 end
 
 -- Returns the notch in UIParent units: left and right edge, height, and how far
@@ -284,17 +283,18 @@ end
 -- top works in every mode.
 local function GetNotchRect()
 	local physicalWidth, physicalHeight = GetPhysicalScreenSize()
-	local scale = UIParent:GetWidth() / physicalWidth
-	local topOffset = physicalHeight * scale - UIParent:GetTop()
-
 	local _, leftEarRight, _, leftEarBottom = C_UI.GetTopLeftNotchSafeRegion()
 	local rightEarLeft = C_UI.GetTopRightNotchSafeRegion()
-	if leftEarBottom > 0 and rightEarLeft > leftEarRight then
-		return leftEarRight * scale, rightEarLeft * scale, leftEarBottom * scale, topOffset
-	end
-
-	local left = (UIParent:GetWidth() - config.fallback.width) / 2
-	return left, left + config.fallback.width, config.fallback.height, topOffset
+	return Layout.NotchRect(
+		UIParent:GetWidth(),
+		UIParent:GetTop(),
+		physicalWidth,
+		physicalHeight,
+		leftEarRight,
+		leftEarBottom,
+		rightEarLeft,
+		config.fallback
+	)
 end
 
 local function UpdateGeometry()
