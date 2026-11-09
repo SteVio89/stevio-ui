@@ -140,6 +140,10 @@ local function CollectPanel()
 	return QuickJump.SortByPosition(result), scrollBar
 end
 
+-- QuickJump asks for the scroll bar right after Collect, in the same refresh;
+-- the scroll bar found by that walk is kept for that one call.
+local walkedScrollBar, hasWalk = nil, false
+
 local panelSource = {
 	name = "panel",
 	priority = 25,
@@ -150,9 +154,17 @@ local panelSource = {
 		return activePanel ~= nil
 	end,
 	Collect = function()
-		return (CollectPanel())
+		hasWalk = false
+		local targets, scrollBar = CollectPanel()
+		walkedScrollBar, hasWalk = scrollBar, true
+		return targets
 	end,
 	GetScrollBar = function()
+		if hasWalk then
+			local scrollBar = walkedScrollBar
+			walkedScrollBar, hasWalk = nil, false
+			return scrollBar
+		end
 		return select(2, CollectPanel())
 	end,
 	OnFinished = function()
