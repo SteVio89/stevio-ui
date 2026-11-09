@@ -62,9 +62,14 @@ local function GetMapSize()
 			targetWidth = spec.width
 		end
 	end
-	local targetRight = UIParent:GetWidth() / 2 + ns.layout.target.x + targetWidth
-	local mapRight = UIParent:GetWidth() + ns.layout.minimap.x
-	return math.floor((mapRight - targetRight - config.gapToTarget) * config.sizeScale)
+	return ns.MinimapGeometry.MapSize(
+		UIParent:GetWidth(),
+		ns.layout.target.x,
+		targetWidth,
+		ns.layout.minimap.x,
+		config.gapToTarget,
+		config.sizeScale
+	)
 end
 
 -- The leave button would sit on the action bars; under the map's lower left
