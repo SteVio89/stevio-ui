@@ -20,11 +20,14 @@ local deadButtonParts = {
 	"Name",
 }
 
+-- Kept outside the buttons so nothing is written onto Blizzard's secure frames.
+local styled = setmetatable({}, { __mode = "k" })
+
 local function StyleButton(button)
-	if button.stevioStyled then
+	if styled[button] then
 		return
 	end
-	button.stevioStyled = true
+	styled[button] = true
 
 	for _, key in ipairs(deadButtonParts) do
 		local region = button[key]
@@ -33,7 +36,11 @@ local function StyleButton(button)
 		end
 	end
 	-- Normal texture is also swapped by Blizzard via SetNormalTexture/Atlas, so the getter wins over the key.
-	ns.KillTexture(button:GetNormalTexture())
+	-- Usually it is the same texture as button.NormalTexture, which is already hooked above.
+	local normal = button:GetNormalTexture()
+	if normal ~= button.NormalTexture then
+		ns.KillTexture(normal)
+	end
 
 	local icon = button.icon or button.Icon
 	if icon then
