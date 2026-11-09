@@ -286,6 +286,7 @@ local labels = {
 	showRolls = { "Loot rolls", "Beutewürfe" },
 	shownColor = { "Colour when shown", "Farbe sichtbar" },
 	shownOnLogin = { "Shown on login", "Beim Login sichtbar" },
+	sidebarFontSize = { "Sidebar font size", "Schriftgröße Seitenleiste" },
 	sidebarWidth = { "Sidebar width", "Breite Seitenleiste" },
 	size = { "Size", "Größe" },
 	sizeScale = {

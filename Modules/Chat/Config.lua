@@ -52,7 +52,7 @@ ns.config.chat = {
 	-- Written into the Edit Mode layout (Blizzard limits: width 250-800, height 120-800).
 	-- Width is a share of the screen so it adapts to resolution and UI scale.
 	widthFraction = 1 / 3,
-	height = 200,
+	height = 300,
 
 	backgroundColor = { 0, 0, 0, 1 },
 	selectedColor = { 1, 1, 1, 0.12 },
@@ -75,11 +75,12 @@ ns.config.chat = {
 
 	-- Messages kept per channel; also what survives a /reload or relog.
 	historyLimit = 200,
-	sidebarWidth = 104,
-	rowHeight = 18,
-	-- Font size of the messages, the input line and the copy view
-	-- (sidebar and header keep ns.config.style.fontSize).
-	fontSize = 14,
+	sidebarWidth = 130,
+	rowHeight = 22,
+	-- Font size of the messages, the input line and the copy view.
+	fontSize = 16,
+	-- Font size of the sidebar and the header above the messages.
+	sidebarFontSize = 14,
 	-- Date line shown before the first message of each day (os.date format);
 	-- the history survives relogs, so the time alone isn't enough.
 	dateFormat = "%a %d.%m.%Y",
