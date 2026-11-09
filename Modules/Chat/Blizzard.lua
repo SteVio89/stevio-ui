@@ -135,15 +135,14 @@ local function BlizzardChatLayout()
 	return placed
 end
 
--- Edit Mode stores chat size split into hundreds and the remainder.
-local function SizeSettings()
-	local Setting = Enum.EditModeChatFrameSetting
-	local width = C.ChatWidth()
+-- Edit Mode stores chat size split into hundreds and the remainder;
+-- `Setting` is Enum.EditModeChatFrameSetting.
+function C.SizeSettings(Setting, width, height)
 	return {
 		[Setting.WidthHundreds] = math.floor(width / 100),
 		[Setting.WidthTensAndOnes] = width % 100,
-		[Setting.HeightHundreds] = math.floor(config.height / 100),
-		[Setting.HeightTensAndOnes] = config.height % 100,
+		[Setting.HeightHundreds] = math.floor(height / 100),
+		[Setting.HeightTensAndOnes] = height % 100,
 	}
 end
 
@@ -163,7 +162,12 @@ end
 
 -- Needs the channel view (C.ui.frame) to exist, since the input box hangs under it.
 function C.SetupBlizzardChat()
-	ns.SetEditModeSystem(Enum.EditModeSystem.ChatFrame, nil, BlizzardChatLayout(), SizeSettings())
+	ns.SetEditModeSystem(
+		Enum.EditModeSystem.ChatFrame,
+		nil,
+		BlizzardChatLayout(),
+		C.SizeSettings(Enum.EditModeChatFrameSetting, C.ChatWidth(), config.height)
+	)
 
 	HideChatButtons()
 	ScanChatFrames()
