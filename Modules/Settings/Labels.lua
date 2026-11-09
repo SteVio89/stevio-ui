@@ -10,6 +10,7 @@ local labels = {
 	accessibility = { "Quickjump", "Schnellsprung" },
 	actionBars = { "Action bars", "Aktionsleisten" },
 	actionbars = { "Action bars", "Aktionsleisten" },
+	actionSets = { "Action set button", "Knopf Aktionsleisten-Sets" },
 	aggroColor = { "Aggro border", "Aggro-Rahmen" },
 	alertGap = {
 		"Toast gap",
@@ -260,6 +261,14 @@ local labels = {
 	segmentGap = { "Segment gap", "Segmentabstand" },
 	segments = { "Segments", "Segmente" },
 	selectedColor = { "Selected", "Ausgewählt" },
+	setButtonHeight = { "Set button height", "Höhe Set-Knopf" },
+	setButtonWidth = { "Set button width", "Breite Set-Knopf" },
+	sets = {
+		"Action sets",
+		"Aktionsleisten-Sets",
+		"Names of the switchable action sets (same slots and keys, different actions). Fewer than two hide the button.",
+		"Namen der umschaltbaren Aktionsleisten-Sets (gleiche Plätze und Tasten, andere Aktionen). Weniger als zwei blenden den Knopf aus.",
+	},
 	settings = { "Profile", "Profil" },
 	showBlizzardChat = {
 		"Show Blizzard chat",

@@ -20,7 +20,7 @@ local MODULES = {
 		"actionbars",
 		"Action bars",
 		"Aktionsleisten",
-		layout = { "actionBars", "stanceBar", "petBar", "menubar", "bags" },
+		layout = { "actionBars", "actionSets", "stanceBar", "petBar", "menubar", "bags" },
 	},
 	{ "minimap", "Minimap", "Minikarte", layout = { "minimap" } },
 	{ "tooltip", "Tooltip", "Tooltip" },

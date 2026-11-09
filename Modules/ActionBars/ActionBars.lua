@@ -130,4 +130,5 @@ function ActionBars:OnEnable()
 	ns.KeepHidden(SecondaryStatusTrackingBarContainer)
 
 	ns.CreateMenubar(config)
+	ns.CreateActionSetSwitcher()
 end
