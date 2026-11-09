@@ -3,6 +3,11 @@ local _, ns = ...
 local config = ns.config.group
 local style = ns.config.style
 
+-- Game API called on every unit event of up to 40 cells, as upvalues.
+local UnitExists, UnitName, UnitIsUnit, UnitInRange = UnitExists, UnitName, UnitIsUnit, UnitInRange
+local UnitThreatSituation, UnitGetDetailedHealPrediction = UnitThreatSituation, UnitGetDetailedHealPrediction
+local issecretvalue = issecretvalue
+
 -- Incoming heals and absorbs may be secret: the calculator clamps them to the
 -- missing health and the bars take them as they are, so nothing is compared.
 local function UpdatePrediction(cell)

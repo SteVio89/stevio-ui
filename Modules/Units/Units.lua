@@ -2,6 +2,11 @@ local _, ns = ...
 
 local config = ns.config.units
 
+-- Game API called on every unit event, as upvalues.
+local UnitExists, UnitName, UnitLevel = UnitExists, UnitName, UnitLevel
+local UnitHealthPercent, UnitAffectingCombat = UnitHealthPercent, UnitAffectingCombat
+local issecretvalue = issecretvalue
+
 local Units = ns.RegisterModule("units", {})
 Units.frames = {}
 
