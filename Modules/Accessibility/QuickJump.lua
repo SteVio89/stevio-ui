@@ -112,10 +112,9 @@ local function GetLeadingIcon(target)
 	end
 end
 
-local function ShowBadge(index, target, label, typed)
+local function ShowBadge(index, target, label, typed, typedHex)
 	local badge = GetBadge(index)
-	local typedColor = CreateColor(unpack(config.badge.typedColor)):GenerateHexColor()
-	badge.text:SetText(Labels.BadgeText(label, typed, current.mouseButton == "RightButton", typedColor))
+	badge.text:SetText(Labels.BadgeText(label, typed, current.mouseButton == "RightButton", typedHex))
 	badge.text:SetTextColor(unpack(config.badge.textColor))
 	local padding = config.badge.padding
 	badge:SetSize(badge.text:GetStringWidth() + padding * 2, badge.text:GetStringHeight() + padding * 2)
@@ -192,10 +191,13 @@ local function Bind()
 	end
 
 	local typed = current.typed
+	-- Once per bind, not at login: the options panel changes the config live.
+	local typedHex
 	for _, step in ipairs(Labels.NextStep(current.labels, typed)) do
 		local index, letter = step.index, step.letter
 		local target = current.targets[index]
-		ShowBadge(index, target, current.labels[index], typed)
+		typedHex = typedHex or CreateColor(unpack(config.badge.typedColor)):GenerateHexColor()
+		ShowBadge(index, target, current.labels[index], typed, typedHex)
 		if step.final then
 			local clicker
 			if target:IsObjectType("Button") and target:GetScript("OnClick") then
