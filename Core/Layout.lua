@@ -18,6 +18,8 @@ ns.layout = {
 		{ point = "BOTTOM", x = 0, y = 76 }, -- bar 2 (bottom left)
 		{ point = "BOTTOM", x = 0, y = 114 }, -- bar 3 (bottom right)
 	},
+	-- Left of the main bar, the same height as one bar row.
+	actionSets = { point = "BOTTOMRIGHT", relativePoint = "BOTTOM", x = -(barBlockWidth / 2 + 4), y = 38 },
 	stanceBar = { point = "BOTTOMRIGHT", relativePoint = "BOTTOM", x = -4, y = 6 },
 	petBar = { point = "BOTTOMLEFT", relativePoint = "BOTTOM", x = 4, y = 6 },
 

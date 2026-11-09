@@ -16,6 +16,7 @@ globals = {
 	"StevioUIDebug",
 	"StevioUIErrors",
 	"StevioUIChatHistory",
+	"StevioUIActionSets",
 	-- Reached from Bindings.xml
 	"StevioUI",
 	-- Read by other addons placing minimap buttons
@@ -33,4 +34,5 @@ globals = {
 	"BINDING_NAME_STEVIOUI_CHAT_NEXT",
 	"BINDING_NAME_STEVIOUI_CHAT_PREVIOUS",
 	"BINDING_NAME_STEVIOUI_QUICKJUMP",
+	"BINDING_NAME_STEVIOUI_ACTIONSET_NEXT",
 }

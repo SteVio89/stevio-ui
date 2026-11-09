@@ -6,7 +6,7 @@
 ## IconTexture: Interface\AddOns\stevio-ui\Media\Icon
 ## X-License: MIT
 ## SavedVariables: StevioUIState, StevioUIConfig, StevioUIExport, StevioUIDebug, StevioUIErrors
-## SavedVariablesPerCharacter: StevioUIChatHistory
+## SavedVariablesPerCharacter: StevioUIChatHistory, StevioUIActionSets
 ## X-Curse-Project-ID: 1739367
 
 Core\Init.lua
@@ -26,6 +26,8 @@ Modules\Units\ClassPower.lua
 Modules\ActionBars\Config.lua
 Modules\ActionBars\ActionBars.lua
 Modules\ActionBars\Menubar.lua
+Modules\ActionBars\Sets.lua
+Modules\ActionBars\SetSwitcher.lua
 
 Modules\Group\Config.lua
 Modules\Group\Cell.lua
