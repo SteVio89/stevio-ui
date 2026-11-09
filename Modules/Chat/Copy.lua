@@ -1,7 +1,6 @@
 local _, ns = ...
 
 local config = ns.config.chat
-local style = ns.config.style
 local C = ns.ChatInternal
 
 -- WoW's message frames can't select text, so "Copy" shows the channel as plain
@@ -47,7 +46,7 @@ function C.CreateCopyView(frame)
 	local edit = CreateFrame("EditBox", nil, scroll)
 	edit:SetMultiLine(true)
 	edit:SetAutoFocus(false)
-	edit:SetFont(style.font, config.fontSize, style.fontFlags)
+	C.ApplyFont(edit)
 	edit:SetMaxLetters(0)
 	edit:SetWidth(C.ChatWidth() - config.sidebarWidth - 12)
 	scroll:SetScrollChild(edit)

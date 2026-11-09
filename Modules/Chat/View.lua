@@ -1,7 +1,6 @@
 local _, ns = ...
 
 local config = ns.config.chat
-local style = ns.config.style
 local C = ns.ChatInternal
 
 -- The channel view: sidebar with the channels, header, messages and input line.
@@ -149,7 +148,7 @@ end
 local function CreateInput(frame)
 	local ui = C.ui
 	local input = CreateFrame("EditBox", nil, frame)
-	input:SetFont(style.font, config.fontSize, style.fontFlags)
+	C.ApplyFont(input)
 	input:SetAutoFocus(false)
 	input:SetHeight(math.max(config.rowHeight, config.fontSize + 6))
 	input:SetPoint("BOTTOMLEFT", ui.sidebar, "BOTTOMRIGHT", 6, 2)
@@ -186,7 +185,7 @@ end
 local function CreateMessages(frame)
 	local ui = C.ui
 	local messages = CreateFrame("ScrollingMessageFrame", nil, frame)
-	messages:SetFont(style.font, config.fontSize, style.fontFlags)
+	C.ApplyFont(messages)
 	messages:SetJustifyH("LEFT")
 	messages:SetFading(false)
 	messages:SetMaxLines(config.historyLimit)

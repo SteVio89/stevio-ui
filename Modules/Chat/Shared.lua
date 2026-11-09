@@ -6,6 +6,7 @@ local _, ns = ...
 -- loaded after them (see stevio-ui.toc), but only at runtime, never while loading.
 
 local config = ns.config.chat
+local style = ns.config.style
 
 local C = {
 	-- The channel view is hidden (alpha, see Blizzard.lua) unless one of these holds.
@@ -39,6 +40,11 @@ function C.TypeColor(chatType, fallback)
 		return unpack(fallback)
 	end
 	return 1, 1, 1
+end
+
+-- The font of the messages, the input line and the copy view.
+function C.ApplyFont(widget)
+	widget:SetFont(style.font, config.fontSize, style.fontFlags)
 end
 
 function C.ChannelColor(channel)
