@@ -117,5 +117,5 @@ function C.RunCommand(text)
 		return
 	end
 	-- Blizzard would answer into its hidden chat window, so the hint goes to System.
-	ns.Print((C.german and "Unbekannter Befehl: %s" or "Unknown command: %s"):format(command:lower()))
+	ns.Print(ns.T("Unknown command: %s", "Unbekannter Befehl: %s"):format(command:lower()))
 end

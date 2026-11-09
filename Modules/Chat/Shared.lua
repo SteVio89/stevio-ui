@@ -19,7 +19,6 @@ local C = {
 	},
 	store = nil,
 	ui = {}, -- frame, sidebar, header, messages, input, rows, copy
-	german = ns.isGerman,
 }
 ns.ChatInternal = C
 
