@@ -266,10 +266,12 @@ local function TryApply()
 	ns.RunAfterCombat(ApplyProfile)
 end
 
-ns.RegisterEvent("PLAYER_ENTERING_WORLD", function()
+local function OnEnteringWorld()
+	ns.UnregisterEvent("PLAYER_ENTERING_WORLD", OnEnteringWorld)
 	enteredWorld = true
 	TryApply()
-end)
+end
+ns.RegisterEvent("PLAYER_ENTERING_WORLD", OnEnteringWorld)
 
 function Settings:OnEnable()
 	enabled = true

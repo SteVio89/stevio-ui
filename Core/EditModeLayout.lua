@@ -131,6 +131,8 @@ local function TryApply()
 end
 
 local function OnLayoutsReady()
+	ns.UnregisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsReady)
+	ns.UnregisterEvent("PLAYER_ENTERING_WORLD", OnLayoutsReady)
 	layoutsReady = true
 	TryApply()
 end

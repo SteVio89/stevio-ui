@@ -224,10 +224,11 @@ end
 -- WoW glue: the saved overrides go into the config once the saved variables
 -- are loaded, before any module is enabled (PLAYER_LOGIN).
 if ns.RegisterEvent then
-	ns.RegisterEvent("ADDON_LOADED", function(_, loadedName)
-		if loadedName ~= ns.name or ns.overrideRoots then
+	local function OnAddonLoaded(_, loadedName)
+		if loadedName ~= ns.name then
 			return
 		end
+		ns.UnregisterEvent("ADDON_LOADED", OnAddonLoaded)
 		StevioUIConfig = StevioUIConfig or {}
 		StevioUIConfig.values = StevioUIConfig.values or {}
 		StevioUIConfig.bindings = StevioUIConfig.bindings or {}
@@ -236,5 +237,6 @@ if ns.RegisterEvent then
 		ns.overrideRoots = { config = ns.config, layout = ns.layout }
 		ns.overrideDefaults = Overrides.DeepCopy(ns.overrideRoots)
 		ns.SafeCall(Overrides.ApplyAll, ns.overrideRoots, StevioUIConfig.values)
-	end)
+	end
+	ns.RegisterEvent("ADDON_LOADED", OnAddonLoaded)
 end
