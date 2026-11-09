@@ -173,6 +173,93 @@ function History.CommunityKey(clubId, streamId)
 	return "community:" .. clubId .. ":" .. streamId
 end
 
+-- Which channel a chat message of `def` (see config.events) goes to.
+-- Whisper partners are keyed by full name (`fullName`, "Name-Realm") or
+-- BattleTag, group chats by type, chat channels by name (see
+-- History.PublicChannel; `publicChannels` are those with their own channel).
+-- `lookups` reaches the game: isSecret(value), accountInfo(bnetID) (Battle.net
+-- account info), channelLabel(baseName) (a community's name) and
+-- ambiguate(name, context).
+-- Returns key, channel options, and for "Other" the line's source channel and
+-- its chat type; for Battle.net whispers the fifth value is the name to show
+-- as sender. Returns nil when the channel can't be told (secret values).
+function History.Route(def, sender, bnetID, channelIndex, baseName, fullName, publicChannels, lookups)
+	if def.key then
+		return def.key,
+			{
+				kind = def.kind,
+				chatType = def.chatType,
+				label = def.label,
+				readOnly = def.readOnly,
+				silent = def.silent,
+			}
+	end
+	if def.channel then
+		if lookups.isSecret(baseName) or lookups.isSecret(channelIndex) or not baseName then
+			return nil
+		end
+		local chatType = "CHANNEL" .. channelIndex
+		local clubId, streamId = History.CommunityIds(baseName)
+		if clubId then
+			return History.CommunityKey(clubId, streamId),
+				{
+					kind = "community",
+					chatType = chatType,
+					label = lookups.channelLabel(baseName),
+					relabel = true,
+					clubId = clubId,
+					streamId = streamId,
+				}
+		end
+		local key, label, own = History.PublicChannel(baseName, publicChannels)
+		if own then
+			return key, { kind = def.kind, chatType = chatType, label = label, channelIndex = channelIndex }
+		end
+		local opts = { kind = "other", chatType = def.chatType, label = label, readOnly = true }
+		return key, opts, baseName, chatType
+	end
+	if lookups.isSecret(sender) or lookups.isSecret(bnetID) then
+		return nil
+	end
+	if def.bnet then
+		local info = lookups.accountInfo(bnetID)
+		local battleTag = info and info.battleTag
+		if battleTag and battleTag ~= "" then
+			local name = History.BattleTagName(battleTag)
+			local opts =
+				{ kind = def.kind, chatType = def.chatType, label = name, bnetID = bnetID, battleTag = battleTag }
+			return History.BattleNetKey(battleTag), opts, nil, nil, name
+		end
+		-- No account info: keyed by the session id, as before.
+		return History.BattleNetKey(bnetID),
+			{ kind = def.kind, chatType = def.chatType, label = sender, bnetID = bnetID }
+	end
+	-- The full name answers the right player even across realms; the label shows
+	-- the realm only for other realms, like Blizzard's chat.
+	local label = lookups.ambiguate(fullName, "none")
+	return History.WhisperKey(fullName), { kind = def.kind, chatType = def.chatType, label = label, target = fullName }
+end
+
+-- The stored entry (see Store:Add) of a readable chat message of `def`:
+-- `sender` as shown, `player` the sender's full name when clickable (or
+-- false), `source`/`sourceType` the chat channel of a line in "Other", `now`
+-- the time and `ownName` the player's name for outgoing messages.
+function History.BuildEntry(def, chatType, text, sender, player, source, sourceType, now, ownName)
+	return {
+		time = now,
+		sender = def.outgoing and ownName or sender,
+		player = player or nil,
+		text = (def.prefix or "") .. text,
+		outgoing = def.outgoing,
+		emote = def.emote,
+		-- Finished lines take the color of their own kind (loot, boss emote, ...).
+		colorType = def.format and chatType,
+		-- "Other" mixes channels, so each line names its own.
+		source = source,
+		sourceType = sourceType,
+	}
+end
+
 -- `saved` is the SavedVariables table (may be empty); `limit` caps messages per
 -- channel; `mainOn` keeps the merged channel from being deleted.
 function History.New(saved, limit, mainOn)
