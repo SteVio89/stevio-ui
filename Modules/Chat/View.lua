@@ -19,7 +19,7 @@ end
 -- NPC, system, ...) take their kind's chat color, like in Blizzard's chat;
 -- System lines stored before they carried a kind count as SYSTEM.
 local function FormatEntry(channel, entry)
-	local stamp = "|cff808080" .. (entry.time and date("%H:%M", entry.time) or "--:--") .. "|r"
+	local stamp = C.GREY .. (entry.time and C.Time(entry.time) or "--:--") .. "|r"
 	local colorType = entry.colorType or (channel.kind == "system" and not entry.sender and "SYSTEM")
 	if colorType then
 		return ns.ChatHistory.Line(entry, stamp), C.TypeColor(colorType)
@@ -38,7 +38,7 @@ local function FormatEntry(channel, entry)
 end
 
 local function DayLine(entry)
-	return "|cff808080-- " .. C.Day(entry.time) .. " --|r"
+	return C.GREY .. "-- " .. C.Day(entry.time) .. " --|r"
 end
 
 -- Adds `entry` to the message frame, after a date line when it starts a new

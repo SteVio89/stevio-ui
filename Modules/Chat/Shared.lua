@@ -55,8 +55,16 @@ function C.ColorCode(r, g, b)
 	return ("|cff%02x%02x%02x"):format(r * 255, g * 255, b * 255)
 end
 
+-- Color code of time stamps and date lines.
+C.GREY = "|cff808080"
+
 function C.Day(t)
 	return date(config.dateFormat, t)
+end
+
+-- A message's time of day.
+function C.Time(t)
+	return date("%H:%M", t)
 end
 
 -- Names of the fixed channels, in the client's language; the saved label

@@ -19,6 +19,11 @@ local function PlayerName(sender)
 	return Ambiguate(sender, "none")
 end
 
+-- Blizzard's "%s says: " style prefix of `chatType`.
+local function GetPrefix(chatType)
+	return _G["CHAT_" .. chatType .. "_GET"] or "%s: "
+end
+
 function formatters.plain(_, text)
 	return text
 end
@@ -28,7 +33,7 @@ end
 -- text with a stray "%" (a player's AFK reply) falls back to the prefix alone.
 function formatters.get(chatType, text, sender)
 	sender = PlayerName(sender)
-	local prefix = _G["CHAT_" .. chatType .. "_GET"] or "%s: "
+	local prefix = GetPrefix(chatType)
 	local ok, line = pcall(format, prefix .. text, sender, sender)
 	if ok then
 		return line
@@ -65,8 +70,7 @@ end
 
 -- The sender of a ping is already worded by the client (it may carry the role).
 function formatters.ping(chatType, text, sender)
-	local prefix = _G["CHAT_" .. chatType .. "_GET"] or "%s: "
-	return format(prefix, sender) .. text
+	return format(GetPrefix(chatType), sender) .. text
 end
 
 local function NoticeTemplate(token)

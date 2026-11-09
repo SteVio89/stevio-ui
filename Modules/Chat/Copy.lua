@@ -16,9 +16,7 @@ local function ToggleCopy()
 	if not channel then
 		return
 	end
-	copy.text = ns.ChatHistory.Transcript(channel, function(t)
-		return date("%H:%M", t)
-	end, C.Day)
+	copy.text = ns.ChatHistory.Transcript(channel, C.Time, C.Day)
 	copy:Show()
 	copy.edit:SetText(copy.text)
 	copy.edit:SetFocus()
