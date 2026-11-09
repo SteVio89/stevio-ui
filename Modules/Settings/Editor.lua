@@ -93,11 +93,26 @@ end
 
 -- Row widgets ---------------------------------------------------------------
 
-local function CreateSmallButton(parent, text, width)
+-- Widgets the options panel's own pages (Panel.lua) share.
+function Editor.CreateButton(parent, text, width, height)
 	local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-	button:SetSize(width or 22, 20)
+	button:SetSize(width, height)
 	button:SetText(text)
 	return button
+end
+
+-- An input box that gives up the focus on Enter and Escape.
+function Editor.CreateInput(parent, width)
+	local input = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+	input:SetSize(width, 20)
+	input:SetAutoFocus(false)
+	input:SetScript("OnEnterPressed", input.ClearFocus)
+	input:SetScript("OnEscapePressed", input.ClearFocus)
+	return input
+end
+
+local function CreateSmallButton(parent, text, width)
+	return Editor.CreateButton(parent, text, width or 22, 20)
 end
 
 -- Picker values are rounded, so confirming an untouched color saves nothing.
@@ -171,10 +186,8 @@ local function CreateRow(page)
 		SetValue(page, row.path, self:GetChecked() and true or false)
 	end)
 
-	row.input = CreateFrame("EditBox", nil, row, "InputBoxTemplate")
-	row.input:SetSize(180, 20)
+	row.input = Editor.CreateInput(row, 180)
 	row.input:SetPoint("LEFT", CONTROL_X + 6, 0)
-	row.input:SetAutoFocus(false)
 	local function CommitInput(self)
 		local text = self:GetText()
 		local value = text
@@ -187,10 +200,8 @@ local function CreateRow(page)
 		end
 		SetValue(page, row.path, value)
 	end
-	row.input:SetScript("OnEnterPressed", function(self)
-		self:ClearFocus()
-	end)
 	row.input:SetScript("OnEditFocusLost", CommitInput)
+	-- Escape also puts the current value back.
 	row.input:SetScript("OnEscapePressed", function(self)
 		self:SetText(tostring(Overrides.Get(ns.overrideRoots, row.path)))
 		self:ClearFocus()
@@ -381,31 +392,19 @@ end
 
 -- Page frame ----------------------------------------------------------------
 
--- A scrollable page with a title, a reload hint and button, and the rows of
--- `sections`, each one of
---   { path = {...}, label = optional name of its top row }
---   { path = {...}, flatten = true }: the table's values without its own header row
---   { heading = "text" }: a title row
--- `extra(page, top)` may add own controls below the title and returns the
--- height it used.
-function Editor.CreatePage(title, sections, extra)
+-- A page with a title and a scroll area below it, for Blizzard's options panel.
+-- `extra(page, top)`, if given, may add own controls below the title and
+-- returns the height it used. Rows go into `page.content`.
+function Editor.CreateScrollPage(title, extra)
 	local page = CreateFrame("Frame")
-	page.sections = sections
-	page.rows, page.used, page.collapsed = {}, 0, {}
-	page.Render = Render
+	-- A parentless frame starts out shown, so the first time Blizzard's panel
+	-- displays it there is no OnShow and the page stayed empty until it was
+	-- hidden and shown again. Starting hidden makes every display an OnShow.
+	page:Hide()
 
 	local heading = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	heading:SetPoint("TOPLEFT", 16, -16)
 	heading:SetText(title)
-
-	local reload = CreateSmallButton(page, T("Reload UI", "UI neu laden"), 120)
-	reload:SetPoint("TOPRIGHT", -16, -12)
-	reload:SetScript("OnClick", ReloadUI)
-
-	page.reloadHint = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	page.reloadHint:SetPoint("RIGHT", reload, "LEFT", -8, 0)
-	page.reloadHint:SetText(T("Changes apply after a reload.", "Änderungen wirken nach dem Neuladen."))
-	page.reloadHint:Hide()
 
 	local top = 44
 	if extra then
@@ -421,13 +420,36 @@ function Editor.CreatePage(title, sections, extra)
 	scroll:SetScript("OnSizeChanged", function(_, width)
 		page.content:SetWidth(width)
 	end)
+	return page
+end
 
-	-- A parentless frame starts out shown, so the first time Blizzard's panel
-	-- displays it there is no OnShow and the page stayed empty until it was
-	-- hidden and shown again. Starting hidden makes every display an OnShow;
-	-- OnRefresh is what the settings panel calls on canvas pages, and a first
-	-- render here fills the page even if neither ever comes.
-	page:Hide()
+-- A scrollable page with a title, a reload hint and button, and the rows of
+-- `sections`, each one of
+--   { path = {...}, label = optional name of its top row }
+--   { path = {...}, flatten = true }: the table's values without its own header row
+--   { heading = "text" }: a title row
+-- `extra(page, top)` may add own controls below the title and returns the
+-- height it used.
+function Editor.CreatePage(title, sections, extra)
+	local page = Editor.CreateScrollPage(title, function(page, top)
+		local reload = CreateSmallButton(page, T("Reload UI", "UI neu laden"), 120)
+		reload:SetPoint("TOPRIGHT", -16, -12)
+		reload:SetScript("OnClick", ReloadUI)
+
+		page.reloadHint = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		page.reloadHint:SetPoint("RIGHT", reload, "LEFT", -8, 0)
+		page.reloadHint:SetText(T("Changes apply after a reload.", "Änderungen wirken nach dem Neuladen."))
+		page.reloadHint:Hide()
+
+		return extra and extra(page, top) or 0
+	end)
+	page.sections = sections
+	page.rows, page.used, page.collapsed = {}, 0, {}
+	page.Render = Render
+
+	-- Every display renders (see CreateScrollPage); OnRefresh is what the
+	-- settings panel calls on canvas pages, and a first render here fills the
+	-- page even if neither ever comes.
 	page:SetScript("OnShow", function(self)
 		self:Render()
 	end)

@@ -93,20 +93,10 @@ StaticPopupDialogs[RESET_DIALOG] = {
 }
 
 local function CreateButton(parent, text, width)
-	local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-	button:SetSize(width, 22)
-	button:SetText(text)
-	return button
+	return Editor.CreateButton(parent, text, width, 22)
 end
 
-local function CreateInput(parent, width)
-	local input = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
-	input:SetSize(width, 20)
-	input:SetAutoFocus(false)
-	input:SetScript("OnEnterPressed", input.ClearFocus)
-	input:SetScript("OnEscapePressed", input.ClearFocus)
-	return input
-end
+local CreateInput = Editor.CreateInput
 
 local function CreateGeneralPage()
 	local sections = {}
@@ -150,24 +140,8 @@ end
 
 -- A list of override rows for a flat map (key -> command, CVar -> value).
 local function CreateListPage(title, extra, fillRow)
-	local page = CreateFrame("Frame")
-	-- Starts hidden so the first display fires OnShow (see Editor.CreatePage).
-	page:Hide()
+	local page = Editor.CreateScrollPage(title, extra)
 	page.rows = {}
-	local heading = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-	heading:SetPoint("TOPLEFT", 16, -16)
-	heading:SetText(title)
-	local top = 44 + extra(page, 44)
-
-	local scroll = CreateFrame("ScrollFrame", nil, page, "UIPanelScrollFrameTemplate")
-	scroll:SetPoint("TOPLEFT", 16, -top)
-	scroll:SetPoint("BOTTOMRIGHT", -32, 12)
-	page.content = CreateFrame("Frame", nil, scroll)
-	page.content:SetSize(1, 1)
-	scroll:SetScrollChild(page.content)
-	scroll:SetScript("OnSizeChanged", function(_, width)
-		page.content:SetWidth(width)
-	end)
 
 	function page:Render(entries)
 		for index, entry in ipairs(entries) do
