@@ -260,6 +260,22 @@ function History.BuildEntry(def, chatType, text, sender, player, source, sourceT
 	}
 end
 
+-- Index of the channel `step` places after `selected` in `keys` (the sidebar
+-- order), wrapping around; nil when there are none. With `selected` not in
+-- the list it counts from before the first one.
+function History.NextIndex(keys, selected, step)
+	if #keys == 0 then
+		return nil
+	end
+	local index = 0
+	for i, key in ipairs(keys) do
+		if key == selected then
+			index = i
+		end
+	end
+	return (index - 1 + step) % #keys + 1
+end
+
 -- `saved` is the SavedVariables table (may be empty); `limit` caps messages per
 -- channel; `mainOn` keeps the merged channel from being deleted.
 function History.New(saved, limit, mainOn)

@@ -123,16 +123,14 @@ end
 
 function C.CycleChannel(step)
 	local channels = C.store:Sorted(config.kindOrder)
-	if #channels == 0 then
-		return
-	end
-	local index = 0
+	local keys = {}
 	for i, channel in ipairs(channels) do
-		if channel.key == state.selected then
-			index = i
-		end
+		keys[i] = channel.key
 	end
-	C.Select(channels[(index - 1 + step) % #channels + 1].key)
+	local index = ns.ChatHistory.NextIndex(keys, state.selected, step)
+	if index then
+		C.Select(keys[index])
+	end
 end
 
 function ns.ToggleChat()
