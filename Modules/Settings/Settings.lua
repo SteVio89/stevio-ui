@@ -2,18 +2,18 @@ local addonName, ns = ...
 
 local config = ns.config.settings
 
-local Settings = ns.RegisterModule("settings", {})
+local SettingsModule = ns.RegisterModule("settings", {})
 
 -- Set while stevio-ui itself changes CVars or bindings, so those changes
 -- aren't taken for the player's own (see the capture below).
 local applying = false
 
 -- The profile with the options panel's overrides (StevioUIConfig) on top.
-function ns.EffectiveBindings()
+local function EffectiveBindings()
 	return ns.Overrides.Merge(config.profile.bindings or {}, StevioUIConfig.bindings)
 end
 
-function ns.EffectiveCVars()
+local function EffectiveCVars()
 	return ns.Overrides.Merge(config.profile.cvars or {}, StevioUIConfig.cvars)
 end
 
@@ -66,15 +66,7 @@ end
 
 -- Strict: every key not bound in the profile gets unbound, so a fresh client
 -- ends up with exactly the bindings in code.
-local ApplyBindingsNow
-
-local function ApplyBindings(bindings, bindingSet)
-	return Applying(function()
-		return ApplyBindingsNow(bindings, bindingSet)
-	end)
-end
-
-function ApplyBindingsNow(bindings, bindingSet)
+local function ApplyBindingsNow(bindings, bindingSet)
 	bindingSet = bindingSet or Enum.BindingSet.Account
 	local changed = false
 	for index = 1, GetNumBindings() do
@@ -95,6 +87,12 @@ function ApplyBindingsNow(bindings, bindingSet)
 		SaveBindings(bindingSet)
 	end
 	return changed
+end
+
+local function ApplyBindings(bindings, bindingSet)
+	return Applying(function()
+		return ApplyBindingsNow(bindings, bindingSet)
+	end)
 end
 
 -- Taken once when the player agrees to the takeover, so /sui restore can hand
@@ -128,7 +126,7 @@ end
 -- lack CVars the profile gained since; those go back to the default.
 local function RestoreCVars(backupCVars)
 	local values = {}
-	for name in pairs(ns.EffectiveCVars()) do
+	for name in pairs(EffectiveCVars()) do
 		values[name] = backupCVars[name] or C_CVar.GetCVarDefault(name)
 	end
 	ApplyCVars(values)
@@ -159,10 +157,10 @@ local function ApplyProfile()
 	if profile.actionBars and ApplyActionBars(profile.actionBars) then
 		changed[#changed + 1] = ns.T("action bars", "Aktionsleisten")
 	end
-	if profile.cvars and ApplyCVars(ns.EffectiveCVars()) then
+	if profile.cvars and ApplyCVars(EffectiveCVars()) then
 		changed[#changed + 1] = ns.T("settings", "Einstellungen")
 	end
-	if profile.bindings and ApplyBindings(ns.EffectiveBindings()) then
+	if profile.bindings and ApplyBindings(EffectiveBindings()) then
 		changed[#changed + 1] = ns.T("key bindings", "Tastenbelegung")
 	end
 	profileApplied = true
@@ -242,10 +240,10 @@ function ns.ApplyOverridesNow(cvarName, cvarValue)
 			Applying(SetCVar, cvarName, cvarValue)
 		end
 		if config.profile.cvars then
-			ApplyCVars(ns.EffectiveCVars())
+			ApplyCVars(EffectiveCVars())
 		end
 		if config.profile.bindings then
-			ApplyBindings(ns.EffectiveBindings())
+			ApplyBindings(EffectiveBindings())
 		end
 	end)
 end
@@ -273,7 +271,7 @@ local function OnEnteringWorld()
 end
 ns.RegisterEvent("PLAYER_ENTERING_WORLD", OnEnteringWorld)
 
-function Settings:OnEnable()
+function SettingsModule:OnEnable()
 	enabled = true
 	TryApply()
 
