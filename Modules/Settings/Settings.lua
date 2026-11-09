@@ -1,6 +1,7 @@
 local _, ns = ...
 
 local config = ns.config.settings
+local Model = ns.SettingsModel
 
 local SettingsModule = ns.RegisterModule("settings", {})
 
@@ -124,12 +125,7 @@ end
 -- count as unchanged, so they aren't saved as removed.
 local function CurrentBindings()
 	local current, commands = ns.BoundKeys()
-	for key, command in pairs(config.profile.bindings) do
-		if current[key] == nil and not commands[command] then
-			current[key] = command
-		end
-	end
-	return current
+	return Model.AddUnknownProfileBindings(current, commands, config.profile.bindings)
 end
 
 local function OnBindingsChanged()
@@ -141,15 +137,7 @@ end
 
 -- CVar names are case-insensitive; the profile's or override's spelling wins.
 function ns.KnownCVarName(name)
-	local lower = name:lower()
-	for _, map in ipairs({ config.profile.cvars or {}, StevioUIConfig.cvars }) do
-		for known in pairs(map) do
-			if known:lower() == lower then
-				return known
-			end
-		end
-	end
-	return name
+	return Model.KnownCVarName(name, { config.profile.cvars or {}, StevioUIConfig.cvars })
 end
 
 local function OnCVarChanged(_, name)
@@ -161,14 +149,7 @@ local function OnCVarChanged(_, name)
 		return
 	end
 	name = ns.KnownCVarName(name)
-	local profileValue = config.profile.cvars[name]
-	-- Back at the profile's value (or, for a CVar outside the profile, at the
-	-- game default) the override goes away again.
-	if value == (profileValue or defaultValue) then
-		StevioUIConfig.cvars[name] = nil
-	else
-		StevioUIConfig.cvars[name] = value
-	end
+	StevioUIConfig.cvars[name] = Model.CVarOverrideFor(value, defaultValue, config.profile.cvars[name])
 end
 
 -- Applies the effective bindings and CVars right away (out of combat), after

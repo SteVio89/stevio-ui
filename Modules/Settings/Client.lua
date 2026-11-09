@@ -4,6 +4,7 @@ local _, ns = ...
 -- profile (Settings.lua), its export, the backup and the options panel.
 
 local config = ns.config.settings
+local Model = ns.SettingsModel
 
 -- GetBinding returns the command, its category and then the bound keys.
 local function KeysOf(_, _, ...)
@@ -79,10 +80,5 @@ end
 
 -- CVars holding client state rather than preferences (config.ignoredCVars).
 function ns.IsIgnoredCVar(name)
-	for _, pattern in ipairs(config.ignoredCVars) do
-		if name:find(pattern) then
-			return true
-		end
-	end
-	return false
+	return Model.IsIgnoredCVar(name, config.ignoredCVars)
 end

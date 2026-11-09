@@ -7,6 +7,7 @@ local _, ns = ...
 
 local Editor = ns.ConfigEditor
 local config = ns.config.settings
+local Model = ns.SettingsModel
 
 local T = ns.T
 
@@ -143,14 +144,7 @@ end
 
 -- Sets (or with `command` nil, unbinds) `key` as an override and applies it.
 local function SetBindingOverride(key, command)
-	local profileCommand = (config.profile.bindings or {})[key]
-	if command == profileCommand then
-		StevioUIConfig.bindings[key] = nil
-	elseif command == nil then
-		StevioUIConfig.bindings[key] = profileCommand and false or nil
-	else
-		StevioUIConfig.bindings[key] = command
-	end
+	StevioUIConfig.bindings[key] = Model.BindingOverride(command, (config.profile.bindings or {})[key])
 	ns.ApplyOverridesNow()
 end
 
@@ -272,14 +266,10 @@ end
 -- Sets `name` to `value` as an override (nil removes it) and applies it.
 local function SetCVarOverride(name, value)
 	name = ns.KnownCVarName(name)
-	local profileValue = (config.profile.cvars or {})[name]
-	if value == nil or value == profileValue then
-		StevioUIConfig.cvars[name] = nil
-	else
-		StevioUIConfig.cvars[name] = value
-	end
+	local override, backToDefault = Model.CVarOverride(value, (config.profile.cvars or {})[name])
+	StevioUIConfig.cvars[name] = override
 	-- A CVar outside the profile is no longer managed: back to the game default.
-	if value == nil and profileValue == nil then
+	if backToDefault then
 		ns.ApplyOverridesNow(name, C_CVar.GetCVarDefault(name))
 	else
 		ns.ApplyOverridesNow()
