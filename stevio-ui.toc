@@ -40,6 +40,7 @@ Modules\Group\Group.lua
 Modules\Group\Preview.lua
 
 Modules\KeyboardHealing\Config.lua
+Modules\KeyboardHealing\Snippets.lua
 Modules\KeyboardHealing\KeyboardHealing.lua
 
 Modules\Minimap\Config.lua

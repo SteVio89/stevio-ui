@@ -13,92 +13,10 @@ local config = ns.config.keyboardHealing
 -- cursorGroup, cursorSlot) lives in the controller's environment, which every
 -- snippet wrapped against it shares.
 
+local MAX_GROUPS = ns.MAX_GROUPS
 local UNITS_PER_GROUP = ns.UNITS_PER_GROUP
 
--- Rows mode stacks groups upwards with members left to right; columns mode
--- puts groups side by side with members top to bottom (see Group.lua).
-local NAVIGATE = [[
-	local g, s = cursorGroup, cursorSlot
-	local cell = g and owner:GetFrameRef("cell" .. g .. "-" .. s)
-	if not (cell and cell:IsShown()) then
-		g, s = nil, nil
-		for group = 1, 8 do
-			if owner:GetFrameRef("cell" .. group .. "-1"):IsShown() then
-				g, s = group, 1
-				break
-			end
-		end
-		if not g then
-			return false
-		end
-	elseif PlayerCanAssist("target") then
-		local groupStep, slotStep = 0, 0
-		if gridMode == "rows" then
-			if button == "up" then groupStep = 1
-			elseif button == "down" then groupStep = -1
-			elseif button == "right" then slotStep = 1
-			else slotStep = -1 end
-		else
-			if button == "right" then groupStep = 1
-			elseif button == "left" then groupStep = -1
-			elseif button == "down" then slotStep = 1
-			else slotStep = -1 end
-		end
-
-		if slotStep ~= 0 then
-			local nextCell = owner:GetFrameRef("cell" .. g .. "-" .. (s + slotStep))
-			if nextCell and nextCell:IsShown() then
-				s = s + slotStep
-			end
-		else
-			-- Empty groups are skipped; a shorter group clamps to its last member.
-			local group = g + groupStep
-			while group >= 1 and group <= 8 and not owner:GetFrameRef("cell" .. group .. "-1"):IsShown() do
-				group = group + groupStep
-			end
-			if group >= 1 and group <= 8 then
-				g = group
-				while s > 1 and not owner:GetFrameRef("cell" .. g .. "-" .. s):IsShown() do
-					s = s - 1
-				end
-			end
-		end
-	end
-
-	cursorGroup, cursorSlot = g, s
-	owner:RunAttribute("UpdateCursor")
-	self:SetAttribute("unit", owner:GetFrameRef("cell" .. g .. "-" .. s):GetAttribute("unit"))
-	return "LeftButton"
-]]
-
--- Parented to the cell, so it follows the cell's visibility and range alpha
--- and still marks the same slot when the roster changes in combat.
-local UPDATE_CURSOR = [[
-	local cursor = self:GetFrameRef("cursor")
-	local cell = cursorGroup and self:GetFrameRef("cell" .. cursorGroup .. "-" .. cursorSlot)
-	if cell then
-		cursor:SetParent(cell)
-		cursor:ClearAllPoints()
-		cursor:SetAllPoints(cell)
-		cursor:SetFrameLevel(cell:GetFrameLevel() + 20)
-		cursor:SetAttribute("unit", cell:GetAttribute("unit"))
-		cursor:Show()
-	else
-		cursor:SetAttribute("unit", nil)
-		cursor:Hide()
-	end
-]]
-
--- A mouse click targets a cell too, so the cursor follows it.
-local SYNC_FROM_CLICK = [[
-	if button == "LeftButton" then
-		cursorGroup, cursorSlot = self:GetAttribute("stevio-group"), self:GetAttribute("stevio-slot")
-		owner:RunAttribute("UpdateCursor")
-	end
-]]
-
--- The restricted snippets above can't see Lua upvalues and spell out the 8 groups themselves.
-local MAX_GROUPS = ns.MAX_GROUPS
+local Snippets = ns.KeyboardHealingSnippets
 
 local controller
 local cursor
@@ -144,14 +62,14 @@ local function CreateTargeter()
 	-- Bindings deliver the direction as the mouse button; only the down press counts.
 	targeter:SetAttribute("useOnKeyDown", true)
 	targeter:RegisterForClicks("AnyDown")
-	SecureHandlerWrapScript(targeter, "OnClick", controller, NAVIGATE)
+	SecureHandlerWrapScript(targeter, "OnClick", controller, Snippets.NAVIGATE)
 	return targeter
 end
 
 local function MarkCell(cell, groupIndex, slot)
 	cell:SetAttribute("stevio-group", groupIndex)
 	cell:SetAttribute("stevio-slot", slot)
-	SecureHandlerWrapScript(cell, "OnClick", controller, SYNC_FROM_CLICK)
+	SecureHandlerWrapScript(cell, "OnClick", controller, Snippets.SYNC_FROM_CLICK)
 end
 
 local function PointCellRefsAt(getCell)
@@ -280,7 +198,7 @@ function KeyboardHealing:OnEnable()
 	end
 
 	controller = CreateFrame("Frame", "StevioUI_GridCursor", UIParent, "SecureHandlerBaseTemplate")
-	controller:SetAttribute("UpdateCursor", UPDATE_CURSOR)
+	controller:SetAttribute("UpdateCursor", Snippets.UPDATE_CURSOR)
 	SecureHandlerSetFrameRef(controller, "cursor", CreateCursor())
 	for groupIndex = 1, MAX_GROUPS do
 		for slot = 1, UNITS_PER_GROUP do
