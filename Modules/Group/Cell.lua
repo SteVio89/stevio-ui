@@ -165,18 +165,11 @@ local function OnAttributeChanged(cell, name, value)
 	end
 end
 
+-- Shared with the /sui test preview's stand-in icons (Preview.lua).
 local ICON_SPACING = 2
-
 local ICON_COUNT_SIZE = 9
-
-local function CreatePreviewIcon(cell, anchorPoint, offsetX, offsetY, size)
-	local icon = CreateFrame("Frame", nil, cell.health)
-	icon:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
-	icon:SetFrameLevel(cell.health:GetFrameLevel() + 2)
-	ns.StyleAuraIcon(icon, size, ICON_COUNT_SIZE)
-	icon:Hide()
-	return icon
-end
+ns.GROUP_ICON_SPACING = ICON_SPACING
+ns.GROUP_ICON_COUNT_SIZE = ICON_COUNT_SIZE
 
 -- Addon code can't read other units' auras in combat (the queries error once
 -- they turn secret), so Blizzard's secure container reads and tracks them and
@@ -279,20 +272,6 @@ function ns.BuildGroupCell(cell)
 	cell.roleIcon:SetPoint("CENTER", cell.health)
 	cell.roleIcon:Hide()
 	cell.optionTable = { displayRoleIcon = true }
-end
-
--- Plain frames the /sui test preview fills with fake debuffs and HoTs.
-function ns.BuildGroupPreviewIcons(cell)
-	local step = config.iconSize + ICON_SPACING
-	cell.leftIcons, cell.rightIcons, cell.ownIcons = {}, {}, {}
-	for i = 1, config.iconsPerSide do
-		cell.leftIcons[i] = CreatePreviewIcon(cell, "LEFT", 2 + (i - 1) * step, 0, config.iconSize)
-		cell.rightIcons[i] = CreatePreviewIcon(cell, "RIGHT", -2 - (i - 1) * step, 0, config.iconSize)
-	end
-	local ownStep = config.ownAuraSize + ICON_SPACING
-	for i = 1, config.ownAurasMax do
-		cell.ownIcons[i] = CreatePreviewIcon(cell, "TOPLEFT", 2 + (i - 1) * ownStep, -2, config.ownAuraSize)
-	end
 end
 
 -- Called from the XML template's OnLoad; the cell size lives in Cell.xml
