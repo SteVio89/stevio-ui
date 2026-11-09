@@ -5,6 +5,12 @@ local config = ns.config.units
 local Units = ns.RegisterModule("units", {})
 Units.frames = {}
 
+-- Unit changes that come with their own event; shared with the cast bars.
+ns.UNIT_CHANGE_EVENTS = {
+	target = "PLAYER_TARGET_CHANGED",
+	focus = "PLAYER_FOCUS_CHANGED",
+}
+
 -- Health, power and names may be secret values in combat. They can be passed
 -- straight into widgets, but never compared or used in arithmetic.
 
@@ -186,10 +192,8 @@ local function CreateUnitFrame(spec)
 			frame:RegisterEvent("PLAYER_REGEN_DISABLED")
 			frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 		end
-		if unit == "target" then
-			frame:RegisterEvent("PLAYER_TARGET_CHANGED")
-		elseif unit == "focus" then
-			frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+		if ns.UNIT_CHANGE_EVENTS[unit] then
+			frame:RegisterEvent(ns.UNIT_CHANGE_EVENTS[unit])
 		elseif unit == "pet" then
 			frame:RegisterUnitEvent("UNIT_PET", "player")
 		end

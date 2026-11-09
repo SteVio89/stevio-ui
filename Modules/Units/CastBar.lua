@@ -25,12 +25,6 @@ local stopEvents = {
 	UNIT_SPELLCAST_CHANNEL_STOP = true,
 }
 
--- Unit changes that start over with whatever the new unit is casting.
-local unitChangeEvents = {
-	target = "PLAYER_TARGET_CHANGED",
-	focus = "PLAYER_FOCUS_CHANGED",
-}
-
 -- The notInterruptible flag may be secret, and secret booleans can't be branched on;
 -- the FromBoolean setter lets the client resolve the color instead.
 local function ApplyColor(texture, notInterruptible)
@@ -125,8 +119,9 @@ function ns.CreateCastBar(unit, sizeFrame, anchor, align, options)
 	for event in pairs(stopEvents) do
 		castBar:RegisterUnitEvent(event, unit)
 	end
-	if unitChangeEvents[unit] then
-		castBar:RegisterEvent(unitChangeEvents[unit])
+	-- A unit change starts over with whatever the new unit is casting.
+	if ns.UNIT_CHANGE_EVENTS[unit] then
+		castBar:RegisterEvent(ns.UNIT_CHANGE_EVENTS[unit])
 	end
 	castBar:SetScript("OnEvent", OnEvent)
 	castBar:SetScript("OnUpdate", OnUpdate)
