@@ -65,6 +65,16 @@ function C.RenderMessages(channel)
 	messages:ScrollToBottom()
 end
 
+-- Opens channel `key` in the message area, closing the copy view; returns the
+-- channel. The sidebar and unread counts are left to the caller.
+function C.ShowChannel(key)
+	C.state.selected = key
+	C.ui.copy:Hide()
+	local channel = C.Selected()
+	C.RenderMessages(channel)
+	return channel
+end
+
 local function CreateRow(index)
 	local ui = C.ui
 	local row = CreateFrame("Button", nil, ui.sidebar)

@@ -12,7 +12,7 @@ local function Add(def, text, colorType)
 	if not text or text == "" then
 		return
 	end
-	C.Receive(def, def.key, def, { time = time(), text = text, colorType = colorType })
+	C.ReceiveLine(def, text, colorType)
 end
 
 local function AddSystem(text)

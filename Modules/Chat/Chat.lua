@@ -13,13 +13,10 @@ local Chat = ns.RegisterModule("chat", {})
 -- commands in Commands.lua and the channel store in History.lua.
 
 function C.Select(key)
-	state.selected = key
-	C.ui.copy:Hide()
-	local channel = C.Selected()
+	local channel = C.ShowChannel(key)
 	if channel and C.Attended() then
 		C.MarkRead(key)
 	end
-	C.RenderMessages(channel)
 	C.RefreshSidebar()
 end
 
@@ -190,12 +187,16 @@ function C.Receive(def, key, opts, entry)
 	-- `focus` channels are opened even when the chat is open, unless the
 	-- player is typing into another channel.
 	if C.hidden or (def.focus and state.selected ~= show and not C.ui.input:HasFocus()) then
-		state.selected = show
-		C.ui.copy:Hide()
-		C.RenderMessages(C.store:Get(show))
+		C.ShowChannel(show)
 	end
 	StartAutoTimer(config.autoShowDuration)
 	C.Update()
+end
+
+-- A finished line (`colorType` names the chat type whose color it takes) in
+-- the channel of `def`, which is its own channel options too.
+function C.ReceiveLine(def, text, colorType)
+	C.Receive(def, def.key, def, { time = time(), text = text, colorType = colorType })
 end
 
 -- Message contents may be secret (e.g. in encounters): those can't be stored and
@@ -268,7 +269,7 @@ local function OnPrint(...)
 		end
 		parts[i] = tostring(value)
 	end
-	C.Receive(def, def.key, def, { time = time(), text = table.concat(parts, " "), colorType = "SYSTEM" })
+	C.ReceiveLine(def, table.concat(parts, " "), "SYSTEM")
 end
 
 -- The account id may change between sessions, so channels with a BattleTag
