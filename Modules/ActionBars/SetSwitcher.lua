@@ -14,8 +14,6 @@ local config = ns.config.actionbars
 local style = ns.config.style
 local T = ns.T
 
-BINDING_NAME_STEVIOUI_ACTIONSET_NEXT = T("Next action set", "Nächstes Aktionsleisten-Set")
-
 local state
 local button
 

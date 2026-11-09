@@ -360,11 +360,6 @@ function C.CycleChannel(step)
 	C.Select(channels[(index - 1 + step) % #channels + 1].key)
 end
 
-BINDING_NAME_STEVIOUI_TOGGLE_CHAT = C.german and "Chat ein-/ausblenden" or "Toggle chat"
-BINDING_NAME_STEVIOUI_CHAT_INPUT = C.german and "Chat: Nachricht schreiben" or "Chat: write message"
-BINDING_NAME_STEVIOUI_CHAT_NEXT = C.german and "Chat: nächster Kanal" or "Chat: next channel"
-BINDING_NAME_STEVIOUI_CHAT_PREVIOUS = C.german and "Chat: voriger Kanal" or "Chat: previous channel"
-
 function ns.ToggleChat()
 	state.manual = not state.manual
 	if state.manual and state.autoTimer then

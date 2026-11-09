@@ -10,6 +10,7 @@
 ## X-Curse-Project-ID: 1739367
 
 Core\Init.lua
+Core\Bindings.lua
 Core\Overrides.lua
 Core\ErrorLog.lua
 Core\Consent.lua
