@@ -5,38 +5,6 @@ local C = ns.ChatInternal
 
 -- The channel view: sidebar with the channels, header, messages and input line.
 
--- The sender's name (`text`, already formatted) as a link that opens a whisper
--- when the message came from another character (see OnHyperlinkClick below).
-local function Sender(entry, text)
-	return entry.player and ns.ChatHistory.PlayerLink(entry.player, text) or text
-end
-
--- "time [channel] sender: text"; the channel only shows in "Other" and Main
--- (where a click on it writes to that channel), the sender
--- is missing on system messages. Channel and sender take their channel's color;
--- emotes ("time Bob waves.") are colored as a whole in the emote color.
--- Returns the line and its base color: finished lines without a sender (loot,
--- NPC, system, ...) take their kind's chat color, like in Blizzard's chat;
--- System lines stored before they carried a kind count as SYSTEM.
-local function FormatEntry(channel, entry)
-	local stamp = C.GREY .. (entry.time and C.Time(entry.time) or "--:--") .. "|r"
-	local colorType = entry.colorType or (channel.kind == "system" and not entry.sender and "SYSTEM")
-	if colorType then
-		return ns.ChatHistory.Line(entry, stamp), C.TypeColor(colorType)
-	end
-	if entry.emote then
-		local body = entry.sender and (Sender(entry, entry.sender) .. " " .. entry.text) or entry.text
-		return stamp .. " " .. C.ColorCode(C.TypeColor("EMOTE")) .. body .. "|r"
-	end
-	local source = entry.source
-		and (C.ColorCode(C.TypeColor(entry.sourceType or channel.chatType)) .. entry.source .. "|r")
-	if source and entry.sourceKey then
-		source = ns.ChatHistory.ChannelLink(entry.sourceKey, source)
-	end
-	local sender = entry.sender and Sender(entry, C.ColorCode(C.ChannelColor(channel)) .. entry.sender .. "|r")
-	return ns.ChatHistory.Line(entry, stamp, source, sender)
-end
-
 local function DayLine(entry)
 	return C.GREY .. "-- " .. C.Day(entry.time) .. " --|r"
 end
@@ -47,7 +15,7 @@ function C.ShowEntry(channel, previous, entry)
 	if ns.ChatHistory.StartsDay(previous, entry, C.Day) then
 		C.ui.messages:AddMessage(DayLine(entry))
 	end
-	local line, r, g, b = FormatEntry(channel, entry)
+	local line, r, g, b = C.FormatEntry(channel, entry, C.TypeColor)
 	C.ui.messages:AddMessage(line, r or 1, g or 1, b or 1)
 end
 
