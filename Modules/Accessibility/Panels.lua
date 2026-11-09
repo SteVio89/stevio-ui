@@ -6,6 +6,7 @@ local _, ns = ...
 -- this source is only active after the leader key, which cycles through them.
 
 local QuickJump = ns.QuickJump
+local Internal = ns.AccessibilityInternal
 
 -- Windows with a dedicated source that labels them better.
 local DEDICATED = {
@@ -153,7 +154,7 @@ local panelSource = {
 }
 
 -- Each leader press moves to the next open window; past the last one, labels end.
-function ns.CyclePanelLabels()
+function Internal.CyclePanelLabels()
 	local panels = OpenPanels()
 	local nextPanel = panels[1]
 	if activePanel then
@@ -175,6 +176,6 @@ function ns.CyclePanelLabels()
 	QuickJump:RequestRefresh()
 end
 
-function ns.SetupPanelSource()
+function Internal.SetupPanelSource()
 	QuickJump:RegisterSource(panelSource)
 end

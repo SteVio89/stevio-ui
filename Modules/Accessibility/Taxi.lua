@@ -1,6 +1,7 @@
 local _, ns = ...
 
 local config = ns.config.accessibility.taxi
+local Internal = ns.AccessibilityInternal
 
 -- Blizzard's flight map has no list to label, so reachable destinations get
 -- their own compact list next to it; the map stays for orientation.
@@ -93,11 +94,11 @@ local taxiSource = {
 	end,
 }
 
-function ns.IsTaxiListOpen()
+function Internal.IsTaxiListOpen()
 	return panel ~= nil and panel:IsShown()
 end
 
-function ns.SetupTaxiList()
+function Internal.SetupTaxiList()
 	panel = CreateFrame("Frame", "StevioUI_TaxiList", UIParent)
 	panel:SetWidth(config.width)
 	panel:SetFrameStrata("HIGH")

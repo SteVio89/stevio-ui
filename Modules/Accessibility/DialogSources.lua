@@ -4,6 +4,7 @@ local _, ns = ...
 -- are selectable right now, in the order they should be labelled.
 
 local QuickJump = ns.QuickJump
+local Internal = ns.AccessibilityInternal
 
 local function RequestRefresh()
 	QuickJump:RequestRefresh()
@@ -73,7 +74,7 @@ local popupSource = {
 }
 
 -- Returns whether popups took the leader press.
-function ns.RequestPopupLabels()
+function Internal.RequestPopupLabels()
 	if AnyPopupShown() and not popupRequested then
 		popupRequested = true
 		RequestRefresh()
@@ -148,11 +149,11 @@ local gossipSource = {
 	end,
 }
 
-function ns.IsDialogOpen()
-	return questSource.IsOpen() or gossipSource.IsOpen() or ns.IsTaxiListOpen()
+function Internal.IsDialogOpen()
+	return questSource.IsOpen() or gossipSource.IsOpen() or Internal.IsTaxiListOpen()
 end
 
-function ns.SetupDialogSources()
+function Internal.SetupDialogSources()
 	QuickJump:RegisterSource(popupSource)
 	QuickJump:RegisterSource(questSource)
 	QuickJump:RegisterSource(gossipSource)

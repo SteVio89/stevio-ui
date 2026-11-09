@@ -1,22 +1,23 @@
 local _, ns = ...
 
 local Accessibility = ns.RegisterModule("accessibility", {})
+local Internal = ns.AccessibilityInternal
 
 -- Popups come first because they usually block whatever else is open. A
 -- dialog whose labels were used up gets them back before windows are cycled.
 function ns.QuickJumpLeader()
-	if ns.RequestPopupLabels() then
+	if Internal.RequestPopupLabels() then
 		return
 	end
-	if not ns.QuickJump:IsActive() and ns.IsDialogOpen() then
+	if not ns.QuickJump:IsActive() and Internal.IsDialogOpen() then
 		ns.QuickJump:RequestRefresh()
 		return
 	end
-	ns.CyclePanelLabels()
+	Internal.CyclePanelLabels()
 end
 
 function Accessibility:OnEnable()
-	ns.SetupDialogSources()
-	ns.SetupTaxiList()
-	ns.SetupPanelSource()
+	Internal.SetupDialogSources()
+	Internal.SetupTaxiList()
+	Internal.SetupPanelSource()
 end
