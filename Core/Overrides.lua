@@ -235,9 +235,6 @@ if ns.RegisterEvent then
 
 		ns.overrideRoots = { config = ns.config, layout = ns.layout }
 		ns.overrideDefaults = Overrides.DeepCopy(ns.overrideRoots)
-		local ok, err = pcall(Overrides.ApplyAll, ns.overrideRoots, StevioUIConfig.values)
-		if not ok then
-			geterrorhandler()(err)
-		end
+		ns.SafeCall(Overrides.ApplyAll, ns.overrideRoots, StevioUIConfig.values)
 	end)
 end

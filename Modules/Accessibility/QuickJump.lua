@@ -263,9 +263,8 @@ local function Collect()
 		if source.IsOpen() then
 			local targets = {}
 			-- A failing source must not take the whole feature down with it.
-			local ok, collected = pcall(source.Collect)
+			local ok, collected = ns.SafeCall(source.Collect)
 			if not ok then
-				geterrorhandler()(collected)
 				collected = {}
 			end
 			for _, target in ipairs(collected) do

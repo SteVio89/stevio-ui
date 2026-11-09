@@ -105,10 +105,7 @@ local handlers = {
 function C.SetupNotices()
 	for event, handler in pairs(handlers) do
 		ns.RegisterEvent(event, function(...)
-			local ok, err = pcall(handler, ...)
-			if not ok then
-				geterrorhandler()(err)
-			end
+			ns.SafeCall(handler, ...)
 		end)
 	end
 end

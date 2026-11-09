@@ -31,10 +31,9 @@ end
 -- value can't stop the capture for the rest of the session.
 local function Applying(fn, ...)
 	applying = true
-	local ok, result = pcall(fn, ...)
+	local ok, result = ns.SafeCall(fn, ...)
 	applying = false
 	if not ok then
-		geterrorhandler()(result)
 		return false
 	end
 	return result
@@ -293,8 +292,5 @@ function Settings:OnEnable()
 	end)
 
 	-- Last, so a failing panel can't take /sui restore down with it.
-	local ok, err = pcall(ns.SetupOptionsPanel)
-	if not ok then
-		geterrorhandler()(err)
-	end
+	ns.SafeCall(ns.SetupOptionsPanel)
 end

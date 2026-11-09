@@ -42,6 +42,32 @@ function ns.RegisterEvent(event, handler)
 	table.insert(handlers[event], handler)
 end
 
+-- Copies the handler list instead of changing it, so a handler may unregister
+-- itself while the dispatcher is still iterating over the old list.
+function ns.UnregisterEvent(event, handler)
+	local remaining = {}
+	for _, registered in ipairs(handlers[event] or {}) do
+		if registered ~= handler then
+			remaining[#remaining + 1] = registered
+		end
+	end
+	if #remaining > 0 then
+		handlers[event] = remaining
+	elseif handlers[event] then
+		handlers[event] = nil
+		dispatcher:UnregisterEvent(event)
+	end
+end
+
+-- Runs `fn`, reporting an error to the error handler instead of raising it.
+function ns.SafeCall(fn, ...)
+	local ok, result = pcall(fn, ...)
+	if not ok then
+		geterrorhandler()(result)
+	end
+	return ok, result
+end
+
 -- Addon output: "stevio-ui: text", or a further line without the prefix.
 -- `ns.printing` marks it as ours while it runs through print(), so the chat
 -- can open on it (an answer to something just typed) but not on other addons' output.
@@ -81,22 +107,25 @@ SlashCmdList.STEVIOUI = function(input)
 	end
 end
 
-local combatQueue = {}
+local combatQueue, queued = {}, {}
 
 -- Protected frames can't be moved, reparented or rebound during combat lockdown,
--- so such changes wait for the lockdown to end instead of erroring.
+-- so such changes wait for the lockdown to end instead of erroring. A function
+-- that is already waiting isn't queued again: every caller passes one that
+-- brings things up to date, so running it once is enough.
 function ns.RunAfterCombat(fn)
-	if InCombatLockdown() then
-		combatQueue[#combatQueue + 1] = fn
-	else
+	if not InCombatLockdown() then
 		fn()
+	elseif not queued[fn] then
+		queued[fn] = true
+		combatQueue[#combatQueue + 1] = fn
 	end
 end
 
 ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
-	local queued = combatQueue
-	combatQueue = {}
-	for _, fn in ipairs(queued) do
+	local pending = combatQueue
+	combatQueue, queued = {}, {}
+	for _, fn in ipairs(pending) do
 		fn()
 	end
 end)
@@ -105,7 +134,7 @@ local function EnableModules()
 	for _, module in ipairs(modules) do
 		local config = ns.config[module.name]
 		if not config or config.enabled ~= false then
-			module:OnEnable(config)
+			module:OnEnable()
 		end
 	end
 	ns.ApplyEditModeLayout()

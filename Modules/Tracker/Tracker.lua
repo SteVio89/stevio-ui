@@ -1,11 +1,9 @@
 local _, ns = ...
 
+local config = ns.config.tracker
 local badgeStyle = ns.config.style.badge
 
 local Tracker = ns.RegisterModule("tracker", {})
-
-BINDING_HEADER_STEVIOUI = "stevio-ui"
-BINDING_NAME_STEVIOUI_TOGGLE_TRACKER = ns.isGerman and "Questverfolgung ein-/ausblenden" or "Toggle objective tracker"
 
 local shown = false
 local applying = false
@@ -14,16 +12,18 @@ local badge
 -- The tracker holds secure quest item buttons, which makes Show/Hide protected
 -- in combat. Alpha is never restricted, so it takes effect immediately and the
 -- real Show/Hide follows once combat allows it.
+local function ApplyShown()
+	applying = true
+	ObjectiveTrackerFrame:SetShown(shown)
+	applying = false
+end
+
 local function Apply()
 	applying = true
 	ObjectiveTrackerFrame:SetAlpha(shown and 1 or 0)
 	applying = false
 	badge.texture:SetColorTexture(unpack(shown and badgeStyle.shownColor or badgeStyle.hiddenColor))
-	ns.RunAfterCombat(function()
-		applying = true
-		ObjectiveTrackerFrame:SetShown(shown)
-		applying = false
-	end)
+	ns.RunAfterCombat(ApplyShown)
 end
 
 function ns.ToggleTracker()
@@ -47,7 +47,7 @@ local function HeightSetting(height)
 	return (height - 400) / 10
 end
 
-function Tracker:OnEnable(config)
+function Tracker:OnEnable()
 	ns.SetEditModeSystem(Enum.EditModeSystem.ObjectiveTracker, nil, ns.layout.tracker, {
 		[Enum.EditModeObjectiveTrackerSetting.Height] = HeightSetting(config.height),
 	})
