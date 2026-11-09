@@ -117,7 +117,7 @@ local function HidePreview()
 end
 
 ns.RegisterSlashCommand("test", function(input)
-	if not ns.config.group.enabled then
+	if not config.enabled then
 		return
 	end
 	local count = tonumber(input)

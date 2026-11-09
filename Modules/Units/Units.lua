@@ -133,7 +133,7 @@ local function CreateUnitFrame(spec)
 	frame:RegisterForClicks("AnyUp")
 
 	ns.CreateBackground(frame)
-	frame.border = ns.CreateBorder(frame)
+	ns.CreateBorder(frame)
 
 	frame.health = ns.CreateStatusBar(frame)
 	frame.health:SetPoint("TOPLEFT")

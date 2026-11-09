@@ -121,6 +121,7 @@ local globalEvents = {
 }
 
 local function OnEvent(cell, event)
+	-- Defensive: SetUnit unregisters all events when the unit goes away.
 	if not cell.unit then
 		return
 	end
@@ -271,7 +272,7 @@ function ns.BuildGroupCell(cell)
 	local px = ns.PixelSize(cell)
 
 	ns.CreateBackground(cell)
-	cell.border = ns.CreateBorder(cell, 0)
+	ns.CreateBorder(cell, 0)
 	cell.aggroBorder = ns.CreateBorder(cell, 1)
 	cell.aggroBorder:SetColor(unpack(config.aggroColor))
 	cell.aggroBorder:SetShown(false)
