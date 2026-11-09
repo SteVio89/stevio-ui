@@ -70,6 +70,22 @@ function Overrides.IsList(value)
 	return count == #value
 end
 
+-- A new path of the first `n` keys of `path`.
+function Overrides.Prefix(path, n)
+	local prefix = {}
+	for i = 1, n do
+		prefix[i] = path[i]
+	end
+	return prefix
+end
+
+-- A new path one step below `path`.
+function Overrides.Child(path, key)
+	local child = Overrides.Prefix(path, #path)
+	child[#child + 1] = key
+	return child
+end
+
 -- The value at `path` below `roots` (nil when any step is missing).
 function Overrides.Get(roots, path)
 	local value = roots
@@ -110,11 +126,7 @@ end
 -- Whether a saved value still fits the config: its parent table exists and it
 -- doesn't change the kind of value (a code change may have removed or reshaped it).
 local function Fits(roots, path, value)
-	local parentPath = {}
-	for i = 1, #path - 1 do
-		parentPath[i] = path[i]
-	end
-	if type(Overrides.Get(roots, parentPath)) ~= "table" then
+	if type(Overrides.Get(roots, Overrides.Prefix(path, #path - 1))) ~= "table" then
 		return false
 	end
 	local current = Overrides.Get(roots, path)
@@ -149,11 +161,7 @@ end
 -- The encoded path of the saved value at or above `path`, if any.
 function Overrides.OverriddenAt(values, path)
 	for length = #path, 1, -1 do
-		local prefix = {}
-		for i = 1, length do
-			prefix[i] = path[i]
-		end
-		local encoded = Overrides.Encode(prefix)
+		local encoded = Overrides.Encode(Overrides.Prefix(path, length))
 		if values[encoded] ~= nil then
 			return encoded
 		end

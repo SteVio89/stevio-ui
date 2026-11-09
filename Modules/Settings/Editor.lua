@@ -72,15 +72,6 @@ local function SortedKeys(tbl)
 	return keys
 end
 
-local function Copy(path, key)
-	local copy = {}
-	for i, part in ipairs(path) do
-		copy[i] = part
-	end
-	copy[#copy + 1] = key
-	return copy
-end
-
 local function IsOverridden(path)
 	return Overrides.OverriddenAt(StevioUIConfig.values, path) ~= nil
 end
@@ -348,7 +339,7 @@ local function Visit(page, path, value, depth, listPath, index, labelOverride)
 		return
 	end
 	for _, childKey in ipairs(SortedKeys(value)) do
-		local childPath = Copy(path, childKey)
+		local childPath = Overrides.Child(path, childKey)
 		Visit(page, childPath, value[childKey], depth + 1, isList and path or nil, isList and childKey or nil)
 	end
 end
@@ -370,7 +361,7 @@ local function Render(page)
 			if value ~= nil and section.flatten and type(value) == "table" then
 				-- The table's own header row is left out (the page title names it).
 				for _, childKey in ipairs(SortedKeys(value)) do
-					Visit(page, Copy(section.path, childKey), value[childKey], 0)
+					Visit(page, Overrides.Child(section.path, childKey), value[childKey], 0)
 				end
 			elseif value ~= nil then
 				Visit(page, section.path, value, 0, nil, nil, section.label)

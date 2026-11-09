@@ -9,6 +9,14 @@ check(Overrides.Encode(path) == "config/units/frames/#2/width", "encode")
 local decoded = Overrides.Decode("config/units/frames/#2/width")
 check(decoded[4] == 2 and decoded[5] == "width" and #decoded == 5, "decode")
 
+-- Prefix and Child copy, so the original path stays as it was.
+local prefix = Overrides.Prefix(path, 3)
+check(#prefix == 3 and prefix[3] == "frames" and prefix ~= path, "prefix")
+check(#Overrides.Prefix(path, 0) == 0, "empty prefix")
+local child = Overrides.Child(prefix, 1)
+check(#child == 4 and child[4] == 1 and #prefix == 3, "child")
+check(#path == 5, "path untouched")
+
 check(Overrides.IsList({ 1, 2 }) and Overrides.IsList({}) and not Overrides.IsList({ a = 1 }), "lists")
 check(Overrides.Equal({ a = { 1, 2 } }, { a = { 1, 2 } }) and not Overrides.Equal({ a = 1 }, { a = 1, b = 2 }), "equal")
 
