@@ -17,7 +17,7 @@ function C.Select(key)
 	end
 	local channel = C.Selected()
 	if channel and C.Attended() then
-		C.store:MarkRead(key)
+		C.MarkRead(key)
 	end
 	C.RenderMessages(channel)
 	C.RefreshSidebar()
@@ -66,7 +66,7 @@ function C.Update()
 		end
 	end
 	if C.Attended() and state.selected then
-		C.store:MarkRead(state.selected)
+		C.MarkRead(state.selected)
 	end
 	C.ApplyBlizzardVisibility()
 	C.ui.frame:SetShown(not C.hidden)
@@ -100,7 +100,14 @@ end
 -- as sender. Returns nil when the channel can't be told (secret values).
 local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	if def.key then
-		return def.key, { kind = def.kind, chatType = def.chatType, label = def.label, readOnly = def.readOnly }
+		return def.key,
+			{
+				kind = def.kind,
+				chatType = def.chatType,
+				label = def.label,
+				readOnly = def.readOnly,
+				silent = def.silent,
+			}
 	end
 	if def.channel then
 		if issecretvalue(baseName) or issecretvalue(channelIndex) or not baseName then
@@ -150,18 +157,29 @@ local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	return ns.ChatHistory.WhisperKey(full), { kind = def.kind, chatType = def.chatType, label = label, target = full }
 end
 
+local function Append(channel, entry)
+	if state.selected == channel.key then
+		C.ShowEntry(channel, C.PreviousTimed(channel.messages, #channel.messages), entry)
+	end
+end
+
 -- Stores a message (`entry`, nil when its contents are secret) in channel `key`
 -- and shows it according to `def` (see config.events).
 function C.Receive(def, key, opts, entry)
-	local viewing = C.Attended() and state.selected == key
+	local main = C.IsMerged(opts.kind) and config.main
+	local viewing = C.Attended() and (state.selected == key or (main and state.selected == main.key))
 	if not entry then
 		C.store:AddUnreadOnly(key, opts, time())
 	else
 		local channel = C.store:Add(key, opts, entry, not viewing and not def.outgoing)
-		if state.selected == key then
-			C.ShowEntry(channel, C.PreviousTimed(channel.messages, #channel.messages), entry)
+		Append(channel, entry)
+		if main then
+			local copy = ns.ChatHistory.Mirror(entry, key, C.Label(channel), channel.chatType)
+			Append(C.store:Add(main.key, main, copy, false), copy)
 		end
 	end
+	-- Lines of merged channels pop up in Main (see below).
+	local show = main and main.key or key
 
 	-- Busy public chat only counts as unread; it doesn't pop up the hidden chat.
 	if def.outgoing or def.quiet then
@@ -171,12 +189,12 @@ function C.Receive(def, key, opts, entry)
 	-- Peek at the channel the message arrived in while the chat is hidden;
 	-- `focus` channels are opened even when the chat is open, unless the
 	-- player is typing into another channel.
-	if C.hidden or (def.focus and state.selected ~= key and not C.ui.input:HasFocus()) then
-		state.selected = key
+	if C.hidden or (def.focus and state.selected ~= show and not C.ui.input:HasFocus()) then
+		state.selected = show
 		if C.ui.copy then
 			C.ui.copy:Hide()
 		end
-		C.RenderMessages(C.store:Get(key))
+		C.RenderMessages(C.store:Get(show))
 	end
 	StartAutoTimer(config.autoShowDuration)
 	C.Update()
@@ -278,6 +296,9 @@ function C.Send(text)
 		return
 	end
 	local channel = C.Selected()
+	if channel and C.IsMain(channel.key) then
+		channel = C.MainTarget()
+	end
 	-- "Other" mixes several channels and "System" has no sender: no one to answer to.
 	if not channel or text == "" or channel.readOnly then
 		return
@@ -312,6 +333,17 @@ function C.OpenWhisper(fullName)
 	-- Opened first: opening a hidden chat moves on from an empty channel.
 	ns.FocusChatInput()
 	C.Select(key)
+end
+
+-- A click on a line's channel tag in Main: writes to that channel from Main.
+function C.PickMainTarget(key)
+	local channel = C.store:Get(key)
+	if not channel or channel.readOnly then
+		return
+	end
+	state.mainTarget = key
+	ns.FocusChatInput()
+	C.RefreshSidebar()
 end
 
 function C.CycleChannel(step)
@@ -372,7 +404,7 @@ local function PrintChannels()
 				C.Label(channel),
 				channel.key,
 				#channel.messages,
-				channel.unread,
+				C.Unread(channel),
 				channel.key == state.selected and ns.T(" (selected)", " (ausgewählt)") or ""
 			)
 		)
@@ -381,13 +413,17 @@ end
 
 function Chat:OnEnable()
 	StevioUIChatHistory = StevioUIChatHistory or {}
-	C.store = ns.ChatHistory.New(StevioUIChatHistory, config.historyLimit)
+	C.store = ns.ChatHistory.New(StevioUIChatHistory, config.historyLimit, config.main.enabled)
 	-- Battle.net account ids from an earlier session may belong to someone else
 	-- now; channels without a BattleTag can't look theirs up again, so they lose it.
 	for _, channel in pairs(StevioUIChatHistory.channels) do
 		if channel.bnetID and not channel.battleTag then
 			channel.bnetID = nil
 		end
+	end
+	-- Turned off, Main keeps its history until deleted with `x`.
+	if config.main.enabled then
+		C.store:Ensure(config.main.key, config.main)
 	end
 	C.CreateChannelView()
 	C.CreateBadge()

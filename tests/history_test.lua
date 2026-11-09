@@ -213,3 +213,60 @@ check(
 	"copied lines drop the link"
 )
 print("player links ok")
+
+-- Silent channels keep their lines but never count unread or as latest activity.
+do
+	local s = History.New({}, 10)
+	local notices = { kind = "notices", chatType = "SYSTEM", label = "Notices", readOnly = true, silent = true }
+	s:Add("guild", { kind = "guild", chatType = "GUILD", label = "Guild" }, { time = 1, text = "g" }, false)
+	s:Add("notices", notices, { time = 5, text = "Bob creates [Flask]." }, true)
+	s:AddUnreadOnly("notices", notices, 6)
+	check(#s:Get("notices").messages == 1, "silent channel keeps its lines")
+	check(s:Get("notices").unread == 0, "silent channel never counts unread")
+	check(not s:HasUnread(), "silent channel adds no unread")
+	check(s:MostRecent().key == "guild", "silent channel is never the latest activity")
+end
+
+-- The merged channel: mirrored lines, unread of its members, reply target.
+do
+	local s = History.New({}, 10, true)
+	local kinds = { group = true, guild = true, whisper = true }
+	local main = { kind = "main", chatType = "SAY", label = "Main" }
+	local partyOpts = { kind = "group", chatType = "PARTY", label = "Party" }
+	local entry = { time = 1, sender = "Bob", text = "pull" }
+	s:Add("party", partyOpts, entry, true)
+	local copy = History.Mirror(entry, "party", "Party", "PARTY")
+	check(copy ~= entry and entry.source == nil, "mirror copies the entry")
+	check(
+		copy.source == "Party" and copy.sourceType == "PARTY" and copy.sourceKey == "party",
+		"mirror tags its channel"
+	)
+	check(History.Line(copy, "12:00") == "12:00 [Party] Bob: pull", "mirrored line names its channel")
+	s:Add("main", main, copy, false)
+	s:Add("guild", { kind = "guild", chatType = "GUILD", label = "Guild" }, { time = 2, text = "hi" }, true)
+	s:Add("main", main, History.Mirror({ time = 2, text = "hi" }, "guild", "Guild", "GUILD"), false)
+	s:AddUnreadOnly("say", { kind = "public", chatType = "SAY", label = "Say" }, 3)
+	check(s:Get("main").unread == 0, "merged channel has no unread of its own")
+	check(s:MergedUnread(kinds) == 2, "merged unread sums its members")
+	check(s:ReplyChannel("main").key == "guild", "reply goes to the latest line's channel")
+	s:Get("guild").readOnly = true
+	check(s:ReplyChannel("main").key == "party", "reply skips read-only channels")
+	s:Delete("party")
+	check(s:ReplyChannel("main") == nil, "reply skips deleted channels")
+	check(not s:Delete("main"), "merged channel can't be deleted")
+	s:MarkKindsRead(kinds)
+	check(s:MergedUnread(kinds) == 0 and s:Get("say").unread == 1, "reading the merged channel reads only its members")
+
+	local channelLink = History.ChannelLink("whisper:Bob-Realm", "[Bob]")
+	check(History.LinkedChannel(channelLink:match("^|H(.-)|h")) == "whisper:Bob-Realm", "channel link round trip")
+	check(History.LinkedChannel("player:Bob-Realm") == nil, "player links aren't channel links")
+	check(History.StripMarkup(channelLink) == "[Bob]", "channel links strip for copying")
+end
+print("merged channel ok")
+
+do
+	local off = History.New({}, 10, false)
+	off:Ensure("main", { kind = "main", chatType = "SAY", label = "Main" })
+	check(off:Delete("main"), "merged channel can be deleted once turned off")
+end
+print("merged channel off ok")

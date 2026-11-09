@@ -53,6 +53,12 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Channel chat and objective tracker** – chat is organised in channels like
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
+  - "Main" shows party, raid, instance, guild and whispers together, each
+    line tagged with its channel (`[Party] Bob: pull`), so there's no
+    switching back and forth; the single channels stay too. Its unread count
+    is theirs and reading it reads them. Typing in Main answers in the channel
+    of the latest line (named in the header, `Main > Party`), kept while
+    typing; clicking a line's tag writes to that channel instead (`main`);
   - party, raid and instance; guild (with officer chat, Guild Discord and the
     message of the day); one channel per community stream; one per whisper
     partner; say (including emotes such as `/e` and `/dance`), yell and the chat
@@ -64,11 +70,13 @@ until it is needed, and as much as possible can be done from the keyboard.
     achievements and level-ups, and "System" everything else Blizzard's chat
     shows (players coming online or going offline, AFK replies, channel
     notices, ...) together with addon output: `/sui` replies open that
-    channel, other addons' output only counts as unread. These three are read-only and coloured like Blizzard's chat.
+    channel, other addons' output only counts as unread. "Notices" keeps
+    what other players craft nearby out of System: it never counts as unread
+    or opens the chat. These four are read-only and coloured like Blizzard's chat.
 
   Clicking a player's name in a message opens the whisper channel with them
   and starts typing into it; right click keeps Blizzard's player menu.
-  `x` deletes any channel but guild with its history. Say, emotes, yell, chat
+  `x` deletes any channel but guild and Main with its history. Say, emotes, yell, chat
   and community channels, NPC, Loot & Progress and System only count as unread and don't pop
   up the chat. Hidden by default, toggled by key, with edge
   badges that light up on new whispers, party or guild messages; it opens on

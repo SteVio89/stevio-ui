@@ -13,6 +13,9 @@ local C = {
 		typing = false,
 		autoTimer = nil,
 		selected = nil, -- key of the open channel
+		-- Channel key Main writes to while it is picked or being typed into
+		-- (nil: the channel of Main's latest line).
+		mainTarget = nil,
 	},
 	store = nil,
 	ui = {}, -- frame, sidebar, header, messages, input, rows, copy
@@ -47,6 +50,7 @@ end
 -- Names of the fixed channels, in the client's language; the saved label
 -- (English) is kept for whisper partners, chat channels and communities.
 local LABELS = {
+	main = { "Main", "Haupt" },
 	party = { "Party", "Gruppe" },
 	raid = { "Raid", "Schlachtzug" },
 	instance = { "Instance", "Instanz" },
@@ -57,6 +61,7 @@ local LABELS = {
 	npc = { "NPC", "NPC" },
 	progress = { "Loot & Progress", "Beute & Fortschritt" },
 	system = { "System", "System" },
+	notices = { "Notices", "Meldungen" },
 }
 
 function C.Label(channel)
@@ -69,6 +74,39 @@ end
 
 function C.Selected()
 	return C.state.selected and C.store:Get(C.state.selected)
+end
+
+-- Whether channel `kind` shows in Main as well.
+function C.IsMerged(kind)
+	return config.main.enabled and config.main.kinds[kind] == true
+end
+
+function C.IsMain(key)
+	return config.main.enabled and key == config.main.key
+end
+
+function C.Unread(channel)
+	if C.IsMain(channel.key) then
+		return C.store:MergedUnread(config.main.kinds)
+	end
+	return channel.unread
+end
+
+function C.MarkRead(key)
+	if C.IsMain(key) then
+		C.store:MarkKindsRead(config.main.kinds)
+	else
+		C.store:MarkRead(key)
+	end
+end
+
+-- The channel Main writes to: the picked one, else that of Main's latest line.
+function C.MainTarget()
+	local picked = C.state.mainTarget and C.store:Get(C.state.mainTarget)
+	if picked and not picked.readOnly then
+		return picked
+	end
+	return C.store:ReplyChannel(config.main.key)
 end
 
 -- Opening the chat by hand (toggle key, typing, clicking) counts as reading;

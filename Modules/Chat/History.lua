@@ -3,7 +3,8 @@ local _, ns = ...
 -- Channel store behind the chat: pure data, no frames, so it can be unit tested
 -- outside the game (see tests/history_test.lua). A channel is
 -- { key, kind, chatType, label, messages = {...}, unread, last, bnetID, target,
---   channelIndex, readOnly }.
+--   channelIndex, readOnly, silent }. Silent channels (crafting notices, ...)
+-- never count unread and never count as the latest activity.
 
 local History = {}
 ns.ChatHistory = History
@@ -115,6 +116,29 @@ function History.LinkedPlayer(link)
 	end
 end
 
+-- A clickable channel tag ("[Party]") in the merged channel: picks that
+-- channel as where the input line writes to (see Chat.lua).
+function History.ChannelLink(key, text)
+	return "|Haddon:stevioui:channel:" .. key .. "|h" .. text .. "|h"
+end
+
+-- The channel key a channel tag link names, or nil for other links.
+function History.LinkedChannel(link)
+	return link:match("^addon:stevioui:channel:(.+)$")
+end
+
+-- The copy of `entry` (from channel `key`, labelled `label`, colored like
+-- `chatType`) shown in the merged channel: like a line in "Other" it names its
+-- channel before the sender, and `sourceKey` remembers the channel to answer in.
+function History.Mirror(entry, key, label, chatType)
+	local copy = {}
+	for field, value in pairs(entry) do
+		copy[field] = value
+	end
+	copy.source, copy.sourceType, copy.sourceKey = label, chatType, key
+	return copy
+end
+
 -- Battle.net whisper partners are keyed by BattleTag ("Name#1234"): the
 -- account id may change between sessions and the Real ID name in chat events
 -- can't be saved; the BattleTag stays. Lines and labels show its name part.
@@ -139,18 +163,19 @@ function History.CommunityKey(clubId, streamId)
 	return "community:" .. clubId .. ":" .. streamId
 end
 
--- `saved` is the SavedVariables table (may be empty); `limit` caps messages per channel.
-function History.New(saved, limit)
+-- `saved` is the SavedVariables table (may be empty); `limit` caps messages per
+-- channel; `mainOn` keeps the merged channel from being deleted.
+function History.New(saved, limit, mainOn)
 	saved.channels = saved.channels or {}
-	return setmetatable({ db = saved, limit = limit }, Store)
+	return setmetatable({ db = saved, limit = limit, mainOn = mainOn }, Store)
 end
 
 function Store:Get(key)
 	return self.db.channels[key]
 end
 
--- opts: kind, chatType, label, bnetID, battleTag, target, channelIndex, readOnly, clubId,
--- streamId, relabel. Created on first use; the channel number and color follow
+-- opts: kind, chatType, label, bnetID, battleTag, target, channelIndex, readOnly, silent,
+-- clubId, streamId, relabel. Created on first use; the channel number and color follow
 -- the latest message, and so does the label with `relabel` (a renamed community).
 function Store:Ensure(key, opts)
 	local channel = self.db.channels[key]
@@ -164,6 +189,7 @@ function Store:Ensure(key, opts)
 			unread = 0,
 			last = 0,
 			readOnly = opts.readOnly,
+			silent = opts.silent,
 		}
 		self.db.channels[key] = channel
 	end
@@ -204,7 +230,7 @@ function Store:Add(key, opts, entry, markUnread)
 		table.remove(messages, 1)
 	end
 	channel.last = entry.time or channel.last
-	if markUnread then
+	if markUnread and not channel.silent then
 		channel.unread = channel.unread + 1
 	end
 	return channel
@@ -213,7 +239,9 @@ end
 -- Messages that couldn't be read (secret) still count as unread.
 function Store:AddUnreadOnly(key, opts, time)
 	local channel = self:Ensure(key, opts)
-	channel.unread = channel.unread + 1
+	if not channel.silent then
+		channel.unread = channel.unread + 1
+	end
 	channel.last = time or channel.last
 	return channel
 end
@@ -225,14 +253,15 @@ function Store:MarkRead(key)
 	end
 end
 
-function Store.IsDeletable(channel)
-	return channel.kind ~= "guild"
+-- `mainOn`: whether the merged channel is in use (only then is it permanent).
+function Store.IsDeletable(channel, mainOn)
+	return channel.kind ~= "guild" and not (mainOn and channel.kind == "main")
 end
 
--- Removes the channel with its whole history. Guild is permanent.
+-- Removes the channel with its whole history. Guild and the merged channel are permanent.
 function Store:Delete(key)
 	local channel = self.db.channels[key]
-	if not channel or not Store.IsDeletable(channel) then
+	if not channel or not Store.IsDeletable(channel, self.mainOn) then
 		return false
 	end
 	self.db.channels[key] = nil
@@ -248,6 +277,42 @@ function Store:HasUnread(kind)
 	return false
 end
 
+-- The merged channel counts no unread of its own: its count is that of the
+-- channels it merges (`kinds`, a set of channel kinds), and reading it reads them.
+function Store:MergedUnread(kinds)
+	local count = 0
+	for _, channel in pairs(self.db.channels) do
+		if kinds[channel.kind] then
+			count = count + channel.unread
+		end
+	end
+	return count
+end
+
+function Store:MarkKindsRead(kinds)
+	for _, channel in pairs(self.db.channels) do
+		if kinds[channel.kind] then
+			channel.unread = 0
+		end
+	end
+end
+
+-- Where the merged channel `key` answers: the channel of its latest line whose
+-- channel still exists and can be written to. Returns that channel or nil.
+function Store:ReplyChannel(key)
+	local merged = self.db.channels[key]
+	if not merged then
+		return nil
+	end
+	for i = #merged.messages, 1, -1 do
+		local source = merged.messages[i].sourceKey
+		local channel = source and self.db.channels[source]
+		if channel and not channel.readOnly then
+			return channel
+		end
+	end
+end
+
 -- The channel with the latest activity, or nil when there is none yet. Opening
 -- the chat there shows what just happened instead of an empty channel.
 function Store:MostRecent()
@@ -255,6 +320,7 @@ function Store:MostRecent()
 	for _, channel in pairs(self.db.channels) do
 		if
 			channel.last > 0
+			and not channel.silent
 			and (not best or channel.last > best.last or (channel.last == best.last and channel.key < best.key))
 		then
 			best = channel

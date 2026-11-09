@@ -27,6 +27,18 @@ local system = {
 	quiet = true,
 	format = "plain",
 }
+-- Notices about other players that pile up (crafting, ...): kept for a look,
+-- but `silent`, they never count as unread or open the chat.
+local notices = {
+	kind = "notices",
+	key = "notices",
+	chatType = "SYSTEM",
+	label = "Notices",
+	readOnly = true,
+	quiet = true,
+	silent = true,
+	format = "plain",
+}
 local npc = {
 	kind = "npc",
 	key = "npc",
@@ -52,7 +64,7 @@ ns.config.chat = {
 	-- Written into the Edit Mode layout (Blizzard limits: width 250-800, height 120-800).
 	-- Width is a share of the screen so it adapts to resolution and UI scale.
 	widthFraction = 1 / 3,
-	height = 200,
+	height = 300,
 
 	backgroundColor = { 0, 0, 0, 1 },
 	selectedColor = { 1, 1, 1, 0.12 },
@@ -75,19 +87,35 @@ ns.config.chat = {
 
 	-- Messages kept per channel; also what survives a /reload or relog.
 	historyLimit = 200,
-	sidebarWidth = 104,
-	rowHeight = 18,
-	-- Font size of the messages, the input line and the copy view
-	-- (sidebar and header keep ns.config.style.fontSize).
-	fontSize = 14,
+	sidebarWidth = 130,
+	rowHeight = 22,
+	-- Font size of the messages, the input line and the copy view.
+	fontSize = 16,
+	-- Font size of the sidebar and the header above the messages.
+	sidebarFontSize = 14,
 	-- Date line shown before the first message of each day (os.date format);
 	-- the history survives relogs, so the time alone isn't enough.
 	dateFormat = "%a %d.%m.%Y",
 	-- Lines scrolled per mouse wheel notch.
 	scrollStep = 3,
 
+	-- "Main" shows the channels of these kinds together, each line tagged with
+	-- its channel ("[Party] Bob: ..."), so group and guild chat can be followed
+	-- without switching; the channels stay as well. Its unread count is theirs.
+	-- Writing in Main answers in the channel of the latest line, which is kept
+	-- while typing; clicking a line's tag writes to that channel instead.
+	main = {
+		enabled = true,
+		key = "main",
+		kind = "main",
+		chatType = "SAY",
+		label = "Main",
+		kinds = { group = true, guild = true, whisper = true },
+	},
+
 	-- Sidebar order of the channel kinds.
 	kindOrder = {
+		main = 0,
 		group = 1,
 		guild = 2,
 		community = 3,
@@ -97,6 +125,7 @@ ns.config.chat = {
 		npc = 7,
 		progress = 8,
 		system = 9,
+		notices = 10,
 	},
 
 	-- Numbered chat channels (base name, case-insensitive) that get their own
@@ -170,7 +199,8 @@ ns.config.chat = {
 		CHAT_MSG_RESTRICTED = With(system, { format = "restricted" }),
 		CHAT_MSG_CHANNEL_NOTICE = With(system, { format = "notice" }),
 		CHAT_MSG_CHANNEL_NOTICE_USER = With(system, { format = "noticeUser" }),
-		CHAT_MSG_TRADESKILLS = With(system),
+		-- "Bob creates [Flask]": crafting of everyone nearby.
+		CHAT_MSG_TRADESKILLS = With(notices),
 		CHAT_MSG_PET_INFO = With(system),
 		CHAT_MSG_PET_BATTLE_INFO = With(system),
 		CHAT_MSG_BG_SYSTEM_HORDE = With(system),
