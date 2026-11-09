@@ -7,12 +7,19 @@ local Feed = {}
 ns.LootFeed = Feed
 Feed.__index = Feed
 
+-- Escapes the pattern characters of a format string and turns its positional
+-- specifiers (%1$s, which some locales use) of the `conversions` pattern class
+-- ("[sd]" or "d") into plain ones.
+local function EscapeFormat(format, conversions)
+	local pattern = format:gsub("[%^%$%(%)%.%[%]%*%+%-%?]", "%%%0")
+	return (pattern:gsub("%%%d+%%%$(" .. conversions .. ")", "%%%1"))
+end
+
 -- Turns a format string such as LOOT_ITEM_SELF_MULTIPLE ("You receive loot:
 -- %sx%d.") into an anchored Lua pattern; positional specifiers (%1$s) are
 -- understood because some locales use them.
 function Feed.PatternFromFormat(format)
-	local pattern = format:gsub("[%^%$%(%)%.%[%]%*%+%-%?]", "%%%0")
-	pattern = pattern:gsub("%%%d+%%%$([sd])", "%%%1")
+	local pattern = EscapeFormat(format, "[sd]")
 	pattern = pattern:gsub("%%s", "(.+)")
 	pattern = pattern:gsub("%%d", "(%%d+)")
 	return "^" .. pattern .. "$"
@@ -81,8 +88,7 @@ end
 function Feed.MoneyPatterns(goldFormat, silverFormat, copperFormat)
 	local patterns = {}
 	for i, format in ipairs({ goldFormat, silverFormat, copperFormat }) do
-		local pattern = format:gsub("[%^%$%(%)%.%[%]%*%+%-%?]", "%%%0")
-		pattern = pattern:gsub("%%%d+%%%$d", "%%d")
+		local pattern = EscapeFormat(format, "d")
 		pattern = pattern:gsub("%%d", "(%%d[%%d.,]*)")
 		patterns[i] = pattern
 	end

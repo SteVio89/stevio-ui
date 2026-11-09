@@ -6,6 +6,15 @@ local Feed = ns.LootFeed
 local link = "|cff0070dd|Hitem:2589::::::::80:::::|h[Linen Cloth]|h|r"
 local currency = "|cffffffff|Hcurrency:3008:0|h[Valorstones]|h|r"
 
+-- Format strings become anchored patterns: magic characters escaped,
+-- positional specifiers made plain.
+check(Feed.PatternFromFormat("You receive loot: %sx%d.") == "^You receive loot: (.+)x(%d+)%.$", "pattern")
+check(
+	Feed.PatternFromFormat("Ihr erhaltet Beute: %2$dx %1$s.") == "^Ihr erhaltet Beute: (%d+)x (.+)%.$",
+	"positional pattern"
+)
+check(Feed.PatternFromFormat("[%s] (+%d%%)?") == "^%[(.+)%] %(%+(%d+)%%%)%?$", "magic characters")
+
 -- Format strings as the enUS / deDE clients define them.
 local patterns = Feed.Patterns(
 	"You receive loot: %sx%d.",
