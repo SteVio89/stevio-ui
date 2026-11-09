@@ -233,3 +233,82 @@ function ns.KillTexture(texture)
 	texture:Hide()
 	hooksecurefunc(texture, "Show", texture.Hide)
 end
+
+-- Unit frame parts shared by the unit frames (Units) and the group cells (Group)
+-- ------------------------------------------------------------------------------
+
+local UnitHealth, UnitHealthMax = UnitHealth, UnitHealthMax
+local UnitPower, UnitPowerMax = UnitPower, UnitPowerMax
+
+-- Health may be secret; the bar takes it as it is. Returned for callers that
+-- show it as text as well.
+function ns.UpdateHealthBar(bar, unit)
+	local health = UnitHealth(unit)
+	bar:SetMinMaxValues(0, UnitHealthMax(unit))
+	bar:SetValue(health)
+	return health
+end
+
+function ns.UpdatePowerBar(bar, unit)
+	bar:SetMinMaxValues(0, UnitPowerMax(unit))
+	bar:SetValue(UnitPower(unit))
+end
+
+function ns.SetPowerBarColor(bar, unit)
+	bar:SetStatusBarColor(ns.UnitPowerColor(unit))
+end
+
+-- UNIT_DISPLAYPOWER: another power type has another color and range.
+function ns.UpdatePowerType(bar, unit)
+	ns.SetPowerBarColor(bar, unit)
+	ns.UpdatePowerBar(bar, unit)
+end
+
+-- A border-colored line between health and power instead of a gap keeps the
+-- frame one solid block. It runs along `relativeTo`'s `relativeEdge` ("TOP"
+-- or "BOTTOM"), with its own `edge` there.
+function ns.CreateSeparator(frame, edge, relativeTo, relativeEdge)
+	local separator = frame:CreateTexture(nil, "ARTWORK")
+	separator:SetColorTexture(unpack(style.borderColor))
+	separator:SetPoint(edge .. "LEFT", relativeTo, relativeEdge .. "LEFT")
+	separator:SetPoint(edge .. "RIGHT", relativeTo, relativeEdge .. "RIGHT")
+	separator:SetHeight(ns.PixelSize(frame))
+end
+
+-- A cropped aura icon with a cooldown swipe, a stack count and a border.
+function ns.StyleAuraIcon(icon, size, countSize)
+	icon:SetSize(size, size)
+
+	icon.texture = icon:CreateTexture(nil, "ARTWORK")
+	icon.texture:SetAllPoints()
+	ns.CropIcon(icon.texture)
+
+	icon.cooldown = CreateFrame("Cooldown", nil, icon, "CooldownFrameTemplate")
+	icon.cooldown:SetAllPoints()
+	icon.cooldown:SetReverse(true)
+	icon.cooldown:SetDrawEdge(false)
+	icon.cooldown:SetHideCountdownNumbers(true)
+
+	icon.count = ns.CreateFontString(icon, countSize, "RIGHT")
+	icon.count:SetPoint("BOTTOMRIGHT", 1, -1)
+
+	ns.CreateBorder(icon)
+end
+
+-- Sets up a button of Blizzard's secure aura container. This runs once per
+-- button before Blizzard locks it against tainted access while auras are
+-- secret, so it is the only place our code may touch it.
+function ns.InitAuraButton(button, size, countSize)
+	button:EnableMouse(false)
+	ns.StyleAuraIcon(button, size, countSize)
+	button:SetIcon(button.texture)
+	button:SetDurationCooldown(button.cooldown)
+	button:SetApplicationCount(button.count)
+end
+
+-- An initializeFrame callback for AuraContainer:AddAuraGroup.
+function ns.AuraButtonInitializer(size, countSize)
+	return function(button)
+		ns.InitAuraButton(button, size, countSize)
+	end
+end

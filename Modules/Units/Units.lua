@@ -1,7 +1,6 @@
 local _, ns = ...
 
 local config = ns.config.units
-local style = ns.config.style
 
 local Units = ns.RegisterModule("units", {})
 Units.frames = {}
@@ -13,9 +12,7 @@ Units.frames = {}
 -- into the font string, abbreviated and scaled by the client.
 local function UpdateHealth(frame)
 	local unit = frame.unit
-	local health = UnitHealth(unit)
-	frame.health:SetMinMaxValues(0, UnitHealthMax(unit))
-	frame.health:SetValue(health)
+	local health = ns.UpdateHealthBar(frame.health, unit)
 	frame.healthText:SetFormattedText(
 		"%s · %d%%",
 		AbbreviateNumbers(health),
@@ -28,17 +25,20 @@ local function UpdateHealthColor(frame)
 end
 
 local function UpdatePower(frame)
-	if not frame.power then
-		return
+	if frame.power then
+		ns.UpdatePowerBar(frame.power, frame.unit)
 	end
-	local unit = frame.unit
-	frame.power:SetMinMaxValues(0, UnitPowerMax(unit))
-	frame.power:SetValue(UnitPower(unit))
 end
 
 local function UpdatePowerColor(frame)
 	if frame.power then
-		frame.power:SetStatusBarColor(ns.UnitPowerColor(frame.unit))
+		ns.SetPowerBarColor(frame.power, frame.unit)
+	end
+end
+
+local function UpdatePowerType(frame)
+	if frame.power then
+		ns.UpdatePowerType(frame.power, frame.unit)
 	end
 end
 
@@ -89,10 +89,7 @@ local eventUpdaters = {
 	UNIT_MAXHEALTH = UpdateHealth,
 	UNIT_POWER_UPDATE = UpdatePower,
 	UNIT_MAXPOWER = UpdatePower,
-	UNIT_DISPLAYPOWER = function(frame)
-		UpdatePowerColor(frame)
-		UpdatePower(frame)
-	end,
+	UNIT_DISPLAYPOWER = UpdatePowerType,
 	UNIT_FACTION = UpdateHealthColor,
 	UNIT_CONNECTION = UpdateHealthColor,
 	UNIT_FLAGS = UpdateHealthColor,
@@ -148,13 +145,7 @@ local function CreateUnitFrame(spec)
 		frame.power:SetPoint("BOTTOMLEFT")
 		frame.power:SetPoint("BOTTOMRIGHT")
 		frame.power:SetHeight(spec.powerHeight)
-
-		-- A border-colored line between the bars instead of a gap keeps the frame one solid block.
-		local separator = frame:CreateTexture(nil, "ARTWORK")
-		separator:SetColorTexture(unpack(style.borderColor))
-		separator:SetPoint("TOPLEFT", frame.health, "BOTTOMLEFT")
-		separator:SetPoint("TOPRIGHT", frame.health, "BOTTOMRIGHT")
-		separator:SetHeight(px)
+		ns.CreateSeparator(frame, "TOP", frame.health, "BOTTOM")
 	end
 
 	if spec.showName then
@@ -226,30 +217,9 @@ local function HideBlizzardFrames()
 	ns.HideBlizzard(PetCastingBarFrame)
 end
 
--- Runs once per button before Blizzard locks it against tainted access while
--- auras are secret, so this is the only place our code may touch it.
+-- The size is read on every call, as buttons are created when first needed.
 local function InitTargetAura(button)
-	local size = config.targetAuras.size
-	button:EnableMouse(false)
-	button:SetSize(size, size)
-
-	button.texture = button:CreateTexture(nil, "ARTWORK")
-	button.texture:SetAllPoints()
-	ns.CropIcon(button.texture)
-
-	button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
-	button.cooldown:SetAllPoints()
-	button.cooldown:SetReverse(true)
-	button.cooldown:SetDrawEdge(false)
-	button.cooldown:SetHideCountdownNumbers(true)
-
-	button.count = ns.CreateFontString(button, 10, "RIGHT")
-	button.count:SetPoint("BOTTOMRIGHT", 1, -1)
-	ns.CreateBorder(button)
-
-	button:SetIcon(button.texture)
-	button:SetDurationCooldown(button.cooldown)
-	button:SetApplicationCount(button.count)
+	ns.InitAuraButton(button, config.targetAuras.size, 10)
 end
 
 -- Own debuffs on the target: target auras turn secret in combat, so

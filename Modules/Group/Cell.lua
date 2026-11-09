@@ -21,8 +21,7 @@ end
 
 local function UpdateHealth(cell)
 	local unit = cell.unit
-	cell.health:SetMinMaxValues(0, UnitHealthMax(unit))
-	cell.health:SetValue(UnitHealth(unit))
+	ns.UpdateHealthBar(cell.health, unit)
 	cell.health:SetStatusBarColor(ns.UnitHealthColor(unit))
 	UpdatePrediction(cell)
 end
@@ -32,13 +31,15 @@ local function UpdateName(cell)
 end
 
 local function UpdatePower(cell)
-	local unit = cell.unit
-	cell.power:SetMinMaxValues(0, UnitPowerMax(unit))
-	cell.power:SetValue(UnitPower(unit))
+	ns.UpdatePowerBar(cell.power, cell.unit)
 end
 
 local function UpdatePowerColor(cell)
-	cell.power:SetStatusBarColor(ns.UnitPowerColor(cell.unit))
+	ns.SetPowerBarColor(cell.power, cell.unit)
+end
+
+local function UpdatePowerType(cell)
+	ns.UpdatePowerType(cell.power, cell.unit)
 end
 
 local function UpdateRange(cell)
@@ -97,10 +98,7 @@ local unitEvents = {
 	UNIT_FLAGS = UpdateHealth,
 	UNIT_POWER_UPDATE = UpdatePower,
 	UNIT_MAXPOWER = UpdatePower,
-	UNIT_DISPLAYPOWER = function(cell)
-		UpdatePowerColor(cell)
-		UpdatePower(cell)
-	end,
+	UNIT_DISPLAYPOWER = UpdatePowerType,
 	UNIT_IN_RANGE_UPDATE = UpdateRange,
 	UNIT_THREAT_SITUATION_UPDATE = UpdateThreat,
 	UNIT_NAME_UPDATE = UpdateName,
@@ -164,44 +162,15 @@ end
 
 local ICON_SPACING = 2
 
-local function StyleIcon(icon, size)
-	icon:SetSize(size, size)
-
-	icon.texture = icon:CreateTexture(nil, "ARTWORK")
-	icon.texture:SetAllPoints()
-	ns.CropIcon(icon.texture)
-
-	icon.cooldown = CreateFrame("Cooldown", nil, icon, "CooldownFrameTemplate")
-	icon.cooldown:SetAllPoints()
-	icon.cooldown:SetReverse(true)
-	icon.cooldown:SetDrawEdge(false)
-	icon.cooldown:SetHideCountdownNumbers(true)
-
-	icon.count = ns.CreateFontString(icon, 9, "RIGHT")
-	icon.count:SetPoint("BOTTOMRIGHT", 1, -1)
-
-	ns.CreateBorder(icon)
-end
+local ICON_COUNT_SIZE = 9
 
 local function CreatePreviewIcon(cell, anchorPoint, offsetX, offsetY, size)
 	local icon = CreateFrame("Frame", nil, cell.health)
 	icon:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
 	icon:SetFrameLevel(cell.health:GetFrameLevel() + 2)
-	StyleIcon(icon, size)
+	ns.StyleAuraIcon(icon, size, ICON_COUNT_SIZE)
 	icon:Hide()
 	return icon
-end
-
--- Runs once per button before Blizzard locks it against tainted access while
--- auras are secret, so this is the only place our code may touch it.
-local function AuraButtonInitializer(size)
-	return function(button)
-		button:EnableMouse(false)
-		StyleIcon(button, size)
-		button:SetIcon(button.texture)
-		button:SetDurationCooldown(button.cooldown)
-		button:SetApplicationCount(button.count)
-	end
 end
 
 -- Addon code can't read other units' auras in combat (the queries error once
@@ -221,7 +190,7 @@ local function CreateAuraGroup(cell, key, filter, anchorPoint, offsetX, offsetY,
 	container:AddAuraGroup(key, filter, {
 		maxFrameCount = count,
 		layout = { elementSpacing = ICON_SPACING },
-		initializeFrame = AuraButtonInitializer(size),
+		initializeFrame = ns.AuraButtonInitializer(size, ICON_COUNT_SIZE),
 	})
 	container:SetEnabled(true)
 	return container
@@ -289,11 +258,7 @@ function ns.BuildGroupCell(cell)
 	cell.health:SetPoint("TOPLEFT")
 	cell.health:SetPoint("BOTTOMRIGHT", cell.power, "TOPRIGHT", 0, px)
 
-	local separator = cell:CreateTexture(nil, "ARTWORK")
-	separator:SetColorTexture(unpack(style.borderColor))
-	separator:SetPoint("BOTTOMLEFT", cell.power, "TOPLEFT")
-	separator:SetPoint("BOTTOMRIGHT", cell.power, "TOPRIGHT")
-	separator:SetHeight(px)
+	ns.CreateSeparator(cell, "BOTTOM", cell.power, "TOP")
 
 	-- Drawn on the health bar right above its fill, so every icon covers it.
 	cell.nameText = cell.health:CreateFontString(nil, "ARTWORK", nil, 7)
