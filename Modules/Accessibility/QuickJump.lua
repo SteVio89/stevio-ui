@@ -24,7 +24,7 @@ local badges = {}
 local proxies = {}
 local prefixButtons = {}
 
-local current -- { targets, labels, typed, mouseButton, scrollBar }
+local current -- { targets, labels, typed, mouseButton, source, scrollBar }
 
 -- The first letter varies fastest, so the first labels all differ already in
 -- the first keystroke. Windows with more targets than the base keys can label
