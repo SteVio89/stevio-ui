@@ -6,7 +6,8 @@ local C = ns.ChatInternal
 
 -- The channel view: sidebar with the channels, header, messages and input line.
 
--- "time [channel] sender: text"; the channel only shows in "Other", the sender
+-- "time [channel] sender: text"; the channel only shows in "Other" and Main
+-- (where a click on it writes to that channel), the sender
 -- is missing on system messages. Channel and sender take their channel's color;
 -- emotes ("time Bob waves.") are colored as a whole in the emote color.
 -- Returns the line and its base color: finished lines without a sender (loot,
@@ -30,6 +31,9 @@ local function FormatEntry(channel, entry)
 	end
 	local source = entry.source
 		and (C.ColorCode(C.TypeColor(entry.sourceType or channel.chatType)) .. entry.source .. "|r")
+	if source and entry.sourceKey then
+		source = ns.ChatHistory.ChannelLink(entry.sourceKey, source)
+	end
 	local sender = entry.sender and Sender(entry, C.ColorCode(C.ChannelColor(channel)) .. entry.sender .. "|r")
 	return ns.ChatHistory.Line(entry, stamp, source, sender)
 end
@@ -112,13 +116,14 @@ function C.RefreshSidebar()
 		row.key = channel.key
 		local r, g, b = C.ChannelColor(channel)
 		local text = C.Label(channel)
-		if channel.unread > 0 then
-			text = ("%s (%d)"):format(text, channel.unread)
+		local unread = C.Unread(channel)
+		if unread > 0 then
+			text = ("%s (%d)"):format(text, unread)
 		end
 		row.text:SetText(text)
-		row.text:SetTextColor(r, g, b, channel.unread > 0 and 1 or 0.7)
+		row.text:SetTextColor(r, g, b, unread > 0 and 1 or 0.7)
 		row.highlight:SetShown(channel.key == C.state.selected)
-		row.delete:SetShown(store.IsDeletable(channel))
+		row.delete:SetShown(store.IsDeletable(channel, config.main.enabled))
 		row:Show()
 	end
 	for index = #channels + 1, #ui.rows do
@@ -128,7 +133,13 @@ function C.RefreshSidebar()
 	local channel = C.Selected()
 	if channel then
 		local r, g, b = C.ChannelColor(channel)
-		ui.header:SetText(C.Label(channel))
+		local text = C.Label(channel)
+		-- Main names the channel it writes to: "Main > Party".
+		local target = C.IsMain(channel.key) and C.MainTarget()
+		if target then
+			text = ("%s > %s%s|r"):format(text, C.ColorCode(C.ChannelColor(target)), C.Label(target))
+		end
+		ui.header:SetText(text)
 		ui.header:SetTextColor(r, g, b)
 	else
 		ui.header:SetText("")
@@ -154,12 +165,19 @@ local function CreateInput(frame)
 	input:SetScript("OnTabPressed", function()
 		C.CycleChannel(IsShiftKeyDown() and -1 or 1)
 	end)
+	-- Main keeps the channel it writes to while typing, so a line arriving
+	-- elsewhere doesn't redirect the message.
 	input:SetScript("OnEditFocusGained", function()
 		C.state.typing = true
+		if C.IsMain(C.state.selected) and not C.state.mainTarget then
+			local target = C.MainTarget()
+			C.state.mainTarget = target and target.key
+		end
 		C.Update()
 	end)
 	input:SetScript("OnEditFocusLost", function()
 		C.state.typing = false
+		C.state.mainTarget = nil
 		C.Update()
 	end)
 	ui.input = input
@@ -185,9 +203,15 @@ local function CreateMessages(frame)
 		end
 	end)
 	messages:SetHyperlinksEnabled(true)
-	-- A left click on a player's name opens the whisper channel with them;
+	-- A click on a channel tag in Main writes to that channel;
+	-- a left click on a player's name opens the whisper channel with them;
 	-- other clicks (right click menu, shift click, ...) and links stay Blizzard's.
 	messages:SetScript("OnHyperlinkClick", function(self, link, text, button)
+		local channelKey = ns.ChatHistory.LinkedChannel(link)
+		if channelKey then
+			C.PickMainTarget(channelKey)
+			return
+		end
 		local player = ns.ChatHistory.LinkedPlayer(link)
 		if player and button == "LeftButton" and not IsModifierKeyDown() then
 			C.OpenWhisper(player)

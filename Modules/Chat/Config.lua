@@ -99,8 +99,23 @@ ns.config.chat = {
 	-- Lines scrolled per mouse wheel notch.
 	scrollStep = 3,
 
+	-- "Main" shows the channels of these kinds together, each line tagged with
+	-- its channel ("[Party] Bob: ..."), so group and guild chat can be followed
+	-- without switching; the channels stay as well. Its unread count is theirs.
+	-- Writing in Main answers in the channel of the latest line, which is kept
+	-- while typing; clicking a line's tag writes to that channel instead.
+	main = {
+		enabled = true,
+		key = "main",
+		kind = "main",
+		chatType = "SAY",
+		label = "Main",
+		kinds = { group = true, guild = true, whisper = true },
+	},
+
 	-- Sidebar order of the channel kinds.
 	kindOrder = {
+		main = 0,
 		group = 1,
 		guild = 2,
 		community = 3,
