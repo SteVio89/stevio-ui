@@ -86,36 +86,27 @@ function C.RunCommand(text)
 	end
 
 	ChatFrameUtil.ImportAllListsToHash()
-	local channelNumber = command:match("^/(%d+)$")
-	if channelNumber then
-		if message == "" or not SendToChannel(channelNumber, message) then
+	local kind, value = Parse.Classify(command, {
+		chatTypes = hash_ChatTypeInfoList,
+		chatTypeInfo = ChatTypeInfo,
+		slashCommands = hash_SlashCmdList,
+		isSecure = issecurevariable,
+		emotes = hash_EmoteTokenList,
+	})
+	if kind == "channel" then
+		if message == "" or not SendToChannel(value, message) then
 			HandOff(text)
 		end
-		return
-	end
-
-	local chatType = hash_ChatTypeInfoList[command]
-	local info = chatType and ChatTypeInfo[chatType]
-	if info and not info.ignoreChatTypeProcessing then
-		if not RunChatType(chatType, message) then
+	elseif kind == "chatType" then
+		if not RunChatType(value, message) then
 			HandOff(text)
 		end
-		return
+	elseif kind == "addon" then
+		value(message, DEFAULT_CHAT_FRAME.editBox)
+	elseif kind == "emote" then
+		C_ChatInfo.PerformEmote(value, message ~= "" and message or nil)
+	else
+		-- Blizzard would answer into its hidden chat window, so the hint goes to System.
+		ns.Print(ns.T("Unknown command: %s", "Unbekannter Befehl: %s"):format(command:lower()))
 	end
-
-	-- Commands registered by Blizzard's own code are secure variables; addon
-	-- commands are not.
-	local handler = hash_SlashCmdList[command]
-	if handler and not issecurevariable(hash_SlashCmdList, command) then
-		handler(message, DEFAULT_CHAT_FRAME.editBox)
-		return
-	end
-
-	local token = hash_EmoteTokenList[command]
-	if token then
-		C_ChatInfo.PerformEmote(token, message ~= "" and message or nil)
-		return
-	end
-	-- Blizzard would answer into its hidden chat window, so the hint goes to System.
-	ns.Print(ns.T("Unknown command: %s", "Unbekannter Befehl: %s"):format(command:lower()))
 end
