@@ -15,25 +15,25 @@ local function OnMouseWheel(minimap, delta)
 	minimap:SetZoom(zoom)
 end
 
+-- Moves a cluster part onto the map, pinned to the same corner of the map
+-- at the given offset.
+local function AttachToMap(frame, point, x, y)
+	frame:SetParent(Minimap)
+	frame:SetScale(config.iconScale)
+	ns.PinFrame(frame, function(pinned)
+		pinned:ClearAllPoints()
+		pinned:SetPoint(point, Minimap, point, x, y)
+	end)
+end
+
 -- Mail and tracking are the only cluster parts worth keeping; they move onto
 -- the map itself so the whole cluster (border, zone text, clock, calendar) can go.
 local function AdoptIndicators()
-	local indicators = MinimapCluster.IndicatorFrame
-	indicators:SetParent(Minimap)
-	indicators:SetScale(config.iconScale)
-	ns.PinFrame(indicators, function(frame)
-		frame:ClearAllPoints()
-		frame:SetPoint("TOPRIGHT", Minimap, "TOPRIGHT", -2, -2)
-	end)
+	AttachToMap(MinimapCluster.IndicatorFrame, "TOPRIGHT", -2, -2)
 
 	local tracking = MinimapCluster.Tracking
-	tracking:SetParent(Minimap)
-	tracking:SetScale(config.iconScale)
 	ns.KillTexture(tracking.Background)
-	ns.PinFrame(tracking, function(frame)
-		frame:ClearAllPoints()
-		frame:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 2, -2)
-	end)
+	AttachToMap(tracking, "TOPLEFT", 2, -2)
 end
 
 -- Blizzard anchors the looking-for-group eye to the micro menu, which ends up
@@ -44,13 +44,9 @@ local function PlaceQueueButton()
 	if not button then
 		return
 	end
-	button:SetParent(Minimap)
-	button:SetScale(config.iconScale)
+	AttachToMap(button, "BOTTOMLEFT", 2, 2)
+	-- Above the map; set after the reparenting, which changes the level.
 	button:SetFrameLevel(Minimap:GetFrameLevel() + 5)
-	ns.PinFrame(button, function(frame)
-		frame:ClearAllPoints()
-		frame:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 2, 2)
-	end)
 end
 
 -- Derived from the layout instead of a fixed size so the map scales with the
