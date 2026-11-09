@@ -43,7 +43,8 @@ local stateLabels = {
 	[State.Pass] = PASS or "Pass",
 }
 
-local config, feed, container, patterns, moneyPatterns, groupPatterns
+local config = ns.config.lootTicker
+local feed, container, patterns, moneyPatterns, groupPatterns
 local rows = {}
 local rowHeight
 
@@ -398,8 +399,7 @@ local function Preview()
 	end
 end
 
-function LootTicker:OnEnable(moduleConfig)
-	config = moduleConfig
+function LootTicker:OnEnable()
 	rowHeight = config.iconSize + config.rowGap
 	feed = Feed.New(config.maxRows)
 

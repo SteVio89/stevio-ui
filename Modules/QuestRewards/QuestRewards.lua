@@ -2,7 +2,7 @@ local _, ns = ...
 
 local QuestRewards = ns.RegisterModule("questRewards", {})
 
-local config
+local config = ns.config.questRewards
 local coins = {}
 local pendingLoad
 
@@ -77,7 +77,6 @@ local function Update(template)
 	end)
 end
 
-function QuestRewards:OnEnable(moduleConfig)
-	config = moduleConfig
+function QuestRewards:OnEnable()
 	hooksecurefunc("QuestInfo_Display", Update)
 end

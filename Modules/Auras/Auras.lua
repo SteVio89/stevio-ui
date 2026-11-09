@@ -1,6 +1,7 @@
 local _, ns = ...
 
 local Auras = ns.RegisterModule("auras", {})
+local config = ns.config.auras
 
 -- Blizzard's buff and debuff frames are kept; only their Edit Mode position,
 -- icon size and icons per row are owned here, so they stay compact in the top
@@ -19,7 +20,7 @@ local function Settings(options, limitSetting)
 	return settings
 end
 
-function Auras:OnEnable(config)
+function Auras:OnEnable()
 	local indices = Enum.EditModeAuraFrameSystemIndices
 	ns.SetEditModeSystem(
 		Enum.EditModeSystem.AuraFrame,

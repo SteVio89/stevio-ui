@@ -1,6 +1,7 @@
 local _, ns = ...
 
 local KeyboardHealing = ns.RegisterModule("keyboardHealing", {})
+local config = ns.config.keyboardHealing
 
 -- Healing by keyboard: the arrow keys move a cursor over the group grid and
 -- target the unit under it, so spells work as usual. While the target isn't
@@ -120,7 +121,7 @@ local function UpdateCursorState()
 	end
 end
 
-local function CreateCursor(config)
+local function CreateCursor()
 	cursor = CreateFrame("Frame", nil, UIParent, "SecureFrameTemplate")
 	cursor.activeBorder = ns.CreateBorder(cursor, 7, config.cursorSize)
 	cursor.activeBorder:SetColor(unpack(config.cursorColor))
@@ -273,14 +274,14 @@ local function RequestReset()
 	end)
 end
 
-function KeyboardHealing:OnEnable(config)
+function KeyboardHealing:OnEnable()
 	if not ns.groupHeaders then
 		return
 	end
 
 	controller = CreateFrame("Frame", "StevioUI_GridCursor", UIParent, "SecureHandlerBaseTemplate")
 	controller:SetAttribute("UpdateCursor", UPDATE_CURSOR)
-	SecureHandlerSetFrameRef(controller, "cursor", CreateCursor(config))
+	SecureHandlerSetFrameRef(controller, "cursor", CreateCursor())
 	for groupIndex = 1, MAX_GROUPS do
 		for slot = 1, UNITS_PER_GROUP do
 			MarkCell(GetLiveCell(groupIndex, slot), groupIndex, slot)

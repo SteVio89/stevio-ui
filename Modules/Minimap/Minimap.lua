@@ -1,6 +1,7 @@
 local _, ns = ...
 
 local MinimapModule = ns.RegisterModule("minimap", {})
+local config = ns.config.minimap
 
 local SQUARE_MASK = "Interface\\Buttons\\WHITE8X8"
 
@@ -16,7 +17,7 @@ end
 
 -- Mail and tracking are the only cluster parts worth keeping; they move onto
 -- the map itself so the whole cluster (border, zone text, clock, calendar) can go.
-local function AdoptIndicators(config)
+local function AdoptIndicators()
 	local indicators = MinimapCluster.IndicatorFrame
 	indicators:SetParent(Minimap)
 	indicators:SetScale(config.iconScale)
@@ -38,7 +39,7 @@ end
 -- Blizzard anchors the looking-for-group eye to the micro menu, which ends up
 -- covering the map; the map's lower left corner keeps it out of the way. The
 -- older names cover clients that still ship the minimap-cluster variant.
-local function PlaceQueueButton(config)
+local function PlaceQueueButton()
 	local button = QueueStatusButton or QueueStatusMinimapButton or MiniMapLFGFrame or LFGMinimapFrame
 	if not button then
 		return
@@ -54,7 +55,7 @@ end
 
 -- Derived from the layout instead of a fixed size so the map scales with the
 -- space right of the target frame, whatever the screen width or UI scale.
-local function GetMapSize(config)
+local function GetMapSize()
 	local targetWidth
 	for _, spec in ipairs(ns.config.units.frames) do
 		if spec.unit == "target" then
@@ -69,7 +70,7 @@ end
 -- The leave button would sit on the action bars; under the map's lower left
 -- corner it stays clear of them. Via Edit Mode because Blizzard re-stacks it
 -- with the bottom bars, in combat too.
-local function PlaceVehicleLeaveButton(config, size)
+local function PlaceVehicleLeaveButton(size)
 	local mapLayout = ns.layout.minimap
 	ns.SetEditModeSystem(Enum.EditModeSystem.VehicleLeaveButton, nil, {
 		point = "TOPLEFT",
@@ -79,8 +80,8 @@ local function PlaceVehicleLeaveButton(config, size)
 	})
 end
 
-function MinimapModule:OnEnable(config)
-	local size = GetMapSize(config)
+function MinimapModule:OnEnable()
+	local size = GetMapSize()
 	Minimap:SetParent(UIParent)
 	Minimap:SetSize(size, size)
 	Minimap:SetMaskTexture(SQUARE_MASK)
@@ -90,9 +91,9 @@ function MinimapModule:OnEnable(config)
 
 	ns.CreateBorder(Minimap)
 
-	AdoptIndicators(config)
-	PlaceQueueButton(config)
-	PlaceVehicleLeaveButton(config, size)
+	AdoptIndicators()
+	PlaceQueueButton()
+	PlaceVehicleLeaveButton(size)
 
 	ns.KeepHidden(MinimapBackdrop)
 	ns.KeepHidden(Minimap.ZoomIn)
