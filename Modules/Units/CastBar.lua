@@ -39,15 +39,14 @@ end
 -- Spell name and remaining seconds may be secret; the font strings take them as they are.
 local function Start(castBar, isChannel)
 	local unit = castBar.unit
-	local name, isTradeskill, notInterruptible, duration
+	local name, isTradeskill, notInterruptible, duration, _
 	if isChannel then
-		name = UnitChannelInfo(unit)
-		isTradeskill, notInterruptible = select(6, UnitChannelInfo(unit))
+		-- name, displayName, texture, startTime, endTime, isTradeskill, notInterruptible, ...
+		name, _, _, _, _, isTradeskill, notInterruptible = UnitChannelInfo(unit)
 		duration = UnitChannelDuration(unit)
 	else
-		local _
-		name = UnitCastingInfo(unit)
-		isTradeskill, _, notInterruptible = select(6, UnitCastingInfo(unit))
+		-- name, displayName, texture, startTime, endTime, isTradeskill, castID, notInterruptible, ...
+		name, _, _, _, _, isTradeskill, _, notInterruptible = UnitCastingInfo(unit)
 		duration = UnitCastingDuration(unit)
 	end
 
