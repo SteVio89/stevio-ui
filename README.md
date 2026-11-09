@@ -34,6 +34,15 @@ until it is needed, and as much as possible can be done from the keyboard.
   right-clicks.
 - **Action bars, menu and bags** – Blizzard's secure buttons, stripped down and
   placed via a dedicated Edit Mode layout named `stevio-ui`.
+- **Action sets** – switchable sets of actions for the same bars, e.g.
+  "Leveling" and "Healing" (`sets` in the action bar options). The button left
+  of the bars (or `/sui bars <name>`, or a key) switches all bars and pages at
+  once, out of combat only; slots and keybindings stay the same, only the
+  spells, items and macros in them change. Leaving a set remembers what its
+  bars hold, so a set is edited simply by changing the bars while it is active.
+  A set used for the first time starts as a copy of the current bars. Sets are
+  stored per character; actions that can't be placed right now (e.g. a talent
+  that isn't learned) stay in the set for later.
 - **Minimap** – square, borderless, mouse-wheel zoom, the looking-for-group
   button in its lower left corner, size derived from the screen. Other
   addons' minimap buttons move into the notch island (the black panel that
@@ -116,6 +125,7 @@ first login.
 | `.` | Toggle chat |
 | *(unbound)* | Chat: write message, next / previous channel (`Tab` / `Shift-Tab` in the input) |
 | `-` | Toggle objective tracker |
+| *(unbound)* | Next action set |
 
 ## Commands
 
@@ -123,6 +133,7 @@ first login.
 | --- | --- |
 | `/sui test 5\|10\|25\|40` | Preview the group grid |
 | `/sui loot` | Preview the loot ticker with a few items from your bags |
+| `/sui bars [name\|number\|next]` | List the action sets or switch to one |
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui qj` | List the current Quickjump targets |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |
