@@ -10,6 +10,7 @@ local C = ns.ChatInternal
 -- message isn't shown at all.
 
 local formatters = {}
+C.formatters = formatters -- for the tests
 
 -- Player names as Blizzard's chat shows them: the realm only for other realms.
 local function PlayerName(sender)
