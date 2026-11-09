@@ -130,6 +130,4 @@ function ns.CreateCastBar(unit, sizeFrame, anchor, align, options)
 	end
 	castBar:SetScript("OnEvent", OnEvent)
 	castBar:SetScript("OnUpdate", OnUpdate)
-
-	return castBar
 end

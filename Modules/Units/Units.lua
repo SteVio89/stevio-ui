@@ -276,7 +276,6 @@ local function CreateTargetAuras()
 	watcher:SetScript("OnEvent", function()
 		container:UpdateAllAuras()
 	end)
-	return container
 end
 
 function Units:OnEnable()

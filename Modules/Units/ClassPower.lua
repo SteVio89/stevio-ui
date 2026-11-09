@@ -61,6 +61,4 @@ function ns.CreateClassPower(playerFrame)
 	container:RegisterEvent("PLAYER_ENTERING_WORLD")
 	container:SetScript("OnEvent", OnEvent)
 	UpdateVisibility(container)
-
-	return container
 end
