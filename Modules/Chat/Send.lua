@@ -6,13 +6,14 @@ local C = ns.ChatInternal
 
 -- The account id may change between sessions, so channels with a BattleTag
 -- look it up again in the friend list; a friend no longer in the list gets
--- nothing rather than whoever holds the old id now.
-local function CurrentBattleNetID(channel)
+-- nothing rather than whoever holds the old id now. `numFriends()` and
+-- `friendInfo(index)` read the friend list.
+function C.CurrentBattleNetID(channel, numFriends, friendInfo)
 	if not channel.battleTag then
 		return channel.bnetID
 	end
-	for index = 1, BNGetNumFriends() do
-		local info = C_BattleNet.GetFriendAccountInfo(index)
+	for index = 1, numFriends() do
+		local info = friendInfo(index)
 		if info and info.battleTag == channel.battleTag then
 			channel.bnetID = info.bnetAccountID
 			return info.bnetAccountID
@@ -37,7 +38,7 @@ function C.Send(text)
 	if channel.clubId then
 		C_Club.SendMessage(channel.clubId, channel.streamId, text)
 	elseif channel.bnetID or channel.battleTag or channel.chatType == "BN_WHISPER" then
-		local bnetID = CurrentBattleNetID(channel)
+		local bnetID = C.CurrentBattleNetID(channel, BNGetNumFriends, C_BattleNet.GetFriendAccountInfo)
 		if bnetID then
 			C_BattleNet.SendWhisper(bnetID, text)
 		end
