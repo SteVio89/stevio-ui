@@ -102,14 +102,9 @@ local questSource = {
 		elseif QuestFrameProgressPanel:IsShown() then
 			return { QuestFrameCompleteButton, QuestFrameGoodbyeButton }
 		elseif QuestFrameRewardPanel:IsShown() then
-			local targets = {}
 			-- QuestInfo picks the rewards frame per display, so read it from there.
-			local rewardsFrame = QuestInfoFrame.rewardsFrame or QuestInfoRewardsFrame
-			for _, button in ipairs(rewardsFrame and rewardsFrame.RewardButtons or {}) do
-				if button:IsShown() and button.type == "choice" then
-					targets[#targets + 1] = button
-				end
-			end
+			local rewardsFrame = ns.QuestChoices.RewardsFrame()
+			local targets = ns.QuestChoices.Buttons(rewardsFrame and rewardsFrame.RewardButtons or {}, false)
 			QuickJump.SortByPosition(targets)
 			targets[#targets + 1] = QuestFrameCompleteQuestButton
 			return targets
