@@ -269,3 +269,4 @@ do
 	check(off:Delete("main"), "merged channel can be deleted once turned off")
 end
 print("merged channel off ok")
+print("history tests passed")

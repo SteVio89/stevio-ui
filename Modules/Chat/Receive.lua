@@ -109,7 +109,7 @@ function C.OnChatMessage(event, text, sender, ...)
 		sender = nil -- text emotes name the sender in their text
 	end
 
-	-- Character names are clickable (see View.lua); Battle.net names and our own aren't.
+	-- Character names are clickable (see C.FormatEntry); Battle.net names and our own aren't.
 	local full = not issecretvalue(sender) and sender and History.FullName(sender, GetNormalizedRealmName())
 	local player = not secret
 		and not def.format
