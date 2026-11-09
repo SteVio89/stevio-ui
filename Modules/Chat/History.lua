@@ -2,8 +2,8 @@ local _, ns = ...
 
 -- Channel store behind the chat: pure data, no frames, so it can be unit tested
 -- outside the game (see tests/history_test.lua). A channel is
--- { key, kind, chatType, label, messages = {...}, unread, last, bnetID, target,
---   channelIndex, readOnly, silent }. Silent channels (crafting notices, ...)
+-- { key, kind, chatType, label, messages = {...}, unread, last, bnetID, battleTag,
+--   target, channelIndex, clubId, streamId, readOnly, silent }. Silent channels (crafting notices, ...)
 -- never count unread and never count as the latest activity.
 
 local History = {}
@@ -216,12 +216,13 @@ function Store:Ensure(key, opts)
 	return channel
 end
 
--- entry: { time, sender, player, text, outgoing, source, sourceType, emote, colorType }:
--- `sender` is nil for finished lines (system, NPC, loot, ...) and text emotes,
--- `player` is the sender's full "Name-Realm" when it is another character,
+-- entry: { time, sender, player, text, outgoing, source, sourceType, sourceKey, emote,
+-- colorType }: `sender` is nil for finished lines (system, NPC, loot, ...) and text
+-- emotes, `player` is the sender's full "Name-Realm" when it is another character,
 -- `emote` marks emotes, `source` names the chat channel of a message in "Other"
--- and `sourceType` its chat type (for its color); `colorType` is the chat type
--- whose color a finished line takes. Returns the channel.
+-- (or Main) and `sourceType` its chat type (for its color); `sourceKey` is the
+-- channel a line in Main came from (see History.Mirror); `colorType` is the chat
+-- type whose color a finished line takes. Returns the channel.
 function Store:Add(key, opts, entry, markUnread)
 	local channel = self:Ensure(key, opts)
 	local messages = channel.messages

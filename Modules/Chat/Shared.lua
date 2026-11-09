@@ -1,7 +1,9 @@
 local _, ns = ...
 
 -- Shared state and helpers of the chat files (Blizzard.lua, View.lua,
--- Copy.lua, Badge.lua, Chat.lua). Private to the chat module.
+-- Copy.lua, Badge.lua, Format.lua, Notices.lua, Commands.lua, Chat.lua).
+-- Private to the chat module. Files may call C.* functions defined in files
+-- loaded after them (see stevio-ui.toc), but only at runtime, never while loading.
 
 local config = ns.config.chat
 

@@ -6,6 +6,12 @@ local C = ns.ChatInternal
 
 -- The channel view: sidebar with the channels, header, messages and input line.
 
+-- The sender's name (`text`, already formatted) as a link that opens a whisper
+-- when the message came from another character (see OnHyperlinkClick below).
+local function Sender(entry, text)
+	return entry.player and ns.ChatHistory.PlayerLink(entry.player, text) or text
+end
+
 -- "time [channel] sender: text"; the channel only shows in "Other" and Main
 -- (where a click on it writes to that channel), the sender
 -- is missing on system messages. Channel and sender take their channel's color;
@@ -13,12 +19,6 @@ local C = ns.ChatInternal
 -- Returns the line and its base color: finished lines without a sender (loot,
 -- NPC, system, ...) take their kind's chat color, like in Blizzard's chat;
 -- System lines stored before they carried a kind count as SYSTEM.
--- The sender's name (`text`, already formatted) as a link that opens a whisper
--- when the message came from another character (see OnHyperlinkClick below).
-local function Sender(entry, text)
-	return entry.player and ns.ChatHistory.PlayerLink(entry.player, text) or text
-end
-
 local function FormatEntry(channel, entry)
 	local stamp = "|cff808080" .. (entry.time and date("%H:%M", entry.time) or "--:--") .. "|r"
 	local colorType = entry.colorType or (channel.kind == "system" and not entry.sender and "SYSTEM")

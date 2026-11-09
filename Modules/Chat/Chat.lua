@@ -8,13 +8,13 @@ local Chat = ns.RegisterModule("chat", {})
 
 -- Chat organised in channels like Slack/Teams. This file holds the state and
 -- the message flow; the frames live in View.lua, Copy.lua and Badge.lua, the
--- handling of Blizzard's own chat in Blizzard.lua and the channel store in History.lua.
+-- handling of Blizzard's own chat in Blizzard.lua, the wording of finished
+-- lines in Format.lua, lines without a chat event in Notices.lua, typed slash
+-- commands in Commands.lua and the channel store in History.lua.
 
 function C.Select(key)
 	state.selected = key
-	if C.ui.copy then
-		C.ui.copy:Hide()
-	end
+	C.ui.copy:Hide()
 	local channel = C.Selected()
 	if channel and C.Attended() then
 		C.MarkRead(key)
@@ -191,9 +191,7 @@ function C.Receive(def, key, opts, entry)
 	-- player is typing into another channel.
 	if C.hidden or (def.focus and state.selected ~= show and not C.ui.input:HasFocus()) then
 		state.selected = show
-		if C.ui.copy then
-			C.ui.copy:Hide()
-		end
+		C.ui.copy:Hide()
 		C.RenderMessages(C.store:Get(show))
 	end
 	StartAutoTimer(config.autoShowDuration)

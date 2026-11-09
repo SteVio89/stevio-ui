@@ -219,7 +219,7 @@ ns.config.chat = {
 	},
 
 	-- Lines Blizzard writes into its chat window without a chat event; each
-	-- names its channel definition (see Chat.lua for the wording).
+	-- names its channel definition (see Notices.lua for the wording).
 	notices = {
 		levelUp = With(progress),
 		guildMotd = With(guild, { quiet = true }),
