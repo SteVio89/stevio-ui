@@ -75,6 +75,8 @@ local function StyleBar(bar)
 	end
 end
 
+local dividerPools = { "HorizontalDividersPool", "VerticalDividersPool" }
+
 local function StripMainBarArt()
 	local bar = MainActionBar
 	ns.KillTexture(bar.BorderArt)
@@ -83,7 +85,11 @@ local function StripMainBarArt()
 
 	-- Dividers come from a pool that is refilled on every button update.
 	hooksecurefunc(bar, "UpdateDividers", function(self)
-		for _, pool in ipairs({ self.HorizontalDividersPool, self.VerticalDividersPool }) do
+		for _, key in ipairs(dividerPools) do
+			local pool = self[key]
+			if not pool then
+				break
+			end
 			for divider in pool:EnumerateActive() do
 				divider:SetAlpha(0)
 			end
