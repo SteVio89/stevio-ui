@@ -87,6 +87,7 @@ Modules\LootTicker\Feed.lua
 Modules\LootTicker\LootTicker.lua
 
 Modules\Accessibility\Config.lua
+Modules\Accessibility\Labels.lua
 Modules\Accessibility\QuickJump.lua
 Modules\Accessibility\DialogSources.lua
 Modules\Accessibility\Taxi.lua

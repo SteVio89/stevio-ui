@@ -1,6 +1,7 @@
 local _, ns = ...
 
 local config = ns.config.accessibility
+local Labels = ns.AccessibilityInternal.Labels
 
 -- Quick-jump labels: every selectable button of the open window gets a
 -- two-letter label; typing it clicks the button. An uppercase first letter
@@ -25,28 +26,6 @@ local proxies = {}
 local prefixButtons = {}
 
 local current -- { targets, labels, typed, mouseButton, source, scrollBar }
-
--- The first letter varies fastest, so the first labels all differ already in
--- the first keystroke. Windows with more targets than the base keys can label
--- borrow extra first letters; those are only ever leader-activated, so taking
--- movement keys is fine there.
-local function GenerateLabels(count)
-	local leftKeys = config.leftKeys
-	if count > #leftKeys * #config.rightKeys then
-		leftKeys = CopyTable(leftKeys)
-		tAppendAll(leftKeys, config.extraLeftKeys)
-	end
-	local labels = {}
-	for _, right in ipairs(config.rightKeys) do
-		for _, left in ipairs(leftKeys) do
-			if #labels == count then
-				return labels
-			end
-			labels[#labels + 1] = left .. right
-		end
-	end
-	return labels
-end
 
 local function GetBadge(index)
 	local badge = badges[index]
@@ -129,12 +108,8 @@ end
 
 local function ShowBadge(index, target, label, typed)
 	local badge = GetBadge(index)
-	local remaining = label:sub(#typed + 1)
 	local typedColor = CreateColor(unpack(config.badge.typedColor)):GenerateHexColor()
-	-- The typed part shows its case, so a pending right click is visible as e.g. "F".
-	local shownTyped = current.mouseButton == "RightButton" and typed:upper() or typed:lower()
-	local text = (#typed > 0 and ("|c%s%s|r"):format(typedColor, shownTyped) or "") .. remaining:lower()
-	badge.text:SetText(text)
+	badge.text:SetText(Labels.BadgeText(label, typed, current.mouseButton == "RightButton", typedColor))
 	badge.text:SetTextColor(unpack(config.badge.textColor))
 	local padding = config.badge.padding
 	badge:SetSize(badge.text:GetStringWidth() + padding * 2, badge.text:GetStringHeight() + padding * 2)
@@ -211,37 +186,33 @@ local function Bind()
 	end
 
 	local typed = current.typed
-	local nextLetters = {}
-	for index, label in ipairs(current.labels) do
-		if label:sub(1, #typed) == typed then
-			local target = current.targets[index]
-			ShowBadge(index, target, label, typed)
-			local letter = label:sub(#typed + 1, #typed + 1)
-			if #label == #typed + 1 then
-				local clicker
-				if target:IsObjectType("Button") and target:GetScript("OnClick") then
-					clicker = GetProxy(index)
-					clicker:SetAttribute("clickbutton", target)
-				else
-					clicker = GetFrameActivator(index)
-					clicker.target = target
-				end
-				SetOverrideBindingClick(owner, true, letter, clicker:GetName(), current.mouseButton)
-				-- Shift may still be held from the first letter of a right click.
-				if current.mouseButton == "RightButton" then
-					SetOverrideBindingClick(owner, true, "SHIFT-" .. letter, clicker:GetName(), current.mouseButton)
-				end
-			elseif not nextLetters[letter] then
-				nextLetters[letter] = true
-				local button = GetPrefixButton(index)
-				button:SetScript("OnClick", function(_, mouseButton)
-					Narrow(letter, mouseButton)
-				end)
-				SetOverrideBindingClick(owner, true, letter, button:GetName(), "LeftButton")
-				-- Only the first letter has a Shift variant; it selects the right click.
-				if typed == "" then
-					SetOverrideBindingClick(owner, true, "SHIFT-" .. letter, button:GetName(), "RightButton")
-				end
+	for _, step in ipairs(Labels.NextStep(current.labels, typed)) do
+		local index, letter = step.index, step.letter
+		local target = current.targets[index]
+		ShowBadge(index, target, current.labels[index], typed)
+		if step.final then
+			local clicker
+			if target:IsObjectType("Button") and target:GetScript("OnClick") then
+				clicker = GetProxy(index)
+				clicker:SetAttribute("clickbutton", target)
+			else
+				clicker = GetFrameActivator(index)
+				clicker.target = target
+			end
+			SetOverrideBindingClick(owner, true, letter, clicker:GetName(), current.mouseButton)
+			-- Shift may still be held from the first letter of a right click.
+			if current.mouseButton == "RightButton" then
+				SetOverrideBindingClick(owner, true, "SHIFT-" .. letter, clicker:GetName(), current.mouseButton)
+			end
+		elseif step.narrow then
+			local button = GetPrefixButton(index)
+			button:SetScript("OnClick", function(_, mouseButton)
+				Narrow(letter, mouseButton)
+			end)
+			SetOverrideBindingClick(owner, true, letter, button:GetName(), "LeftButton")
+			-- Only the first letter has a Shift variant; it selects the right click.
+			if typed == "" then
+				SetOverrideBindingClick(owner, true, "SHIFT-" .. letter, button:GetName(), "RightButton")
 			end
 		end
 	end
@@ -290,7 +261,7 @@ local function Refresh()
 	end
 	current = {
 		targets = targets,
-		labels = GenerateLabels(#targets),
+		labels = Labels.Generate(#targets, config.leftKeys, config.rightKeys, config.extraLeftKeys),
 		typed = "",
 		mouseButton = "LeftButton",
 		source = source,
@@ -324,13 +295,7 @@ end
 
 -- Sorted top to bottom, left to right, so labels follow reading order.
 function QuickJump.SortByPosition(targets)
-	table.sort(targets, function(a, b)
-		local aTop, bTop = a:GetTop() or 0, b:GetTop() or 0
-		if math.abs(aTop - bTop) > 1 then
-			return aTop > bTop
-		end
-		return (a:GetLeft() or 0) < (b:GetLeft() or 0)
-	end)
+	table.sort(targets, Labels.ByPosition)
 	return targets
 end
 
