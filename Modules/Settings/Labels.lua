@@ -181,7 +181,6 @@ local labels = {
 		"Kanalarten, die gemeinsam in Haupt erscheinen.",
 	},
 	label = { "Label", "Bezeichnung" },
-	layout = { "Layout", "Layout" },
 	left = { "Left", "Links" },
 	leftKeys = { "First letters", "Erste Buchstaben" },
 	levelUp = { "Level-up", "Stufenaufstieg" },

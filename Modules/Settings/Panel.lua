@@ -10,39 +10,16 @@ local config = ns.config.settings
 
 local T = ns.T
 
--- Module pages in sidebar order: config key, titles and the Layout.lua
--- positions the module places, shown on its page below its options.
-local MODULES = {
-	{ "units", "Unit frames", "Einheitenfenster", layout = { "player", "target", "focus", "targetAuras" } },
-	{ "group", "Group grid", "Gruppenraster", layout = { "group" } },
-	{ "keyboardHealing", "Keyboard healing", "Tastaturheilung" },
-	{
-		"actionbars",
-		"Action bars",
-		"Aktionsleisten",
-		layout = { "actionBars", "actionSets", "stanceBar", "petBar", "menubar", "bags" },
-	},
-	{ "minimap", "Minimap", "Minikarte", layout = { "minimap" } },
-	{ "tooltip", "Tooltip", "Tooltip" },
-	{ "auras", "Auras", "Auren", layout = { "buffs", "debuffs" } },
-	{ "tracker", "Objective tracker", "Questverfolgung", layout = { "tracker", "trackerBadge" } },
-	{ "chat", "Chat", "Chat", layout = { "chat", "chatBadge" } },
-	{ "lootTicker", "Loot ticker", "Beuteticker", layout = { "lootTicker" } },
-	{ "notch", "Notch", "Notch" },
-	{ "questRewards", "Quest rewards", "Questbelohnungen" },
-	{ "accessibility", "Quickjump", "Schnellsprung" },
-	{ "settings", "Profile", "Profil" },
-}
-
-local function ModuleTitle(module)
-	return ns.isGerman and module[3] or module[2]
-end
+local Pages = ns.ConfigPages
+local MODULES = Pages.MODULES
+local ModuleTitle = Pages.Title
 
 -- The module's options without the redundant top row, then its positions.
 local function ModuleSections(module)
 	local sections = { { path = { "config", module[1] }, flatten = true } }
 	local positions = {}
 	for _, key in ipairs(module.layout or {}) do
+		-- A safety net for future layout keys and modules; today every key exists.
 		if ns.layout[key] ~= nil then
 			positions[#positions + 1] = { path = { "layout", key } }
 		end
@@ -54,24 +31,6 @@ local function ModuleSections(module)
 		end
 	end
 	return sections
-end
-
--- Layout.lua positions no module page shows; they stay on the General page.
-local function UnclaimedLayout()
-	local claimed = {}
-	for _, module in ipairs(MODULES) do
-		for _, key in ipairs(module.layout or {}) do
-			claimed[key] = true
-		end
-	end
-	local keys = {}
-	for key in pairs(ns.layout) do
-		if not claimed[key] then
-			keys[#keys + 1] = key
-		end
-	end
-	table.sort(keys)
-	return keys
 end
 
 local RESET_DIALOG = "STEVIOUI_RESET_CONFIG"
@@ -102,6 +61,7 @@ local function CreateGeneralPage()
 	local sections = {}
 	sections[1] = { heading = T("Modules", "Module") }
 	for _, module in ipairs(MODULES) do
+		-- The config check is a safety net for future modules; today every module has one.
 		if module[1] ~= "settings" and ns.config[module[1]] and ns.config[module[1]].enabled ~= nil then
 			sections[#sections + 1] = {
 				path = { "config", module[1], "enabled" },
@@ -110,7 +70,7 @@ local function CreateGeneralPage()
 		end
 	end
 	sections[#sections + 1] = { path = { "config", "style" } }
-	local unclaimed = UnclaimedLayout()
+	local unclaimed = Pages.UnclaimedLayout(ns.layout)
 	if #unclaimed > 0 then
 		sections[#sections + 1] = { heading = T("Other positions", "Weitere Positionen") }
 		for _, key in ipairs(unclaimed) do
@@ -378,6 +338,7 @@ local rootCategory
 function ns.SetupOptionsPanel()
 	rootCategory = Settings.RegisterCanvasLayoutCategory(CreateGeneralPage(), "stevio-ui")
 	for _, module in ipairs(MODULES) do
+		-- A safety net for future modules; today every module has a config.
 		if ns.config[module[1]] then
 			local page = Editor.CreatePage(ModuleTitle(module), ModuleSections(module))
 			Settings.RegisterCanvasLayoutSubcategory(rootCategory, page, ModuleTitle(module))

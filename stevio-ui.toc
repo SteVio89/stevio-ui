@@ -94,5 +94,6 @@ Modules\Settings\Export.lua
 Modules\Settings\Backup.lua
 Modules\Settings\Settings.lua
 Modules\Settings\Labels.lua
+Modules\Settings\Pages.lua
 Modules\Settings\Editor.lua
 Modules\Settings\Panel.lua
