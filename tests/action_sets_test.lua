@@ -36,6 +36,10 @@ check(#Sets.Changes({ [181] = heal }, {}) == 0, "beyond the last slot")
 check(Sets.Next(1, 2) == 2 and Sets.Next(2, 2) == 1, "wraps")
 check(Sets.Next(nil, 3) == 1, "starts at one")
 check(Sets.Next(1, 0) == nil, "no sets")
+check(Sets.Previous(2, 2) == 1 and Sets.Previous(1, 2) == 2, "previous wraps")
+check(Sets.Previous(1, 3) == 3 and Sets.Previous(3, 3) == 2, "previous of three")
+check(Sets.Previous(1, 1) == 1, "previous of one")
+check(Sets.Previous(1, 0) == nil, "previous without sets")
 
 local names = { "Leveling", "Healing" }
 check(Sets.Find(names, "healing") == 2, "by name")

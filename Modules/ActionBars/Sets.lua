@@ -48,6 +48,14 @@ function Sets.Next(current, count)
 	return (current or 0) % count + 1
 end
 
+-- Index of the set before `current`, wrapping around.
+function Sets.Previous(current, count)
+	if count < 1 then
+		return nil
+	end
+	return (current - 2) % count + 1
+end
+
 -- Index of a set given by number or (case-insensitive) name, nil if unknown.
 function Sets.Find(names, query)
 	local number = tonumber(query)

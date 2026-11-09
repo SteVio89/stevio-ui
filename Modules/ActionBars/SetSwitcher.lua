@@ -208,9 +208,9 @@ function ns.NextActionSet()
 	end
 end
 
-function ns.PreviousActionSet()
+local function PreviousActionSet()
 	if state and #config.sets > 1 then
-		SwitchTo((state.current - 2) % #config.sets + 1)
+		SwitchTo(Sets.Previous(state.current, #config.sets))
 	end
 end
 
@@ -248,7 +248,7 @@ local function CreateButton()
 	b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	b:SetScript("OnClick", function(self, mouseButton)
 		if mouseButton == "RightButton" then
-			ns.PreviousActionSet()
+			PreviousActionSet()
 		else
 			ns.NextActionSet()
 		end
