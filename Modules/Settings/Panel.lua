@@ -238,7 +238,7 @@ local function ChooseAction(owner, onChoose)
 		for index = 1, GetNumBindings() do
 			local command, category = GetBinding(index)
 			if command and not command:find("^HEADER") then
-				local categoryName = category and _G[category] or category or OTHER
+				local categoryName = ns.BindingCategoryName(category, OTHER)
 				local submenu = submenus[categoryName]
 				if not submenu then
 					submenu = root:CreateButton(categoryName)
@@ -352,11 +352,6 @@ local function SetCVarOverride(name, value)
 	end
 end
 
-local function IsSettableCVar(name)
-	local value, _, _, _, isLocked, isSecure, isReadOnly = C_CVar.GetCVarInfo(name)
-	return value ~= nil and not isLocked and not isSecure and not isReadOnly
-end
-
 local function CreateCVarsPage()
 	local page
 	page = CreateListPage(T("Graphics & interface", "Grafik & Interface"), function(self, top)
@@ -371,7 +366,7 @@ local function CreateCVarsPage()
 		hint:SetText(T("CVar name and value", "CVar-Name und Wert"))
 		add:SetScript("OnClick", function()
 			local cvar = name:GetText():match("^%s*(.-)%s*$")
-			if cvar == "" or not IsSettableCVar(cvar) then
+			if cvar == "" or ns.SettableCVar(cvar) == nil then
 				hint:SetText(T("Unknown or protected CVar", "Unbekannte oder geschützte CVar"))
 				return
 			end

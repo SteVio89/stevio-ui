@@ -89,6 +89,7 @@ Modules\Accessibility\Accessibility.lua
 
 Modules\Settings\Config.lua
 Modules\Settings\Profile.lua
+Modules\Settings\Client.lua
 Modules\Settings\Export.lua
 Modules\Settings\Settings.lua
 Modules\Settings\Labels.lua

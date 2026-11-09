@@ -1,17 +1,5 @@
 local _, ns = ...
 
-local config = ns.config.settings
-
--- CVars holding client state rather than preferences (config.ignoredCVars).
-function ns.IsIgnoredCVar(name)
-	for _, pattern in ipairs(config.ignoredCVars) do
-		if name:find(pattern) then
-			return true
-		end
-	end
-	return false
-end
-
 local function LuaKey(name)
 	if name:match("^[%a_][%w_]*$") then
 		return name
@@ -21,8 +9,8 @@ end
 
 local function AppendActionBars(lines)
 	local values = {}
-	for i = 1, select("#", GetActionBarToggles()) do
-		values[i] = tostring(not not select(i, GetActionBarToggles()))
+	for i, enabled in ipairs(ns.CurrentActionBarToggles()) do
+		values[i] = tostring(enabled)
 	end
 	lines[#lines + 1] = "\t-- Bars 2 to 8, in Blizzard's settings order."
 	lines[#lines + 1] = ("\tactionBars = { %s },"):format(table.concat(values, ", "))
@@ -39,7 +27,7 @@ local function AppendBindings(lines)
 		if #keys > 0 then
 			if category ~= lastCategory then
 				lastCategory = category
-				lines[#lines + 1] = ("\t\t-- %s"):format(category and _G[category] or category or "?")
+				lines[#lines + 1] = ("\t\t-- %s"):format(ns.BindingCategoryName(category, "?"))
 			end
 			for _, key in ipairs(keys) do
 				lines[#lines + 1] = ("\t\t[%q] = %q,"):format(key, command)
@@ -47,20 +35,6 @@ local function AppendBindings(lines)
 		end
 	end
 	lines[#lines + 1] = "\t},"
-end
-
--- Calls `callback(name, value, defaultValue)` for every CVar the player can
--- change (not locked, secure or read-only).
-function ns.ForEachCVar(callback)
-	for _, info in ipairs(ConsoleGetAllCommands()) do
-		if info.commandType == Enum.ConsoleCommandType.Cvar then
-			local name = info.command
-			local value, defaultValue, _, _, isLocked, isSecure, isReadOnly = C_CVar.GetCVarInfo(name)
-			if value and not isLocked and not isSecure and not isReadOnly then
-				callback(name, value, defaultValue)
-			end
-		end
-	end
 end
 
 local function AppendCVars(lines)

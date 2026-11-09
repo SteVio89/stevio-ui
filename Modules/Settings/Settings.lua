@@ -18,8 +18,10 @@ local function EffectiveCVars()
 end
 
 local function ApplyActionBars(toggles)
+	local current = ns.CurrentActionBarToggles()
 	for index, enabled in ipairs(toggles) do
-		if (not not select(index, GetActionBarToggles())) ~= enabled then
+		-- A bar the client doesn't report counts as off.
+		if (not not current[index]) ~= enabled then
 			SetActionBarToggles(unpack(toggles))
 			return true
 		end
@@ -50,18 +52,6 @@ local function ApplyCVars(cvars)
 		end
 		return changed
 	end)
-end
-
-function ns.GetBindingKeys(index)
-	local keys = {}
-	local count = select("#", GetBinding(index))
-	for i = 3, count do
-		local key = select(i, GetBinding(index))
-		if key then
-			keys[#keys + 1] = key
-		end
-	end
-	return keys
 end
 
 -- Strict: every key not bound in the profile gets unbound, so a fresh client
@@ -100,21 +90,12 @@ end
 -- profile later can be handed back too.
 function ns.CaptureBackup()
 	local backup = {
-		actionBars = {},
-		bindings = {},
+		actionBars = ns.CurrentActionBarToggles(),
+		bindings = (ns.BoundKeys()),
 		bindingSet = GetCurrentBindingSet(),
 		cvars = {},
 		editModeLayout = ns.GetActiveEditModeLayout(),
 	}
-	for i = 1, select("#", GetActionBarToggles()) do
-		backup.actionBars[i] = not not select(i, GetActionBarToggles())
-	end
-	for index = 1, GetNumBindings() do
-		local command = GetBinding(index)
-		for _, key in ipairs(ns.GetBindingKeys(index)) do
-			backup.bindings[key] = command
-		end
-	end
 	ns.ForEachCVar(function(name, value)
 		backup.cvars[name] = value
 	end)
@@ -176,14 +157,7 @@ end
 -- Profile keys whose command isn't there this session (an addon turned off)
 -- count as unchanged, so they aren't saved as removed.
 local function CurrentBindings()
-	local current, commands = {}, {}
-	for index = 1, GetNumBindings() do
-		local command = GetBinding(index)
-		commands[command] = true
-		for _, key in ipairs(ns.GetBindingKeys(index)) do
-			current[key] = command
-		end
-	end
+	local current, commands = ns.BoundKeys()
 	for key, command in pairs(config.profile.bindings) do
 		if current[key] == nil and not commands[command] then
 			current[key] = command
@@ -216,8 +190,8 @@ local function OnCVarChanged(_, name)
 	if applying or not profileApplied or not config.profile.cvars or not name or ns.IsIgnoredCVar(name) then
 		return
 	end
-	local value, defaultValue, _, _, isLocked, isSecure, isReadOnly = C_CVar.GetCVarInfo(name)
-	if value == nil or isLocked or isSecure or isReadOnly then
+	local value, defaultValue = ns.SettableCVar(name)
+	if value == nil then
 		return
 	end
 	name = ns.KnownCVarName(name)
