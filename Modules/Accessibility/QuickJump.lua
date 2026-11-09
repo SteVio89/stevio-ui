@@ -144,11 +144,15 @@ scrollUp:SetScript("OnClick", function()
 	Scroll(ScrollControllerMixin.Directions.Decrease)
 end)
 
-local function ClearLabels()
-	ClearOverrideBindings(owner)
+local function HideBadges()
 	for _, badge in ipairs(badges) do
 		badge:Hide()
 	end
+end
+
+local function ClearLabels()
+	ClearOverrideBindings(owner)
+	HideBadges()
 	current = nil
 end
 
@@ -176,9 +180,7 @@ local Narrow
 -- letter clicks its target, an earlier one narrows the selection further.
 local function Bind()
 	ClearOverrideBindings(owner)
-	for _, badge in ipairs(badges) do
-		badge:Hide()
-	end
+	HideBadges()
 
 	if current.scrollBar then
 		SetOverrideBindingClick(owner, true, config.scrollDownKey, scrollDown:GetName(), "LeftButton")
