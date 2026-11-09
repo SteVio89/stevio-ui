@@ -212,6 +212,8 @@ local function CreateAuraGroup(cell, key, filter, anchorPoint, offsetX, offsetY,
 	container:SetFrameLevel(cell.health:GetFrameLevel() + 2)
 	container:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
 	container:SetEditModePreviewEnabled(false)
+	-- The icons are display only; clicks go through to the cell underneath.
+	container:EnableMouse(false)
 	local flowAnchor = anchorPoint:find("TOP") and anchorPoint or ("TOP" .. anchorPoint)
 	container:SetFlowLayoutAnchorPoint(flowAnchor)
 	container:SetFlowLayoutGrowthDirection(growth, AnchorUtil.FlowDirection.Down)
@@ -325,6 +327,10 @@ end
 -- Called from the XML template's OnLoad; the cell size lives in Cell.xml
 -- because the secure header may create cells in combat, where Lua can't resize them.
 function ns.InitGroupCell(cell)
+	-- A Button only reacts to the left button's up-click by default; the
+	-- type1/type2 attributes set by the header need both buttons. Cells are
+	-- precreated out of combat (see PrecreateCells), where this is allowed.
+	cell:RegisterForClicks("AnyUp")
 	ns.BuildGroupCell(cell)
 	CreatePrediction(cell)
 	local Flow = AnchorUtil.FlowDirection
