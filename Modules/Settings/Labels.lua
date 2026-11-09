@@ -374,3 +374,8 @@ function ns.ConfigLabel(key)
 	end
 	return Words(key)
 end
+
+-- Whether `key` has an entry above (tests/settings_labels_test.lua checks every config key has one).
+function ns.HasConfigLabel(key)
+	return labels[key] ~= nil
+end
