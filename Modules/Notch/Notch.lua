@@ -200,20 +200,24 @@ local function UpdateButtons(row)
 	return true
 end
 
-local rowSpecs = {
-	{ update = UpdateXP, bar = true },
-	{ update = UpdateRested },
-	{ update = UpdateReputation, bar = true },
-	{ update = UpdateGold },
-	{ update = UpdateBags },
-	{ update = UpdateDurability },
-	{ update = UpdateZone, groupStart = true },
-	{ update = UpdateTime },
-	{ update = UpdateSystem },
-	{ update = UpdateOnline },
-}
-if config.minimapButtons then
-	rowSpecs[#rowSpecs + 1] = { update = UpdateButtons, buttons = true, groupStart = true }
+-- Built when the island is created, so saved overrides are applied already.
+local function RowSpecs()
+	local rowSpecs = {
+		{ update = UpdateXP, bar = true },
+		{ update = UpdateRested },
+		{ update = UpdateReputation, bar = true },
+		{ update = UpdateGold },
+		{ update = UpdateBags },
+		{ update = UpdateDurability },
+		{ update = UpdateZone, groupStart = true },
+		{ update = UpdateTime },
+		{ update = UpdateSystem },
+		{ update = UpdateOnline },
+	}
+	if config.minimapButtons then
+		rowSpecs[#rowSpecs + 1] = { update = UpdateButtons, buttons = true, groupStart = true }
+	end
+	return rowSpecs
 end
 
 local function CreateRow(spec)
@@ -326,7 +330,7 @@ local function CreateIsland()
 	background:SetAllPoints()
 	background:SetColorTexture(unpack(colors.background))
 
-	for _, spec in ipairs(rowSpecs) do
+	for _, spec in ipairs(RowSpecs()) do
 		rows[#rows + 1] = CreateRow(spec)
 	end
 
