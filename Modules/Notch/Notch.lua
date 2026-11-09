@@ -39,7 +39,7 @@ local L = ns.isGerman
 local Zone = ns.NotchZone
 local Buttons = ns.NotchButtons
 
-local watcher, island
+local island
 local notchHeight = 0
 -- Trigger area in UIParent units ({ left, right, bottom }), see Zone.Contains.
 local notchRect
@@ -359,7 +359,7 @@ local function CreateIsland()
 	local islandRect = {}
 	local input, options = {}, { hideDelay = config.hideDelay, margin = config.islandMargin }
 	local sinceCheck = 0
-	watcher = CreateFrame("Frame", "StevioUI_NotchWatcher", UIParent)
+	local watcher = CreateFrame("Frame", "StevioUI_NotchWatcher", UIParent)
 	watcher:SetScript("OnUpdate", function(_, elapsed)
 		sinceCheck = sinceCheck + elapsed
 		if sinceCheck < config.pollInterval then
