@@ -2,8 +2,8 @@ local _, ns = ...
 
 local style = ns.config.style
 
-ns.hiddenParent = CreateFrame("Frame")
-ns.hiddenParent:Hide()
+local hiddenParent = CreateFrame("Frame")
+hiddenParent:Hide()
 
 function ns.PixelSize(region)
 	return PixelUtil.ConvertPixelsToUIForRegion(1, region)
@@ -144,7 +144,7 @@ function ns.HideBlizzard(frame, keepEvents)
 	if not keepEvents then
 		frame:UnregisterAllEvents()
 	end
-	frame:SetParent(ns.hiddenParent)
+	frame:SetParent(hiddenParent)
 end
 
 -- Only values used as table keys need an issecretvalue guard; colors themselves

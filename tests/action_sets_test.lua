@@ -47,4 +47,4 @@ check(Sets.Find(names, "1") == 1, "by number")
 check(Sets.Find(names, "3") == nil, "number out of range")
 check(Sets.Find(names, "tank") == nil, "unknown name")
 
-print("action_sets_test: ok")
+print("action sets tests passed")
