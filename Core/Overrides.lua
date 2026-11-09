@@ -224,7 +224,7 @@ end
 -- WoW glue: the saved overrides go into the config once the saved variables
 -- are loaded, before any module is enabled (PLAYER_LOGIN).
 if ns.RegisterEvent then
-	ns:RegisterEvent("ADDON_LOADED", function(_, loadedName)
+	ns.RegisterEvent("ADDON_LOADED", function(_, loadedName)
 		if loadedName ~= ns.name or ns.overrideRoots then
 			return
 		end

@@ -2,7 +2,7 @@ local addonName, ns = ...
 
 local config = ns.config.settings
 
-local Settings = ns:RegisterModule("settings", {})
+local Settings = ns.RegisterModule("settings", {})
 
 -- Set while stevio-ui itself changes CVars or bindings, so those changes
 -- aren't taken for the player's own (see the capture below).
@@ -238,7 +238,7 @@ end
 -- the options panel changed an override; `cvarName` is first set to `cvarValue`
 -- (a CVar that stopped being managed, back to its default).
 function ns.ApplyOverridesNow(cvarName, cvarValue)
-	ns:RunAfterCombat(function()
+	ns.RunAfterCombat(function()
 		if cvarName and cvarValue then
 			Applying(SetCVar, cvarName, cvarValue)
 		end
@@ -251,8 +251,8 @@ function ns.ApplyOverridesNow(cvarName, cvarValue)
 	end)
 end
 
-ns:RegisterEvent("UPDATE_BINDINGS", OnBindingsChanged)
-ns:RegisterEvent("CVAR_UPDATE", OnCVarChanged)
+ns.RegisterEvent("UPDATE_BINDINGS", OnBindingsChanged)
+ns.RegisterEvent("CVAR_UPDATE", OnCVarChanged)
 
 -- Bindings and account CVars arrive from the server around login; by the
 -- first PLAYER_ENTERING_WORLD both are in place. The module only enables after
@@ -264,10 +264,10 @@ local function TryApply()
 		return
 	end
 	applied = true
-	ns:RunAfterCombat(ApplyProfile)
+	ns.RunAfterCombat(ApplyProfile)
 end
 
-ns:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+ns.RegisterEvent("PLAYER_ENTERING_WORLD", function()
 	enteredWorld = true
 	TryApply()
 end)
@@ -280,16 +280,16 @@ function Settings:OnEnable()
 		SetConsoleKey(config.consoleKey)
 	end
 
-	ns:RegisterSlashCommand("export", function()
+	ns.RegisterSlashCommand("export", function()
 		local text = ns.BuildProfileExport()
 		StevioUIExport = text
 		ns.ShowExportWindow(text)
 	end)
-	ns:RegisterSlashCommand("apply", function()
-		ns:RunAfterCombat(ApplyProfile)
+	ns.RegisterSlashCommand("apply", function()
+		ns.RunAfterCombat(ApplyProfile)
 	end)
-	ns:RegisterSlashCommand("restore", function()
-		ns:RunAfterCombat(Restore)
+	ns.RegisterSlashCommand("restore", function()
+		ns.RunAfterCombat(Restore)
 	end)
 
 	-- Last, so a failing panel can't take /sui restore down with it.

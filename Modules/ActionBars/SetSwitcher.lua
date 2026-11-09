@@ -282,10 +282,10 @@ function ns.CreateActionSetSwitcher()
 
 	button = CreateButton()
 	UpdateButton()
-	ns:RegisterEvent("PLAYER_REGEN_DISABLED", UpdateButton)
-	ns:RegisterEvent("PLAYER_REGEN_ENABLED", UpdateButton)
+	ns.RegisterEvent("PLAYER_REGEN_DISABLED", UpdateButton)
+	ns.RegisterEvent("PLAYER_REGEN_ENABLED", UpdateButton)
 
-	ns:RegisterSlashCommand("bars", function(input)
+	ns.RegisterSlashCommand("bars", function(input)
 		if input == "" then
 			ListSets()
 			return

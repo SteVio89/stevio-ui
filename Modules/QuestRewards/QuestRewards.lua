@@ -1,6 +1,6 @@
 local _, ns = ...
 
-local QuestRewards = ns:RegisterModule("questRewards", {})
+local QuestRewards = ns.RegisterModule("questRewards", {})
 
 local config
 local coins = {}

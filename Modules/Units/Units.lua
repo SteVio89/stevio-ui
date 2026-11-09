@@ -3,7 +3,7 @@ local _, ns = ...
 local config = ns.config.units
 local style = ns.config.style
 
-local Units = ns:RegisterModule("units", {})
+local Units = ns.RegisterModule("units", {})
 Units.frames = {}
 
 -- Health, power and names may be secret values in combat. They can be passed

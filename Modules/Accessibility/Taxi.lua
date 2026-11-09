@@ -108,10 +108,10 @@ function ns.SetupTaxiList()
 	ns.QuickJump:RegisterSource(taxiSource)
 
 	-- The map frame is shown after the event, and the list anchors to it.
-	ns:RegisterEvent("TAXIMAP_OPENED", function()
+	ns.RegisterEvent("TAXIMAP_OPENED", function()
 		C_Timer.After(0, Build)
 	end)
-	ns:RegisterEvent("TAXIMAP_CLOSED", function()
+	ns.RegisterEvent("TAXIMAP_CLOSED", function()
 		panel:Hide()
 		ns.QuickJump:RequestRefresh()
 	end)

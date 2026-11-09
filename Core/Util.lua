@@ -177,7 +177,7 @@ function ns.PinFrame(frame, place)
 	-- Unprotected frames may move in combat, so only protected ones wait.
 	local function request()
 		if frame:IsProtected() then
-			ns:RunAfterCombat(apply)
+			ns.RunAfterCombat(apply)
 		else
 			apply()
 		end

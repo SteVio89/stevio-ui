@@ -3,7 +3,7 @@ local _, ns = ...
 local config = ns.config.actionbars
 local style = ns.config.style
 
-local ActionBars = ns:RegisterModule("actionbars", {})
+local ActionBars = ns.RegisterModule("actionbars", {})
 
 -- Blizzard's own bars and buttons are kept, only restyled and moved: paging,
 -- keybinds, cooldowns, range tint and proc glows keep working under the
@@ -101,15 +101,15 @@ local function PlaceBars()
 		[Setting.HideBarArt] = 1,
 	}
 	for index, systemIndex in ipairs(barSystemIndices) do
-		ns:SetEditModeSystem(Enum.EditModeSystem.ActionBar, systemIndex, ns.layout.actionBars[index], barSettings)
+		ns.SetEditModeSystem(Enum.EditModeSystem.ActionBar, systemIndex, ns.layout.actionBars[index], barSettings)
 	end
 
-	ns:SetEditModeSystem(
+	ns.SetEditModeSystem(
 		Enum.EditModeSystem.ActionBar,
 		Enum.EditModeActionBarSystemIndices.StanceBar,
 		ns.layout.stanceBar
 	)
-	ns:SetEditModeSystem(
+	ns.SetEditModeSystem(
 		Enum.EditModeSystem.ActionBar,
 		Enum.EditModeActionBarSystemIndices.PetActionBar,
 		ns.layout.petBar

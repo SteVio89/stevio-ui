@@ -4,7 +4,7 @@ local config = ns.config.chat
 local C = ns.ChatInternal
 local state = C.state
 
-local Chat = ns:RegisterModule("chat", {})
+local Chat = ns.RegisterModule("chat", {})
 
 -- Chat organised in channels like Slack/Teams. This file holds the state and
 -- the message flow; the frames live in View.lua, Copy.lua and Badge.lua, the
@@ -430,9 +430,9 @@ function Chat:OnEnable()
 
 	-- Registered first, so messages are stored even if a Blizzard hook below fails.
 	for event in pairs(config.events) do
-		ns:RegisterEvent(event, OnChatMessage)
+		ns.RegisterEvent(event, OnChatMessage)
 	end
-	ns:RegisterSlashCommand("chat", PrintChannels)
+	ns.RegisterSlashCommand("chat", PrintChannels)
 	hooksecurefunc("print", OnPrint)
 
 	C.SetupBlizzardChat()

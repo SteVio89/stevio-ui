@@ -1,6 +1,6 @@
 local _, ns = ...
 
-local KeyboardHealing = ns:RegisterModule("keyboardHealing", {})
+local KeyboardHealing = ns.RegisterModule("keyboardHealing", {})
 
 -- Healing by keyboard: the arrow keys move a cursor over the group grid and
 -- target the unit under it, so spells work as usual. While the target isn't
@@ -254,7 +254,7 @@ function ns.OnGroupPreviewChanged(previewCells, count, mode)
 	if not controller then
 		return
 	end
-	ns:RunAfterCombat(function()
+	ns.RunAfterCombat(function()
 		if previewCells then
 			ShowTestCells(previewCells, count, mode)
 		else
@@ -269,7 +269,7 @@ end
 local function RequestReset()
 	C_Timer.After(0, function()
 		UpdateCursorState()
-		ns:RunAfterCombat(ResetCursor)
+		ns.RunAfterCombat(ResetCursor)
 	end)
 end
 
@@ -293,7 +293,7 @@ function KeyboardHealing:OnEnable(config)
 		SetOverrideBindingClick(controller, false, key, targeter:GetName(), direction)
 	end
 
-	ns:RegisterEvent("GROUP_ROSTER_UPDATE", RequestReset)
-	ns:RegisterEvent("PLAYER_TARGET_CHANGED", UpdateCursorState)
+	ns.RegisterEvent("GROUP_ROSTER_UPDATE", RequestReset)
+	ns.RegisterEvent("PLAYER_TARGET_CHANGED", UpdateCursorState)
 	RequestReset()
 end

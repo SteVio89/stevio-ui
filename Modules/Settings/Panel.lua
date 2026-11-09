@@ -422,10 +422,10 @@ function ns.SetupOptionsPanel()
 	)
 	Settings.RegisterAddOnCategory(rootCategory)
 
-	ns:RegisterSlashCommand("config", function()
+	ns.RegisterSlashCommand("config", function()
 		Settings.OpenToCategory(rootCategory:GetID())
 	end)
-	ns:RegisterSlashCommand("reset", function()
+	ns.RegisterSlashCommand("reset", function()
 		StaticPopup_Show(RESET_DIALOG)
 	end)
 end

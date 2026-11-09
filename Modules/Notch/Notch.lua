@@ -3,7 +3,7 @@ local _, ns = ...
 local config = ns.config.notch
 local colors = config.colors
 
-local Notch = ns:RegisterModule("notch", {})
+local Notch = ns.RegisterModule("notch", {})
 
 -- Nothing is visible until the cursor reaches the notch; then a black island
 -- grows out of it with information that is only needed now and then.
@@ -414,14 +414,14 @@ function Notch:OnEnable()
 	-- Blizzard shifts UIParent below the notch only later (entering the world,
 	-- notch mode or display changes); the offset to the screen top must follow.
 	hooksecurefunc("UpdateUIParentPosition", UpdateGeometry)
-	ns:RegisterEvent("UI_SCALE_CHANGED", function()
+	ns.RegisterEvent("UI_SCALE_CHANGED", function()
 		C_Timer.After(0, UpdateGeometry)
 	end)
 
 	-- Adopting the buttons early keeps them from showing on the map until the
 	-- island first opens; buttons created later are picked up when it opens.
 	if config.minimapButtons then
-		ns:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+		ns.RegisterEvent("PLAYER_ENTERING_WORLD", function()
 			C_Timer.After(config.buttonScanDelay, function()
 				Buttons.Scan(config.buttonSize)
 			end)
@@ -429,5 +429,5 @@ function Notch:OnEnable()
 		Buttons.Scan(config.buttonSize)
 	end
 
-	ns:RegisterSlashCommand("notch", DumpGeometry)
+	ns.RegisterSlashCommand("notch", DumpGeometry)
 end

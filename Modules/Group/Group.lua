@@ -2,7 +2,7 @@ local _, ns = ...
 
 local config = ns.config.group
 
-local Group = ns:RegisterModule("group", {})
+local Group = ns.RegisterModule("group", {})
 
 local MAX_GROUPS = ns.MAX_GROUPS
 local UNITS_PER_GROUP = ns.UNITS_PER_GROUP
@@ -150,8 +150,8 @@ function Group:OnEnable()
 	end
 	UpdateMode()
 
-	ns:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-		ns:RunAfterCombat(UpdateMode)
+	ns.RegisterEvent("GROUP_ROSTER_UPDATE", function()
+		ns.RunAfterCombat(UpdateMode)
 	end)
 
 	ns.HideBlizzard(CompactPartyFrame)

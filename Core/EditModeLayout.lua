@@ -14,7 +14,7 @@ function ns.EditModeIconSize(percent)
 	return (percent - 50) / 10
 end
 
-function ns:SetEditModeSystem(system, systemIndex, layout, settings)
+function ns.SetEditModeSystem(system, systemIndex, layout, settings)
 	desiredSystems[#desiredSystems + 1] = {
 		system = system,
 		systemIndex = systemIndex,
@@ -126,7 +126,7 @@ local function TryApply()
 		return
 	end
 	applied = true
-	ns:RunAfterCombat(ApplyLayout)
+	ns.RunAfterCombat(ApplyLayout)
 end
 
 local function OnLayoutsReady()
@@ -134,8 +134,8 @@ local function OnLayoutsReady()
 	TryApply()
 end
 
-ns:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsReady)
-ns:RegisterEvent("PLAYER_ENTERING_WORLD", OnLayoutsReady)
+ns.RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsReady)
+ns.RegisterEvent("PLAYER_ENTERING_WORLD", OnLayoutsReady)
 
 -- Called by Init once all modules have registered their systems.
 function ns.ApplyEditModeLayout()

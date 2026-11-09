@@ -15,10 +15,10 @@ local function MatchingBagPercent(microPercent)
 end
 
 function ns.CreateMenubar(config)
-	ns:SetEditModeSystem(Enum.EditModeSystem.MicroMenu, nil, ns.layout.menubar, {
+	ns.SetEditModeSystem(Enum.EditModeSystem.MicroMenu, nil, ns.layout.menubar, {
 		[Enum.EditModeMicroMenuSetting.Size] = SizeSetting(config.menubarSize, MICRO_MIN),
 	})
-	ns:SetEditModeSystem(Enum.EditModeSystem.Bags, nil, ns.layout.bags, {
+	ns.SetEditModeSystem(Enum.EditModeSystem.Bags, nil, ns.layout.bags, {
 		[Enum.EditModeBagsSetting.Size] = SizeSetting(MatchingBagPercent(config.menubarSize), BAGS_MIN),
 	})
 end

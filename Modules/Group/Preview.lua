@@ -116,7 +116,7 @@ local function HidePreview()
 	end
 end
 
-ns:RegisterSlashCommand("test", function(input)
+ns.RegisterSlashCommand("test", function(input)
 	if not ns.config.group.enabled then
 		return
 	end

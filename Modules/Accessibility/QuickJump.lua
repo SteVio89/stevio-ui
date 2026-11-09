@@ -337,14 +337,14 @@ end
 
 -- PLAYER_REGEN_DISABLED still runs before lockdown starts, the last moment
 -- bindings can be removed; leftover labels would keep letters bound in combat.
-ns:RegisterEvent("PLAYER_REGEN_DISABLED", ClearLabels)
-ns:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+ns.RegisterEvent("PLAYER_REGEN_DISABLED", ClearLabels)
+ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
 	QuickJump:RequestRefresh()
 end)
 
 -- Dumps what would be labelled right now, for diagnosing missing or dead
 -- labels. Saved for reading outside the game and shown in a copyable window.
-ns:RegisterSlashCommand("qj", function()
+ns.RegisterSlashCommand("qj", function()
 	local lines = {}
 	for _, source in ipairs(sources) do
 		local open = source.IsOpen()

@@ -1,6 +1,6 @@
 local _, ns = ...
 
-local LootTicker = ns:RegisterModule("lootTicker", {})
+local LootTicker = ns.RegisterModule("lootTicker", {})
 
 -- Own loot, gold and currency gains as a short list above the bags: icon, name in
 -- quality color and count. Lines enter at the bottom, move up as new ones
@@ -445,9 +445,9 @@ function LootTicker:OnEnable(moduleConfig)
 		rows[i]:Hide()
 	end
 
-	ns:RegisterEvent("CHAT_MSG_LOOT", OnLoot)
-	ns:RegisterEvent("CHAT_MSG_CURRENCY", OnLoot)
-	ns:RegisterEvent("CHAT_MSG_MONEY", OnMoney)
-	ns:RegisterEvent("LOOT_HISTORY_UPDATE_DROP", OnDrop)
-	ns:RegisterSlashCommand("loot", Preview)
+	ns.RegisterEvent("CHAT_MSG_LOOT", OnLoot)
+	ns.RegisterEvent("CHAT_MSG_CURRENCY", OnLoot)
+	ns.RegisterEvent("CHAT_MSG_MONEY", OnMoney)
+	ns.RegisterEvent("LOOT_HISTORY_UPDATE_DROP", OnDrop)
+	ns.RegisterSlashCommand("loot", Preview)
 end

@@ -185,7 +185,7 @@ end
 
 -- Needs the channel view (C.ui.frame) to exist, since the input box hangs under it.
 function C.SetupBlizzardChat()
-	ns:SetEditModeSystem(Enum.EditModeSystem.ChatFrame, nil, BlizzardChatLayout(), SizeSettings())
+	ns.SetEditModeSystem(Enum.EditModeSystem.ChatFrame, nil, BlizzardChatLayout(), SizeSettings())
 
 	HideChatButtons()
 	ScanChatFrames()

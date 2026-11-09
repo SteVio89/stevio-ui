@@ -1,6 +1,6 @@
 local _, ns = ...
 
-local Tooltip = ns:RegisterModule("tooltip", {})
+local Tooltip = ns.RegisterModule("tooltip", {})
 
 -- Only the default anchor moves, via Edit Mode; tooltips anchored to their
 -- owner (action buttons, bags) stay where Blizzard puts them. The position is
@@ -8,7 +8,7 @@ local Tooltip = ns:RegisterModule("tooltip", {})
 -- module must be enabled after the minimap one.
 function Tooltip:OnEnable(config)
 	local mapLayout = ns.layout.minimap
-	ns:SetEditModeSystem(Enum.EditModeSystem.HudTooltip, nil, {
+	ns.SetEditModeSystem(Enum.EditModeSystem.HudTooltip, nil, {
 		point = "BOTTOMRIGHT",
 		x = mapLayout.x,
 		y = mapLayout.y + Minimap:GetHeight() + config.gapAboveMinimap,

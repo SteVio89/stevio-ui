@@ -19,7 +19,7 @@ ns.UNITS_PER_GROUP = 5
 
 local modules = {}
 
-function ns:RegisterModule(name, module)
+function ns.RegisterModule(name, module)
 	module.name = name
 	modules[#modules + 1] = module
 	return module
@@ -34,7 +34,7 @@ dispatcher:SetScript("OnEvent", function(_, event, ...)
 	end
 end)
 
-function ns:RegisterEvent(event, handler)
+function ns.RegisterEvent(event, handler)
 	if not handlers[event] then
 		handlers[event] = {}
 		dispatcher:RegisterEvent(event)
@@ -64,7 +64,7 @@ end
 
 local slashCommands = {}
 
-function ns:RegisterSlashCommand(name, handler)
+function ns.RegisterSlashCommand(name, handler)
 	slashCommands[name] = handler
 end
 
@@ -85,7 +85,7 @@ local combatQueue = {}
 
 -- Protected frames can't be moved, reparented or rebound during combat lockdown,
 -- so such changes wait for the lockdown to end instead of erroring.
-function ns:RunAfterCombat(fn)
+function ns.RunAfterCombat(fn)
 	if InCombatLockdown() then
 		combatQueue[#combatQueue + 1] = fn
 	else
@@ -93,7 +93,7 @@ function ns:RunAfterCombat(fn)
 	end
 end
 
-ns:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
 	local queued = combatQueue
 	combatQueue = {}
 	for _, fn in ipairs(queued) do
@@ -113,10 +113,10 @@ end
 
 -- A /reload during combat starts the addon under lockdown, where secure frames
 -- can't be configured; building everything afterwards avoids half-set-up frames.
-ns:RegisterEvent("PLAYER_LOGIN", function()
+ns.RegisterEvent("PLAYER_LOGIN", function()
 	if not (StevioUIState and StevioUIState.consented) then
 		ns.ShowConsent()
 		return
 	end
-	ns:RunAfterCombat(EnableModules)
+	ns.RunAfterCombat(EnableModules)
 end)

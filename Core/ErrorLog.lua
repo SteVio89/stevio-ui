@@ -45,11 +45,11 @@ local function AllErrors()
 	return all
 end
 
-ns:RegisterEvent("PLAYER_LOGOUT", function()
+ns.RegisterEvent("PLAYER_LOGOUT", function()
 	StevioUIErrors = AllErrors()
 end)
 
-ns:RegisterSlashCommand("errors", function(input)
+ns.RegisterSlashCommand("errors", function(input)
 	if input == "clear" then
 		StevioUIErrors = {}
 		if ScriptErrorsFrame then

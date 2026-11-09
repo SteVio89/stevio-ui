@@ -2,7 +2,7 @@ local _, ns = ...
 
 local badgeStyle = ns.config.style.badge
 
-local Tracker = ns:RegisterModule("tracker", {})
+local Tracker = ns.RegisterModule("tracker", {})
 
 BINDING_HEADER_STEVIOUI = "stevio-ui"
 BINDING_NAME_STEVIOUI_TOGGLE_TRACKER = ns.isGerman and "Questverfolgung ein-/ausblenden" or "Toggle objective tracker"
@@ -19,7 +19,7 @@ local function Apply()
 	ObjectiveTrackerFrame:SetAlpha(shown and 1 or 0)
 	applying = false
 	badge.texture:SetColorTexture(unpack(shown and badgeStyle.shownColor or badgeStyle.hiddenColor))
-	ns:RunAfterCombat(function()
+	ns.RunAfterCombat(function()
 		applying = true
 		ObjectiveTrackerFrame:SetShown(shown)
 		applying = false
@@ -48,7 +48,7 @@ local function HeightSetting(height)
 end
 
 function Tracker:OnEnable(config)
-	ns:SetEditModeSystem(Enum.EditModeSystem.ObjectiveTracker, nil, ns.layout.tracker, {
+	ns.SetEditModeSystem(Enum.EditModeSystem.ObjectiveTracker, nil, ns.layout.tracker, {
 		[Enum.EditModeObjectiveTrackerSetting.Height] = HeightSetting(config.height),
 	})
 

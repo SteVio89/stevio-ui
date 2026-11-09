@@ -104,7 +104,7 @@ local handlers = {
 -- A notice failing (a global this client lacks) must not break the others.
 function C.SetupNotices()
 	for event, handler in pairs(handlers) do
-		ns:RegisterEvent(event, function(...)
+		ns.RegisterEvent(event, function(...)
 			local ok, err = pcall(handler, ...)
 			if not ok then
 				geterrorhandler()(err)

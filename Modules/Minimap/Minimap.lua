@@ -1,6 +1,6 @@
 local _, ns = ...
 
-local MinimapModule = ns:RegisterModule("minimap", {})
+local MinimapModule = ns.RegisterModule("minimap", {})
 
 local SQUARE_MASK = "Interface\\Buttons\\WHITE8X8"
 
@@ -71,7 +71,7 @@ end
 -- with the bottom bars, in combat too.
 local function PlaceVehicleLeaveButton(config, size)
 	local mapLayout = ns.layout.minimap
-	ns:SetEditModeSystem(Enum.EditModeSystem.VehicleLeaveButton, nil, {
+	ns.SetEditModeSystem(Enum.EditModeSystem.VehicleLeaveButton, nil, {
 		point = "TOPLEFT",
 		relativePoint = "BOTTOMRIGHT",
 		x = mapLayout.x - size,
