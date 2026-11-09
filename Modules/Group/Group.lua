@@ -87,7 +87,7 @@ end
 
 -- Alpha instead of Hide because headers are secure and may be in combat lockdown.
 function ns.SetLiveGroupAlpha(alpha)
-	for _, header in ipairs(Group.headers or {}) do
+	for _, header in ipairs(ns.groupHeaders or {}) do
 		header:SetAlpha(alpha)
 	end
 end
@@ -97,12 +97,13 @@ function Group:OnEnable()
 	local container = ns.CreateGroupContainer(baseWidth, cellHeight)
 	local currentMode
 
-	self.headers = {}
+	local headers = {}
 	for groupIndex = 1, MAX_GROUPS do
-		self.headers[groupIndex] = CreateHeader(groupIndex)
-		PrecreateCells(self.headers[groupIndex])
+		headers[groupIndex] = CreateHeader(groupIndex)
+		PrecreateCells(headers[groupIndex])
 	end
-	ns.groupHeaders = self.headers
+	-- Also read by the preview and keyboard healing.
+	ns.groupHeaders = headers
 
 	-- Secure headers can't be re-anchored in combat; a roster change mid-fight
 	-- switches the layout once combat ends.
@@ -113,7 +114,7 @@ function Group:OnEnable()
 		end
 		currentMode = mode
 		local cellWidth = ns.GetGroupCellWidth(mode, baseWidth)
-		for groupIndex, header in ipairs(self.headers) do
+		for groupIndex, header in ipairs(headers) do
 			ApplyHeaderMode(header, groupIndex, mode, container, cellWidth, cellHeight)
 		end
 	end
