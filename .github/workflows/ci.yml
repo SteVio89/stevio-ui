@@ -16,6 +16,7 @@ jobs:
       - name: Install StyLua
         run: |
           curl -sSL -o stylua.zip https://github.com/JohnnyMorganz/StyLua/releases/download/v2.0.2/stylua-linux-x86_64.zip
+          mkdir -p "$HOME/.local/bin"
           unzip -q stylua.zip -d "$HOME/.local/bin"
           chmod +x "$HOME/.local/bin/stylua"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
