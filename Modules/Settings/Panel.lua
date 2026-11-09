@@ -62,7 +62,7 @@ local function CreateGeneralPage()
 	local sections = {}
 	sections[1] = { heading = T("Modules", "Module") }
 	for _, module in ipairs(MODULES) do
-		-- The config check is a safety net for future modules; today every module has one.
+		-- The config checks are a safety net for future modules; today every module has a config with `enabled`.
 		if module[1] ~= "settings" and ns.config[module[1]] and ns.config[module[1]].enabled ~= nil then
 			sections[#sections + 1] = {
 				path = { "config", module[1], "enabled" },
@@ -71,6 +71,7 @@ local function CreateGeneralPage()
 		end
 	end
 	sections[#sections + 1] = { path = { "config", "style" } }
+	-- A safety net for future layout keys; today every position has a module page.
 	local unclaimed = Pages.UnclaimedLayout(ns.layout)
 	if #unclaimed > 0 then
 		sections[#sections + 1] = { heading = T("Other positions", "Weitere Positionen") }
