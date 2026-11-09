@@ -50,6 +50,21 @@ function Border:SetShownFromBoolean(value)
 	end
 end
 
+-- The opposite of SetShownFromBoolean: shown while the value is false.
+function Border:SetHiddenFromBoolean(value)
+	if issecretvalue(value) then
+		for _, edge in ipairs(self) do
+			edge:Show()
+			edge:SetAlphaFromBoolean(value, 0, 1)
+		end
+	else
+		for _, edge in ipairs(self) do
+			edge:SetAlpha(1)
+		end
+		self:SetShown(not value)
+	end
+end
+
 -- Edges sit outside the frame so the border never covers bar content.
 -- Higher sublevels draw later, which lets highlight borders stack on the base one.
 function ns.CreateBorder(frame, sublevel, size)
