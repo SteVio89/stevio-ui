@@ -27,6 +27,7 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Group grid** – up to 40 players; class colours, the name as a faint
   watermark, resource, incoming heals and absorb shields, dispellable debuffs,
   your own HoTs and buffs along the top, role, range, death, aggro and target highlight.
+  Left-click a cell to target that player, right-click for their menu.
 - **Keyboard healing** – the arrow keys move a cursor over the group grid and set
   your real target, so heals can be cast without a mouse. Works in combat.
   When you target something else (an enemy, loot, nothing), the cursor stays
