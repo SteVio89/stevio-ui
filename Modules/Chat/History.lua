@@ -3,7 +3,8 @@ local _, ns = ...
 -- Channel store behind the chat: pure data, no frames, so it can be unit tested
 -- outside the game (see tests/history_test.lua). A channel is
 -- { key, kind, chatType, label, messages = {...}, unread, last, bnetID, target,
---   channelIndex, readOnly }.
+--   channelIndex, readOnly, silent }. Silent channels (crafting notices, ...)
+-- never count unread and never count as the latest activity.
 
 local History = {}
 ns.ChatHistory = History
@@ -149,8 +150,8 @@ function Store:Get(key)
 	return self.db.channels[key]
 end
 
--- opts: kind, chatType, label, bnetID, battleTag, target, channelIndex, readOnly, clubId,
--- streamId, relabel. Created on first use; the channel number and color follow
+-- opts: kind, chatType, label, bnetID, battleTag, target, channelIndex, readOnly, silent,
+-- clubId, streamId, relabel. Created on first use; the channel number and color follow
 -- the latest message, and so does the label with `relabel` (a renamed community).
 function Store:Ensure(key, opts)
 	local channel = self.db.channels[key]
@@ -164,6 +165,7 @@ function Store:Ensure(key, opts)
 			unread = 0,
 			last = 0,
 			readOnly = opts.readOnly,
+			silent = opts.silent,
 		}
 		self.db.channels[key] = channel
 	end
@@ -204,7 +206,7 @@ function Store:Add(key, opts, entry, markUnread)
 		table.remove(messages, 1)
 	end
 	channel.last = entry.time or channel.last
-	if markUnread then
+	if markUnread and not channel.silent then
 		channel.unread = channel.unread + 1
 	end
 	return channel
@@ -213,7 +215,9 @@ end
 -- Messages that couldn't be read (secret) still count as unread.
 function Store:AddUnreadOnly(key, opts, time)
 	local channel = self:Ensure(key, opts)
-	channel.unread = channel.unread + 1
+	if not channel.silent then
+		channel.unread = channel.unread + 1
+	end
 	channel.last = time or channel.last
 	return channel
 end
@@ -255,6 +259,7 @@ function Store:MostRecent()
 	for _, channel in pairs(self.db.channels) do
 		if
 			channel.last > 0
+			and not channel.silent
 			and (not best or channel.last > best.last or (channel.last == best.last and channel.key < best.key))
 		then
 			best = channel

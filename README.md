@@ -64,7 +64,9 @@ until it is needed, and as much as possible can be done from the keyboard.
     achievements and level-ups, and "System" everything else Blizzard's chat
     shows (players coming online or going offline, AFK replies, channel
     notices, ...) together with addon output: `/sui` replies open that
-    channel, other addons' output only counts as unread. These three are read-only and coloured like Blizzard's chat.
+    channel, other addons' output only counts as unread. "Notices" keeps
+    what other players craft nearby out of System: it never counts as unread
+    or opens the chat. These four are read-only and coloured like Blizzard's chat.
 
   Clicking a player's name in a message opens the whisper channel with them
   and starts typing into it; right click keeps Blizzard's player menu.

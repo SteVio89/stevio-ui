@@ -288,6 +288,12 @@ local labels = {
 	shownOnLogin = { "Shown on login", "Beim Login sichtbar" },
 	sidebarFontSize = { "Sidebar font size", "Schriftgröße Seitenleiste" },
 	sidebarWidth = { "Sidebar width", "Breite Seitenleiste" },
+	silent = {
+		"Silent",
+		"Stumm",
+		"Never counts as unread or opens the chat.",
+		"Zählt nie als ungelesen und öffnet den Chat nie.",
+	},
 	size = { "Size", "Größe" },
 	sizeScale = {
 		"Size share",

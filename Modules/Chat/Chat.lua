@@ -100,7 +100,8 @@ end
 -- as sender. Returns nil when the channel can't be told (secret values).
 local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
 	if def.key then
-		return def.key, { kind = def.kind, chatType = def.chatType, label = def.label, readOnly = def.readOnly }
+		return def.key,
+			{ kind = def.kind, chatType = def.chatType, label = def.label, readOnly = def.readOnly, silent = def.silent }
 	end
 	if def.channel then
 		if issecretvalue(baseName) or issecretvalue(channelIndex) or not baseName then

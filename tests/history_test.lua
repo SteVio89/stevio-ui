@@ -213,3 +213,16 @@ check(
 	"copied lines drop the link"
 )
 print("player links ok")
+
+-- Silent channels keep their lines but never count unread or as latest activity.
+do
+	local s = History.New({}, 10)
+	local notices = { kind = "notices", chatType = "SYSTEM", label = "Notices", readOnly = true, silent = true }
+	s:Add("guild", { kind = "guild", chatType = "GUILD", label = "Guild" }, { time = 1, text = "g" }, false)
+	s:Add("notices", notices, { time = 5, text = "Bob creates [Flask]." }, true)
+	s:AddUnreadOnly("notices", notices, 6)
+	check(#s:Get("notices").messages == 1, "silent channel keeps its lines")
+	check(s:Get("notices").unread == 0, "silent channel never counts unread")
+	check(not s:HasUnread(), "silent channel adds no unread")
+	check(s:MostRecent().key == "guild", "silent channel is never the latest activity")
+end

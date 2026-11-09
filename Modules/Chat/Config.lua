@@ -27,6 +27,18 @@ local system = {
 	quiet = true,
 	format = "plain",
 }
+-- Notices about other players that pile up (crafting, ...): kept for a look,
+-- but `silent`, they never count as unread or open the chat.
+local notices = {
+	kind = "notices",
+	key = "notices",
+	chatType = "SYSTEM",
+	label = "Notices",
+	readOnly = true,
+	quiet = true,
+	silent = true,
+	format = "plain",
+}
 local npc = {
 	kind = "npc",
 	key = "npc",
@@ -98,6 +110,7 @@ ns.config.chat = {
 		npc = 7,
 		progress = 8,
 		system = 9,
+		notices = 10,
 	},
 
 	-- Numbered chat channels (base name, case-insensitive) that get their own
@@ -171,7 +184,8 @@ ns.config.chat = {
 		CHAT_MSG_RESTRICTED = With(system, { format = "restricted" }),
 		CHAT_MSG_CHANNEL_NOTICE = With(system, { format = "notice" }),
 		CHAT_MSG_CHANNEL_NOTICE_USER = With(system, { format = "noticeUser" }),
-		CHAT_MSG_TRADESKILLS = With(system),
+		-- "Bob creates [Flask]": crafting of everyone nearby.
+		CHAT_MSG_TRADESKILLS = With(notices),
 		CHAT_MSG_PET_INFO = With(system),
 		CHAT_MSG_PET_BATTLE_INFO = With(system),
 		CHAT_MSG_BG_SYSTEM_HORDE = With(system),

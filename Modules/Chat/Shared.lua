@@ -57,6 +57,7 @@ local LABELS = {
 	npc = { "NPC", "NPC" },
 	progress = { "Loot & Progress", "Beute & Fortschritt" },
 	system = { "System", "System" },
+	notices = { "Notices", "Meldungen" },
 }
 
 function C.Label(channel)
