@@ -1,7 +1,8 @@
 local _, ns = ...
 
 local config = ns.config.accessibility
-local Labels = ns.AccessibilityInternal.Labels
+local Internal = ns.AccessibilityInternal
+local Labels = Internal.Labels
 
 -- Quick-jump labels: every selectable button of the open window gets a
 -- two-letter label; typing it clicks the button. An uppercase first letter
@@ -15,10 +16,8 @@ local Labels = ns.AccessibilityInternal.Labels
 local QuickJump = {}
 ns.QuickJump = QuickJump
 
-local owner = CreateFrame("Frame")
-local overlay = CreateFrame("Frame", nil, UIParent)
-overlay:SetFrameStrata("TOOLTIP")
-overlay:SetAllPoints()
+-- Created by SetupQuickJump, so nothing exists while the module is off.
+local owner, overlay, scrollDown, scrollUp
 
 local sources = {}
 local badges = {}
@@ -137,26 +136,18 @@ local function Scroll(direction)
 	end
 end
 
-local scrollDown = CreateFrame("Button", "StevioUI_QuickJumpScrollDown", UIParent)
-scrollDown:RegisterForClicks("AnyDown")
-scrollDown:SetScript("OnClick", function()
-	Scroll(ScrollControllerMixin.Directions.Increase)
-end)
-
-local scrollUp = CreateFrame("Button", "StevioUI_QuickJumpScrollUp", UIParent)
-scrollUp:RegisterForClicks("AnyDown")
-scrollUp:SetScript("OnClick", function()
-	Scroll(ScrollControllerMixin.Directions.Decrease)
-end)
-
 local function HideBadges()
 	for _, badge in ipairs(badges) do
 		badge:Hide()
 	end
 end
 
+-- The leader key still runs a refresh while the module is off, and ends up
+-- here without an owner; it would have no bindings to clear then anyway.
 local function ClearLabels()
-	ClearOverrideBindings(owner)
+	if owner then
+		ClearOverrideBindings(owner)
+	end
 	HideBadges()
 	current = nil
 end
@@ -305,15 +296,36 @@ function QuickJump.SortByPosition(targets)
 	return targets
 end
 
--- PLAYER_REGEN_DISABLED still runs before lockdown starts, the last moment
--- bindings can be removed; leftover labels would keep letters bound in combat.
-ns.RegisterEvent("PLAYER_REGEN_DISABLED", ClearLabels)
-ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
-	QuickJump:RequestRefresh()
-end)
+function Internal.SetupQuickJump()
+	owner = CreateFrame("Frame")
+	overlay = CreateFrame("Frame", nil, UIParent)
+	overlay:SetFrameStrata("TOOLTIP")
+	overlay:SetAllPoints()
+
+	scrollDown = CreateFrame("Button", "StevioUI_QuickJumpScrollDown", UIParent)
+	scrollDown:RegisterForClicks("AnyDown")
+	scrollDown:SetScript("OnClick", function()
+		Scroll(ScrollControllerMixin.Directions.Increase)
+	end)
+
+	scrollUp = CreateFrame("Button", "StevioUI_QuickJumpScrollUp", UIParent)
+	scrollUp:RegisterForClicks("AnyDown")
+	scrollUp:SetScript("OnClick", function()
+		Scroll(ScrollControllerMixin.Directions.Decrease)
+	end)
+
+	-- PLAYER_REGEN_DISABLED still runs before lockdown starts, the last moment
+	-- bindings can be removed; leftover labels would keep letters bound in combat.
+	ns.RegisterEvent("PLAYER_REGEN_DISABLED", ClearLabels)
+	ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
+		QuickJump:RequestRefresh()
+	end)
+end
 
 -- Dumps what would be labelled right now, for diagnosing missing or dead
 -- labels. Saved for reading outside the game and shown in a copyable window.
+-- Registered at load like every /sui command; with the module off there are
+-- no sources, so the dump is empty.
 ns.RegisterSlashCommand("qj", function()
 	local lines = {}
 	for _, source in ipairs(sources) do

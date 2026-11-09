@@ -17,6 +17,7 @@ function ns.QuickJumpLeader()
 end
 
 function Accessibility:OnEnable()
+	Internal.SetupQuickJump()
 	Internal.SetupDialogSources()
 	Internal.SetupTaxiList()
 	Internal.SetupPanelSource()
