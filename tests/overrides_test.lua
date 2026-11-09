@@ -1,13 +1,7 @@
 -- Run with: lua tests/overrides_test.lua  (from the repo root)
-local ns = {}
-assert(loadfile("Core/Overrides.lua"))("stevio-ui", ns)
+local check, loadAddonFile = dofile("tests/helpers.lua")
+local ns = loadAddonFile("Core/Overrides.lua")
 local Overrides = ns.Overrides
-
-local function check(cond, msg)
-	if not cond then
-		error("FAIL: " .. msg, 2)
-	end
-end
 
 -- Paths
 local path = { "config", "units", "frames", 2, "width" }
@@ -97,8 +91,6 @@ local merged = Overrides.Merge(profile, diff)
 check(Overrides.Equal(merged, current), "merge undoes diff")
 check(next(Overrides.Diff(profile, profile)) == nil, "no diff, no overrides")
 
-print("overrides tests passed")
-
 -- Saved values that no longer fit the config are dropped.
 fresh = Fresh()
 local stale = {
@@ -113,3 +105,4 @@ check(fresh.config.chat.quiet == true and stale["config/chat/quiet"] == nil, "ch
 check(fresh.config.gone == nil and stale["config/gone/x"] == nil, "removed table")
 check(fresh.config.chat.newFlag == true and stale["config/chat/newFlag"] == true, "new key kept")
 print("stale overrides ok")
+print("overrides tests passed")

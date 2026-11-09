@@ -1,13 +1,7 @@
 -- Run with: lua tests/chat_parse_test.lua  (from the repo root)
-local ns = {}
-assert(loadfile("Modules/Chat/Parse.lua"))("stevio-ui", ns)
+local check, loadAddonFile = dofile("tests/helpers.lua")
+local ns = loadAddonFile("Modules/Chat/Parse.lua")
 local Parse = ns.ChatParse
-
-local function check(cond, msg)
-	if not cond then
-		error("FAIL: " .. msg, 2)
-	end
-end
 
 local command, rest = Parse.Command("/w Bob hi there")
 check(command == "/W" and rest == "Bob hi there", "command and rest")

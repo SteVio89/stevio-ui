@@ -1,13 +1,7 @@
 -- Run with: lua tests/history_test.lua  (from the repo root)
-local ns = {}
-assert(loadfile("Modules/Chat/History.lua"))("stevio-ui", ns)
+local check, loadAddonFile = dofile("tests/helpers.lua")
+local ns = loadAddonFile("Modules/Chat/History.lua")
 local History = ns.ChatHistory
-
-local function check(cond, msg)
-	if not cond then
-		error("FAIL: " .. msg, 2)
-	end
-end
 
 local store = History.New({}, 3)
 local party = { kind = "group", chatType = "PARTY", label = "Party" }

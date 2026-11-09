@@ -1,13 +1,7 @@
 -- Run with: lua tests/notch_buttons_test.lua  (from the repo root)
-local ns = {}
-assert(loadfile("Modules/Notch/Buttons.lua"))("stevio-ui", ns)
+local check, loadAddonFile = dofile("tests/helpers.lua")
+local ns = loadAddonFile("Modules/Notch/Buttons.lua")
 local Buttons = ns.NotchButtons
-
-local function check(cond, msg)
-	if not cond then
-		error("FAIL: " .. msg, 2)
-	end
-end
 
 local function info(extra)
 	local result = { name = "DBMMinimapButton", owner = "DBM-Core", isButton = true, width = 31, height = 31 }

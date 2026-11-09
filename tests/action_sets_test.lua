@@ -1,13 +1,7 @@
 -- Run with: lua tests/action_sets_test.lua  (from the repo root)
-local ns = {}
-assert(loadfile("Modules/ActionBars/Sets.lua"))("stevio-ui", ns)
+local check, loadAddonFile = dofile("tests/helpers.lua")
+local ns = loadAddonFile("Modules/ActionBars/Sets.lua")
 local Sets = ns.ActionSets
-
-local function check(cond, msg)
-	if not cond then
-		error("FAIL: " .. msg, 2)
-	end
-end
 
 local fireball = { type = "spell", id = 133 }
 local heal = { type = "spell", id = 2050 }
