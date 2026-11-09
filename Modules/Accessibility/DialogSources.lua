@@ -25,14 +25,24 @@ end
 local popupRequested = false
 local POPUP_COUNT = 4
 
-local function AnyPopupShown()
+-- Calls fn with every popup frame that exists, until fn returns true;
+-- returns whether one did.
+local function ForEachPopup(fn)
 	for i = 1, POPUP_COUNT do
 		local dialog = _G["StaticPopup" .. i]
-		if dialog and dialog:IsShown() then
+		if dialog and fn(dialog) then
 			return true
 		end
 	end
 	return false
+end
+
+local function IsShown(frame)
+	return frame:IsShown()
+end
+
+local function AnyPopupShown()
+	return ForEachPopup(IsShown)
 end
 
 local popupSource = {
@@ -46,16 +56,15 @@ local popupSource = {
 	end,
 	Collect = function()
 		local targets = {}
-		for i = 1, POPUP_COUNT do
-			local dialog = _G["StaticPopup" .. i]
-			if dialog and dialog:IsShown() then
+		ForEachPopup(function(dialog)
+			if dialog:IsShown() then
 				local buttons = dialog.ButtonContainer
 				tAppendAll(
 					targets,
 					Shown(buttons.Button1, buttons.Button2, buttons.Button3, buttons.Button4, dialog.ExtraButton)
 				)
 			end
-		end
+		end)
 		return QuickJump.SortByPosition(targets)
 	end,
 	OnFinished = function()
@@ -153,12 +162,9 @@ function ns.SetupDialogSources()
 	QuickJump:RegisterSource(questSource)
 	QuickJump:RegisterSource(gossipSource)
 
-	for i = 1, POPUP_COUNT do
-		local dialog = _G["StaticPopup" .. i]
-		if dialog then
-			dialog:HookScript("OnHide", RequestRefresh)
-		end
-	end
+	ForEachPopup(function(dialog)
+		dialog:HookScript("OnHide", RequestRefresh)
+	end)
 
 	QuestFrame:HookScript("OnHide", RequestRefresh)
 	for _, panel in ipairs({
