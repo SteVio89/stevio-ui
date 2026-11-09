@@ -259,6 +259,66 @@ function Feed.RollSummary(drop)
 	return summary
 end
 
+local GREY = "|cffaaaaaa%s|r"
+
+-- "Need 87", or just "Need" before the numbers are rolled; `stateLabels`
+-- names the roll states.
+function Feed.RollText(roll, stateLabels)
+	local text = stateLabels[roll.state] or ""
+	if roll.roll then
+		text = text .. " " .. roll.roll
+	end
+	return text
+end
+
+-- The right part of a roll line: "rolling · you: Need", "Bob Need 98 · you:
+-- Greed 45", "You Need 87" or "all passed". `L` holds the texts rolling,
+-- allPassed, you and yourRoll; `classColored(name, class)` colors a name.
+function Feed.RollDetail(summary, L, stateLabels, classColored)
+	if summary.allPassed then
+		return GREY:format(L.allPassed)
+	end
+	local winner, mine = summary.winner, summary.mine
+	if winner and winner.isSelf then
+		return ("|cff40ff40%s|r %s"):format(L.you, GREY:format(Feed.RollText(winner, stateLabels)))
+	end
+	local text
+	if winner then
+		text = classColored(winner.name, winner.class) .. " " .. GREY:format(Feed.RollText(winner, stateLabels))
+	else
+		text = GREY:format(L.rolling)
+	end
+	if mine then
+		text = text .. GREY:format((" · %s: %s"):format(L.yourRoll, Feed.RollText(mine, stateLabels)))
+	end
+	return text
+end
+
+-- Count and looter of a loot line: "x3 Bob".
+function Feed.LootDetail(entry, classColored)
+	local parts = {}
+	if entry.count > 1 then
+		parts[#parts + 1] = ("|cffffffffx%d|r"):format(entry.count)
+	end
+	if entry.looter then
+		parts[#parts + 1] = classColored(Feed.ShortName(entry.looter), entry.class)
+	end
+	return table.concat(parts, " ")
+end
+
+-- Whether a loot line is shown: currency only with showCurrency, items of a
+-- known quality from minQuality on (groupMinQuality for other players' loot).
+function Feed.Passes(quality, isCurrency, isGroup, options)
+	if isCurrency and not options.showCurrency then
+		return false
+	end
+	local minQuality = isGroup and options.groupMinQuality or options.minQuality
+	if quality and not isCurrency and quality < minQuality then
+		return false
+	end
+	return true
+end
+
 -- Whether a roll entry was won by `looter` (nil: the player) for an item
 -- named like `link`.
 local function WonBy(entry, link, looter)

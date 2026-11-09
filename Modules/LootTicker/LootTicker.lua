@@ -21,7 +21,6 @@ local ROLL_TIMEOUT = 150
 -- A loot line this many seconds older than the roll result is still taken
 -- back into the roll's line.
 local LOOT_BEFORE_RESULT = 10
-local GREY = "|cffaaaaaa%s|r"
 
 local L = ns.isGerman and {
 	rolling = "würfelt",
@@ -111,37 +110,6 @@ local function ClassColored(name, class)
 	return color and color:WrapTextInColorCode(name) or name
 end
 
--- "Need 87", or just "Need" before the numbers are rolled.
-local function RollText(roll)
-	local text = stateLabels[roll.state] or ""
-	if roll.roll then
-		text = text .. " " .. roll.roll
-	end
-	return text
-end
-
--- The right part of a roll line: "rolling · you: Need", "Bob Need 98 · you:
--- Greed 45", "You Need 87" or "all passed".
-local function RollDetail(summary)
-	if summary.allPassed then
-		return GREY:format(L.allPassed)
-	end
-	local winner, mine = summary.winner, summary.mine
-	if winner and winner.isSelf then
-		return ("|cff40ff40%s|r %s"):format(L.you, GREY:format(RollText(winner)))
-	end
-	local text
-	if winner then
-		text = ClassColored(winner.name, winner.class) .. " " .. GREY:format(RollText(winner))
-	else
-		text = GREY:format(L.rolling)
-	end
-	if mine then
-		text = text .. GREY:format((" · %s: %s"):format(L.yourRoll, RollText(mine)))
-	end
-	return text
-end
-
 local function CreateRow()
 	local row = CreateFrame("Frame", nil, container)
 	row:SetSize(config.width, config.iconSize)
@@ -161,18 +129,6 @@ local function CreateRow()
 	return row
 end
 
--- Count and looter of a loot line: "x3 Bob".
-local function LootDetail(entry)
-	local parts = {}
-	if entry.count > 1 then
-		parts[#parts + 1] = ("|cffffffffx%d|r"):format(entry.count)
-	end
-	if entry.looter then
-		parts[#parts + 1] = ClassColored(Feed.ShortName(entry.looter), entry.class)
-	end
-	return table.concat(parts, " ")
-end
-
 local function ShowEntry(row, entry)
 	row.entry = entry
 	row.icon:SetTexture(entry.icon or 134400) -- question mark
@@ -184,7 +140,7 @@ local function ShowEntry(row, entry)
 	else
 		row.text:SetText(Feed.LinkName(entry.link))
 		row.text:SetTextColor(unpack(entry.color))
-		detail = entry.roll and entry.detail or LootDetail(entry)
+		detail = entry.roll and entry.detail or Feed.LootDetail(entry, ClassColored)
 	end
 	-- Very long details (a long name and both rolls) are capped too, so the
 	-- item name always keeps some room.
@@ -240,11 +196,7 @@ local function Add(link, count, looter, guid)
 		return
 	end
 	local icon, quality, isCurrency = LinkInfo(link)
-	if isCurrency and not config.showCurrency then
-		return
-	end
-	local minQuality = looter and config.groupMinQuality or config.minQuality
-	if quality and not isCurrency and quality < minQuality then
+	if not Feed.Passes(quality, isCurrency, looter ~= nil, config) then
 		return
 	end
 	AddEntry({
@@ -269,7 +221,7 @@ end
 -- the player passed on or didn't join are dimmed like other players' loot.
 local function AddDrop(key, drop)
 	local summary = Feed.RollSummary(drop)
-	local detail = RollDetail(summary)
+	local detail = Feed.RollDetail(summary, L, stateLabels, ClassColored)
 	local old = feed:Find(key)
 	if old and old.detail == detail then
 		return -- nothing new, e.g. the loot history window was opened
