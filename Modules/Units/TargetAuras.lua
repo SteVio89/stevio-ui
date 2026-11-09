@@ -26,9 +26,8 @@ function ns.CreateTargetAuras()
 	container:SetEnabled(true)
 	-- A new target brings a new set of auras; the container exposes
 	-- UpdateAllAuras for such outside triggers and is left untouched otherwise.
-	local watcher = CreateFrame("Frame")
-	watcher:RegisterEvent("PLAYER_TARGET_CHANGED")
-	watcher:SetScript("OnEvent", function()
+	-- No other handler of the event reads the container, so their order doesn't matter.
+	ns.RegisterEvent("PLAYER_TARGET_CHANGED", function()
 		container:UpdateAllAuras()
 	end)
 end
