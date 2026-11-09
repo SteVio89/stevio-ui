@@ -22,6 +22,7 @@ Core\EditModeLayout.lua
 
 Modules\Units\Config.lua
 Modules\Units\Units.lua
+Modules\Units\TargetAuras.lua
 Modules\Units\CastBar.lua
 Modules\Units\ClassPower.lua
 
