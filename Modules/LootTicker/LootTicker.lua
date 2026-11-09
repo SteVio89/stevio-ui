@@ -62,13 +62,18 @@ local function QualityColor(quality, link)
 	return 1, 1, 1
 end
 
--- Item qualities by link color ({ [quality] = "ffrrggbb" }), for items not cached yet.
+-- Item qualities by link color ({ [quality] = "ffrrggbb" }), for items not
+-- cached yet. Built on first use.
+local qualityHex
+
 local function QualityHex()
-	local hex = {}
-	for quality, color in pairs(ITEM_QUALITY_COLORS) do
-		hex[quality] = color.hex and color.hex:match("|c(%x%x%x%x%x%x%x%x)")
+	if not qualityHex then
+		qualityHex = {}
+		for quality, color in pairs(ITEM_QUALITY_COLORS) do
+			qualityHex[quality] = color.hex and color.hex:match("|c(%x%x%x%x%x%x%x%x)")
+		end
 	end
-	return hex
+	return qualityHex
 end
 
 -- Icon and quality of an item or currency link; an uncached item's quality
