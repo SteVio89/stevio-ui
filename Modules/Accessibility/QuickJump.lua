@@ -54,7 +54,7 @@ local function GetBadge(index)
 		return badge
 	end
 	badge = CreateFrame("Frame", nil, overlay)
-	ns.CreateBackground(badge):SetColorTexture(0, 0, 0, 0.9)
+	ns.CreateBackground(badge, ns.PANEL_COLOR)
 	ns.CreateBorder(badge)
 	badge.text = ns.CreateFontString(badge, config.badge.fontSize, "CENTER")
 	badge.text:SetPoint("CENTER")
@@ -373,7 +373,5 @@ ns.RegisterSlashCommand("qj", function()
 			end
 		end
 	end
-	local text = table.concat(lines, "\n")
-	StevioUIDebug = text
-	ns.ShowExportWindow(text)
+	ns.ShowDebugDump(table.concat(lines, "\n"))
 end)

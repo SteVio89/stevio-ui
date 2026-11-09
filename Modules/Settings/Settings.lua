@@ -282,7 +282,7 @@ function Settings:OnEnable()
 	ns.RegisterSlashCommand("export", function()
 		local text = ns.BuildProfileExport()
 		StevioUIExport = text
-		ns.ShowExportWindow(text)
+		ns.ShowTextWindow(text)
 	end)
 	ns.RegisterSlashCommand("apply", function()
 		ns.RunAfterCombat(ApplyProfile)

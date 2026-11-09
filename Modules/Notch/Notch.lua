@@ -402,9 +402,7 @@ local function DumpGeometry()
 		("trigger: left %.1f, right %.1f, bottom %.1f"):format(notchRect.left, notchRect.right, notchRect.bottom),
 		("cursor: %.1f, %.1f"):format(GetCursorPosition()),
 	}
-	local text = table.concat(lines, "\n")
-	StevioUIDebug = text
-	ns.ShowExportWindow(text)
+	ns.ShowDebugDump(table.concat(lines, "\n"))
 end
 
 function Notch:OnEnable()

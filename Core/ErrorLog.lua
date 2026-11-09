@@ -75,5 +75,5 @@ ns.RegisterSlashCommand("errors", function(input)
 			entry.locals
 		)
 	end
-	ns.ShowExportWindow(table.concat(parts, "\n\n"))
+	ns.ShowTextWindow(table.concat(parts, "\n\n"))
 end)

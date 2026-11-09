@@ -17,6 +17,7 @@ Core\Consent.lua
 Core\Config.lua
 Core\Layout.lua
 Core\Util.lua
+Core\TextWindow.lua
 Core\EditModeLayout.lua
 
 Modules\Units\Config.lua
