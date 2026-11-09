@@ -25,6 +25,21 @@ local stopEvents = {
 	UNIT_SPELLCAST_CHANNEL_STOP = true,
 }
 
+-- The pure part is kept on ns.CastBar for tests/cast_bar_test.lua.
+local CastBar = {}
+ns.CastBar = CastBar
+
+-- What an event means for the bar: "stop", "start" (plus whether it is a
+-- channel) or, for unit changes, "refresh".
+function CastBar.CastAction(event)
+	if stopEvents[event] then
+		return "stop"
+	elseif startEvents[event] ~= nil then
+		return "start", startEvents[event]
+	end
+	return "refresh"
+end
+
 -- The notInterruptible flag may be secret, and secret booleans can't be branched on;
 -- the FromBoolean setter lets the client resolve the color instead.
 local function ApplyColor(texture, notInterruptible)
@@ -74,10 +89,11 @@ local function Refresh(castBar)
 end
 
 local function OnEvent(castBar, event)
-	if stopEvents[event] then
+	local action, isChannel = CastBar.CastAction(event)
+	if action == "stop" then
 		castBar:Hide()
-	elseif startEvents[event] ~= nil then
-		Start(castBar, startEvents[event])
+	elseif action == "start" then
+		Start(castBar, isChannel)
 	else
 		Refresh(castBar)
 	end
