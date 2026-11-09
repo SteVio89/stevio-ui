@@ -15,12 +15,8 @@ function C.UpdateBadge()
 		if not C.hidden then
 			texture:SetColorTexture(unpack(badgeStyle.shownColor))
 		elseif C.store:HasUnread(segment.category) then
-			local info = ChatTypeInfo[segment.chatType]
-			if info and info.r then
-				texture:SetColorTexture(info.r, info.g, info.b, 1)
-			else
-				texture:SetColorTexture(unpack(segment.fallbackColor))
-			end
+			local r, g, b, a = C.TypeColor(segment.chatType, segment.fallbackColor)
+			texture:SetColorTexture(r, g, b, a or 1)
 		else
 			texture:SetColorTexture(unpack(badgeStyle.hiddenColor))
 		end

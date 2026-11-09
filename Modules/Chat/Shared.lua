@@ -28,10 +28,15 @@ function C.ChatWidth()
 	return Clamp(math.floor(UIParent:GetWidth() * config.widthFraction), 250, 800)
 end
 
-function C.TypeColor(chatType)
+-- The player's chat color of `chatType`; before those load (or for unknown
+-- types) the `fallback` color ({ r, g, b[, a] }), else white.
+function C.TypeColor(chatType, fallback)
 	local info = chatType and ChatTypeInfo[chatType]
 	if info and info.r then
 		return info.r, info.g, info.b
+	end
+	if fallback then
+		return unpack(fallback)
 	end
 	return 1, 1, 1
 end
