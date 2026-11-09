@@ -51,15 +51,6 @@ function C.ShowEntry(channel, previous, entry)
 	C.ui.messages:AddMessage(line, r or 1, g or 1, b or 1)
 end
 
--- The last message with a time before index `index` (nil when there is none).
-function C.PreviousTimed(messages, index)
-	for i = index - 1, 1, -1 do
-		if messages[i].time then
-			return messages[i]
-		end
-	end
-end
-
 function C.RenderMessages(channel)
 	local messages = C.ui.messages
 	messages:Clear()

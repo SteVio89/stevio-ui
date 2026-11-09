@@ -158,6 +158,11 @@ check(
 	"transcript with dates: " .. transcript
 )
 check(History.Transcript({ messages = { { time = 1, text = "a" } } }, nil) == "[1] a", "no date lines without day")
+local timed = { { time = 1 }, { time = 2 }, { text = "untimed" }, { time = 4 } }
+check(History.PreviousTimed(timed, 4) == timed[2], "previous timed skips untimed messages")
+check(History.PreviousTimed(timed, 2) == timed[1], "previous timed message")
+check(History.PreviousTimed(timed, 1) == nil, "nothing before the first message")
+check(History.PreviousTimed({}, 0) == nil, "empty channel")
 print("dates ok")
 
 -- community streams added to the chat

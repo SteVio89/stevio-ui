@@ -53,6 +53,16 @@ function History.StartsDay(previous, entry, day)
 	return day(previous.time) ~= day(entry.time)
 end
 
+-- The last message with a time before index `index` (nil when there is none):
+-- what decides whether a message appended at `index` starts a new day.
+function History.PreviousTimed(messages, index)
+	for i = index - 1, 1, -1 do
+		if messages[i].time then
+			return messages[i]
+		end
+	end
+end
+
 -- Plain-text transcript of a channel, one "[stamp] [source] sender: text" line per message.
 -- `stamp(time)` formats the time (defaults to the raw number); with `day(time)`
 -- a "-- day --" line precedes the first message of each day.

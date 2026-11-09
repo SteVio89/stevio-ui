@@ -159,7 +159,7 @@ end
 
 local function Append(channel, entry)
 	if state.selected == channel.key then
-		C.ShowEntry(channel, C.PreviousTimed(channel.messages, #channel.messages), entry)
+		C.ShowEntry(channel, ns.ChatHistory.PreviousTimed(channel.messages, #channel.messages), entry)
 	end
 end
 
