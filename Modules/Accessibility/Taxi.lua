@@ -43,16 +43,31 @@ local function GetMapFrame()
 	end
 end
 
-local function Build()
-	local nodes = {}
-	for index = 1, NumTaxiNodes() do
-		if TaxiNodeGetType(index) == "REACHABLE" then
-			nodes[#nodes + 1] = { index = index, name = TaxiNodeName(index), cost = TaxiNodeCost(index) }
+-- Testable without the game: the reachable nodes ({ index, type, name, cost })
+-- sorted by name, ignoring case.
+function Internal.ReachableSorted(nodes)
+	local reachable = {}
+	for _, node in ipairs(nodes) do
+		if node.type == "REACHABLE" then
+			reachable[#reachable + 1] = node
 		end
 	end
-	table.sort(nodes, function(a, b)
+	table.sort(reachable, function(a, b)
 		return a.name:lower() < b.name:lower()
 	end)
+	return reachable
+end
+
+local function Build()
+	local all = {}
+	for index = 1, NumTaxiNodes() do
+		all[index] = { index = index, type = TaxiNodeGetType(index) }
+		-- Name and cost are only read for reachable nodes.
+		if all[index].type == "REACHABLE" then
+			all[index].name, all[index].cost = TaxiNodeName(index), TaxiNodeCost(index)
+		end
+	end
+	local nodes = Internal.ReachableSorted(all)
 
 	for index, node in ipairs(nodes) do
 		local row = GetRow(index)

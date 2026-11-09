@@ -30,6 +30,19 @@ local STRATA_RANK = {
 
 local MAX_CONTAINER_FRAMES = 13
 
+-- The parts without game state, kept testable outside the game.
+local Panels = {}
+Internal.Panels = Panels
+
+-- Sort order of windows: higher strata first, then higher frame levels.
+function Panels.ByStacking(a, b)
+	local aRank, bRank = STRATA_RANK[a:GetFrameStrata()] or 0, STRATA_RANK[b:GetFrameStrata()] or 0
+	if aRank ~= bRank then
+		return aRank > bRank
+	end
+	return a:GetFrameLevel() > b:GetFrameLevel()
+end
+
 local activePanel
 local hookedPanels = {}
 
@@ -61,13 +74,7 @@ local function OpenPanels()
 	end
 
 	-- Topmost first, so the first leader press lands on what's in front.
-	table.sort(panels, function(a, b)
-		local aRank, bRank = STRATA_RANK[a:GetFrameStrata()] or 0, STRATA_RANK[b:GetFrameStrata()] or 0
-		if aRank ~= bRank then
-			return aRank > bRank
-		end
-		return a:GetFrameLevel() > b:GetFrameLevel()
-	end)
+	table.sort(panels, Panels.ByStacking)
 	return panels
 end
 
@@ -84,7 +91,7 @@ end
 -- still count as visible to the API. So buttons inside a clipping region must
 -- be centred inside it; elsewhere (e.g. side tabs hanging outside a window)
 -- any visible button counts.
-local function IsInside(frame, region)
+function Panels.IsInside(frame, region)
 	local x, y = frame:GetCenter()
 	local left, bottom, width, height = region:GetRect()
 	return x and left and x >= left and x <= left + width and y >= bottom and y <= bottom + height
@@ -115,7 +122,7 @@ local function CollectButtons(frame, clipRegion, result)
 				if
 					IsClickable(child)
 					and not IsCloseButton(child)
-					and (not clipRegion or IsInside(child, clipRegion))
+					and (not clipRegion or Panels.IsInside(child, clipRegion))
 				then
 					result[#result + 1] = child
 				end
@@ -153,20 +160,24 @@ local panelSource = {
 	end,
 }
 
--- Each leader press moves to the next open window; past the last one, labels end.
-function Internal.CyclePanelLabels()
-	local panels = OpenPanels()
-	local nextPanel = panels[1]
-	if activePanel then
-		nextPanel = nil
-		for index, panel in ipairs(panels) do
-			if panel == activePanel then
-				nextPanel = panels[index + 1]
-			end
+-- The window after `active` in `panels`, or the first without one. Past the
+-- last one, or when `active` isn't open anymore, there is none (nil).
+function Panels.NextPanel(panels, active)
+	if not active then
+		return panels[1]
+	end
+	local nextPanel
+	for index, panel in ipairs(panels) do
+		if panel == active then
+			nextPanel = panels[index + 1]
 		end
 	end
+	return nextPanel
+end
 
-	activePanel = nextPanel
+-- Each leader press moves to the next open window; past the last one, labels end.
+function Internal.CyclePanelLabels()
+	activePanel = Panels.NextPanel(OpenPanels(), activePanel)
 	if activePanel and not hookedPanels[activePanel] then
 		hookedPanels[activePanel] = true
 		activePanel:HookScript("OnHide", function()
