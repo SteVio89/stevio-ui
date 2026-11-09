@@ -48,6 +48,18 @@ local function UpdatePowerType(frame)
 	end
 end
 
+-- The level text and its color (none for a secret level, which can't be
+-- compared): the difficulty color, or a red "??" for unknown levels (bosses).
+function Units.LevelDisplay(level, isSecret, difficultyColor)
+	if isSecret then
+		return level
+	elseif level and level > 0 then
+		local color = difficultyColor(level)
+		return level, color.r, color.g, color.b
+	end
+	return "??", 1, 0.2, 0.2
+end
+
 local function UpdateName(frame)
 	if not frame.name then
 		return
@@ -56,15 +68,10 @@ local function UpdateName(frame)
 	frame.name:SetText(UnitName(unit))
 
 	local level = UnitLevel(unit)
-	if issecretvalue(level) then
-		frame.level:SetText(level)
-	elseif level and level > 0 then
-		local color = GetCreatureDifficultyColor(level)
-		frame.level:SetText(level)
-		frame.level:SetTextColor(color.r, color.g, color.b)
-	else
-		frame.level:SetText("??")
-		frame.level:SetTextColor(1, 0.2, 0.2)
+	local text, r, g, b = Units.LevelDisplay(level, issecretvalue(level), GetCreatureDifficultyColor)
+	frame.level:SetText(text)
+	if r then
+		frame.level:SetTextColor(r, g, b)
 	end
 end
 
