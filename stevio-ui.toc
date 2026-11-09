@@ -69,6 +69,8 @@ Modules\Chat\Format.lua
 Modules\Chat\Notices.lua
 Modules\Chat\Parse.lua
 Modules\Chat\Commands.lua
+Modules\Chat\Receive.lua
+Modules\Chat\Send.lua
 Modules\Chat\Chat.lua
 
 Modules\Auras\Config.lua
