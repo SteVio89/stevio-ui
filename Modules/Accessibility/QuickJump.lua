@@ -82,11 +82,17 @@ local function GetFrameActivator(index)
 	return activator
 end
 
+local Narrow
+
+-- Bind sets the button's `letter` each time it binds the button.
 local function GetPrefixButton(index)
 	local button = prefixButtons[index]
 	if not button then
 		button = CreateFrame("Button", "StevioUI_QuickJumpPrefix" .. index, UIParent)
 		button:RegisterForClicks("AnyDown")
+		button:SetScript("OnClick", function(self, mouseButton)
+			Narrow(self.letter, mouseButton)
+		end)
 		prefixButtons[index] = button
 	end
 	return button
@@ -174,8 +180,6 @@ function QuickJump:IsActive()
 	return current ~= nil
 end
 
-local Narrow
-
 -- Binds the next letter of every label still matching what was typed: a final
 -- letter clicks its target, an earlier one narrows the selection further.
 local function Bind()
@@ -208,9 +212,7 @@ local function Bind()
 			end
 		elseif step.narrow then
 			local button = GetPrefixButton(index)
-			button:SetScript("OnClick", function(_, mouseButton)
-				Narrow(letter, mouseButton)
-			end)
+			button.letter = letter
 			SetOverrideBindingClick(owner, true, letter, button:GetName(), "LeftButton")
 			-- Only the first letter has a Shift variant; it selects the right click.
 			if typed == "" then
