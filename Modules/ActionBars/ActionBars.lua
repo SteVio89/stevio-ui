@@ -97,6 +97,8 @@ local function StripMainBarArt()
 	end)
 end
 
+-- Kept in step with config.bars (Config.lua) and ns.layout.actionBars
+-- (Core/Layout.lua): entry n of all three is the same bar.
 local barSystemIndices = {
 	Enum.EditModeActionBarSystemIndices.MainBar,
 	Enum.EditModeActionBarSystemIndices.Bar2,

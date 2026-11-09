@@ -4,6 +4,7 @@ ns.config.actionbars = {
 	enabled = true,
 
 	-- Blizzard bar frames in layout order; positions come from ns.layout.actionBars.
+	-- Entry n must match entry n of ns.layout.actionBars and of barSystemIndices in ActionBars.lua.
 	bars = { "MainActionBar", "MultiBarBottomLeft", "MultiBarBottomRight" },
 
 	-- Written into the Edit Mode layout; Layout.lua assumes 80% for the bar block width.
