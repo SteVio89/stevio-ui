@@ -368,28 +368,27 @@ local function Preview()
 		AddMoney(12345)
 	end
 	if config.showRolls and links[1] then
-		local me = { playerName = UnitName("player"), playerClass = select(2, UnitClass("player")), isSelf = true }
-		local bob = { playerName = "Bob", playerClass = "MAGE", isSelf = false }
+		local myName, myClass = UnitName("player"), select(2, UnitClass("player"))
 		AddDrop("preview:open", {
 			itemHyperlink = links[1],
 			playerRollState = State.NeedMainSpec,
 			rollInfos = {
-				{ playerName = me.playerName, playerClass = me.playerClass, isSelf = true, state = State.NeedMainSpec },
+				{ playerName = myName, playerClass = myClass, isSelf = true, state = State.NeedMainSpec },
 			},
 		})
 		AddDrop("preview:won", {
 			itemHyperlink = links[2] or links[1],
 			playerRollState = State.Greed,
 			winner = {
-				playerName = bob.playerName,
-				playerClass = bob.playerClass,
+				playerName = "Bob",
+				playerClass = "MAGE",
 				state = State.NeedMainSpec,
 				roll = 98,
 			},
 			rollInfos = {
 				{
-					playerName = me.playerName,
-					playerClass = me.playerClass,
+					playerName = myName,
+					playerClass = myClass,
 					isSelf = true,
 					state = State.Greed,
 					roll = 45,
