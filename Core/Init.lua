@@ -94,10 +94,16 @@ function ns.RegisterSlashCommand(name, handler)
 	slashCommands[name] = handler
 end
 
+-- What follows /sui: " Name some args " -> "name", "some args".
+function ns.ParseSlash(input)
+	local name, rest = input:match("^%s*(%S*)%s*(.-)%s*$")
+	return name:lower(), rest
+end
+
 SLASH_STEVIOUI1 = "/sui"
 SlashCmdList.STEVIOUI = function(input)
-	local name, rest = input:match("^%s*(%S*)%s*(.-)%s*$")
-	local handler = slashCommands[name:lower()]
+	local name, rest = ns.ParseSlash(input)
+	local handler = slashCommands[name]
 	if handler then
 		handler(rest)
 	else
