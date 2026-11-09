@@ -33,6 +33,7 @@ Modules\ActionBars\Sets.lua
 Modules\ActionBars\SetSwitcher.lua
 
 Modules\Group\Config.lua
+Modules\Group\Grid.lua
 Modules\Group\Cell.lua
 Modules\Group\Cell.xml
 Modules\Group\Group.lua
