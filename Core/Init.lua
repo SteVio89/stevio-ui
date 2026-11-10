@@ -113,24 +113,29 @@ SlashCmdList.STEVIOUI = function(input)
 	end
 end
 
-local combatQueue, queued = {}, {}
+local combatQueue = {}
 
 -- Protected frames can't be moved, reparented or rebound during combat lockdown,
 -- so such changes wait for the lockdown to end instead of erroring. A function
--- that is already waiting isn't queued again: every caller passes one that
--- brings things up to date, so running it once is enough.
+-- queued again only runs once, at its latest position: every caller passes one
+-- that brings things up to date, so the outcome is the same as running each.
 function ns.RunAfterCombat(fn)
 	if not InCombatLockdown() then
 		fn()
-	elseif not queued[fn] then
-		queued[fn] = true
-		combatQueue[#combatQueue + 1] = fn
+		return
 	end
+	for i, queued in ipairs(combatQueue) do
+		if queued == fn then
+			table.remove(combatQueue, i)
+			break
+		end
+	end
+	combatQueue[#combatQueue + 1] = fn
 end
 
 ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
 	local pending = combatQueue
-	combatQueue, queued = {}, {}
+	combatQueue = {}
 	for _, fn in ipairs(pending) do
 		fn()
 	end

@@ -5,9 +5,12 @@ local check, loadAddonFile = dofile("tests/helpers.lua")
 function _G.GetLocale()
 	return "enUS"
 end
+local onEvent
 function _G.CreateFrame()
 	return {
-		SetScript = function() end,
+		SetScript = function(_, _, handler)
+			onEvent = handler
+		end,
 		RegisterEvent = function() end,
 		UnregisterEvent = function() end,
 	}
@@ -44,5 +47,49 @@ check(ns.T("Yes", "Ja") == "Yes", "English client")
 ns.isGerman = true
 check(ns.T("Yes", "Ja") == "Ja", "German client")
 print("translations ok")
+
+-- RunAfterCombat: immediate outside combat; in combat queued until it ends,
+-- a function queued again running once at its latest position.
+local inCombat = false
+function _G.InCombatLockdown()
+	return inCombat
+end
+local ran = {}
+local function A()
+	ran[#ran + 1] = "A"
+end
+local function B()
+	ran[#ran + 1] = "B"
+end
+ns.RunAfterCombat(A)
+check(ran[1] == "A", "runs at once outside combat")
+ran, inCombat = {}, true
+ns.RunAfterCombat(A)
+ns.RunAfterCombat(B)
+ns.RunAfterCombat(A)
+check(#ran == 0, "waits during combat")
+inCombat = false
+onEvent(nil, "PLAYER_REGEN_ENABLED")
+check(table.concat(ran, " ") == "B A", "repeated function runs once, last")
+ran = {}
+onEvent(nil, "PLAYER_REGEN_ENABLED")
+check(#ran == 0, "queue emptied")
+print("combat queue ok")
+
+-- UnregisterEvent: a handler can remove itself while the event is dispatched.
+local calls = 0
+local function Once()
+	calls = calls + 1
+	ns.UnregisterEvent("TEST_EVENT", Once)
+end
+local afterCalls = 0
+ns.RegisterEvent("TEST_EVENT", Once)
+ns.RegisterEvent("TEST_EVENT", function()
+	afterCalls = afterCalls + 1
+end)
+onEvent(nil, "TEST_EVENT")
+onEvent(nil, "TEST_EVENT")
+check(calls == 1 and afterCalls == 2, "unregister during dispatch")
+print("event unregistering ok")
 
 print("init tests passed")
