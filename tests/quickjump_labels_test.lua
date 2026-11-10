@@ -30,14 +30,17 @@ local function unique(list)
 	return true
 end
 
--- 81 fit the base keys; one more brings in the extra first letters, which
--- changes the order of all labels.
+-- 81 fit the base keys; the targets after them get the extra first letters,
+-- and the first 81 labels stay as they are.
 labels = generate(81)
 check(#labels == 81 and unique(labels), "81 base labels")
 check(labels[10] == "FU" and labels[81] == "YZ", "base keys only")
 labels = generate(82)
 check(#labels == 82 and unique(labels), "82 labels")
-check(labels[10] == "DH" and labels[15] == "QH" and labels[16] == "FU", "extra first letters")
+check(labels[10] == "FU" and labels[81] == "YZ", "base labels unchanged")
+check(labels[82] == "DH", "extra first letters after them")
+labels = generate(97)
+check(labels[87] == "QH" and labels[88] == "DU" and labels[94] == "DI", "extra first letter varies fastest")
 check(#left == 9, "the keys are not changed")
 
 -- 15 x 9 is the most there can be.
