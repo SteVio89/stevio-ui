@@ -43,6 +43,23 @@ check(
 	"formatted: " .. text
 )
 check(ErrorLog.Format({}) == "", "no entries")
+check(
+	ErrorLog.Format({ { time = "t", message = "m" } }) == "#1  t  x1\nm\n\nLocals:\n",
+	"entry without count, stack or locals"
+)
 print("format ok")
+
+-- Clearing: an entry shows again with the repeats after the clear; new entries in full.
+local clearedCounts = {}
+local repeating = { message = "again", count = 3 }
+local once = { message = "once", count = 1 }
+ErrorLog.MarkCleared({ repeating, once }, clearedCounts)
+check(ErrorLog.CountSinceClear(once, clearedCounts) == 0, "cleared entry hidden")
+check(ErrorLog.CountSinceClear(repeating, clearedCounts) == 0, "cleared repeating entry hidden")
+repeating.count = 5
+check(ErrorLog.CountSinceClear(repeating, clearedCounts) == 2, "repeats after the clear shown")
+check(ErrorLog.CountSinceClear({ message = "new", count = 4 }, clearedCounts) == 4, "new entry in full")
+check(ErrorLog.CountSinceClear({ message = "new" }, clearedCounts) == 1, "entry without count")
+print("clear ok")
 
 print("error log tests passed")

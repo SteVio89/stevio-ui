@@ -41,7 +41,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   topmost first, and after the last one hides them; popups get their labels
   first. Flight masters get a sorted list of destinations next to the map.
   `J`/`K` scroll the labelled window if it has a scroll bar. Windows with more
-  targets than the usual letters can label also use D S A E W Q as first letters.
+  targets than the usual letters can label also use D S A E W Q as first letters
+  for the targets after the first 81, whose labels stay the same.
 - **Action bars, menu and bags** – Blizzard's secure buttons, stripped down and
   placed via a dedicated Edit Mode layout named `stevio-ui`.
 - **Action sets** – switchable sets of actions for the same bars, e.g.
@@ -180,13 +181,15 @@ first login.
 | `/sui restore` | Restore the settings from before stevio-ui and disable it |
 
 `/sui` alone lists all commands. `config`, `reset`, `export`, `apply` and
-`restore` only exist once you have accepted the first-login dialog.
+`restore` only exist once you have accepted the first-login dialog. `test`,
+`loot`, `qj` and `notch` say so when their module is turned off.
 
 ## Configuration
 
 The defaults live in code: every module has a `Config.lua` (`enabled = false`
 turns it off), the global look lives in `Core/Config.lua`, all positions in
-`Core/Layout.lua` and the keybindings and graphics settings in
+`Core/Layout.lua` (including which action bars are styled and placed: each
+entry of `actionBars` names its Edit Mode bar) and the keybindings and graphics settings in
 `Modules/Settings/Profile.lua`.
 
 The options panel (Options → AddOns → stevio-ui, or `/sui config`) changes

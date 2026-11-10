@@ -153,6 +153,12 @@ local panelSource = {
 		end
 		return activePanel ~= nil
 	end,
+	PeekOpen = function()
+		return activePanel ~= nil and activePanel:IsVisible()
+	end,
+	PeekCollect = function()
+		return (CollectPanel())
+	end,
 	Collect = function()
 		hasWalk = false
 		local targets, scrollBar = CollectPanel()

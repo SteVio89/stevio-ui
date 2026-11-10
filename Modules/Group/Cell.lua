@@ -47,10 +47,27 @@ local function UpdatePowerType(cell)
 	ns.UpdatePowerType(cell.power, cell.unit)
 end
 
+-- Whether the cell shows the player. UnitIsUnit may be secret in combat; then
+-- the answer from the last readable check of the same unit token is used.
+local function IsPlayerCell(cell)
+	local unit = cell.unit
+	if unit == "player" then
+		return true
+	end
+	local isPlayer = UnitIsUnit(unit, "player")
+	if not issecretvalue(isPlayer) then
+		cell.checkedUnit, cell.checkedIsPlayer = unit, isPlayer
+		return isPlayer
+	end
+	return cell.checkedUnit == unit and cell.checkedIsPlayer
+end
+
+-- The player's own cell can't be range checked and always stays at full alpha,
+-- in combat too. In combat checkedRange may be secret; every other group
+-- member can be checked, so inRange alone decides then.
 local function UpdateRange(cell)
 	local unit = cell.unit
-	local isPlayer = UnitIsUnit(unit, "player")
-	if not issecretvalue(isPlayer) and isPlayer then
+	if IsPlayerCell(cell) then
 		cell:SetAlpha(1)
 		return
 	end
@@ -115,13 +132,31 @@ local unitEvents = {
 local globalEvents = {
 	PLAYER_TARGET_CHANGED = UpdateTarget,
 	PLAYER_ROLES_ASSIGNED = UpdateRole,
-	-- The headers reassign units in their own handler, which may run after
-	-- this one, so the cell refreshes again once they are done.
-	GROUP_ROSTER_UPDATE = function(cell)
-		UpdateAll(cell)
-		C_Timer.After(0, cell.refresh)
-	end,
 }
+
+-- Every cell the headers created.
+local cells = {}
+local rosterRefreshPending = false
+
+local function RefreshAllCells()
+	rosterRefreshPending = false
+	for _, cell in ipairs(cells) do
+		if cell.unit then
+			UpdateAll(cell)
+		end
+	end
+end
+
+-- A roster change refreshes all cells once, on the next frame: the headers
+-- reassign units in their own handler, and cells handed a new unit update
+-- right then (OnAttributeChanged). Several roster events in one frame share
+-- the one refresh.
+ns.RegisterEvent("GROUP_ROSTER_UPDATE", function()
+	if not rosterRefreshPending then
+		rosterRefreshPending = true
+		C_Timer.After(0, RefreshAllCells)
+	end
+end)
 
 local function OnEvent(cell, event)
 	-- Defensive: SetUnit unregisters all events when the unit goes away.
@@ -176,22 +211,21 @@ ns.GROUP_ICON_COUNT_SIZE = ICON_COUNT_SIZE
 -- only fills in the elements we hand it. `anchorPoint` is the cell corner or
 -- edge the icons start from (e.g. "LEFT", "TOPLEFT").
 local function CreateAuraGroup(cell, key, filter, anchorPoint, offsetX, offsetY, growth, count, size)
-	local container = CreateFrame("AuraContainer", nil, cell.health, "CustomAuraContainerTemplate")
-	container:SetFrameLevel(cell.health:GetFrameLevel() + 2)
-	container:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
-	container:SetEditModePreviewEnabled(false)
-	-- The icons are display only; clicks go through to the cell underneath.
-	container:EnableMouse(false)
-	local flowAnchor = anchorPoint:find("TOP") and anchorPoint or ("TOP" .. anchorPoint)
-	container:SetFlowLayoutAnchorPoint(flowAnchor)
-	container:SetFlowLayoutGrowthDirection(growth, AnchorUtil.FlowDirection.Down)
-	container:AddAuraGroup(key, filter, {
-		maxFrameCount = count,
-		layout = { elementSpacing = ICON_SPACING },
+	return ns.CreateAuraContainer(cell.health, {
+		place = function(container)
+			container:SetFrameLevel(cell.health:GetFrameLevel() + 2)
+			container:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
+		end,
+		-- The icons are display only; clicks go through to the cell underneath.
+		noMouse = true,
+		flowAnchor = anchorPoint:find("TOP") and anchorPoint or ("TOP" .. anchorPoint),
+		growth = growth,
+		key = key,
+		filter = filter,
+		max = count,
+		spacing = ICON_SPACING,
 		initializeFrame = ns.AuraButtonInitializer(size, ICON_COUNT_SIZE),
 	})
-	container:SetEnabled(true)
-	return container
 end
 
 -- A bar that continues the health fill to the right: it starts where the fill
@@ -319,9 +353,7 @@ function ns.InitGroupCell(cell)
 			config.ownAuraSize
 		),
 	}
-	cell.refresh = function()
-		UpdateAll(cell)
-	end
+	cells[#cells + 1] = cell
 	cell:SetScript("OnEvent", OnEvent)
 	cell:HookScript("OnAttributeChanged", OnAttributeChanged)
 	cell:HookScript("OnShow", UpdateAll)

@@ -10,7 +10,7 @@ local _, ns = ...
 -- not known right now); it is kept for that set instead of being lost on the next switch.
 
 local Sets = ns.ActionSets
-local config = ns.config.actionbars
+local config = ns.config.actionBars
 local style = ns.config.style
 local T = ns.T
 

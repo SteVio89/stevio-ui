@@ -12,13 +12,20 @@ ns.ChatHistory = History
 local Store = {}
 Store.__index = Store
 
--- Strips WoW escape sequences (colors, textures, hyperlinks) so text can be copied.
+-- Strips WoW escape sequences (colors, textures, atlases, hyperlinks,
+-- Battle.net names) so text can be copied. An escaped "||" is a literal "|",
+-- so it is set aside first and never read as the start of a sequence.
 function History.StripMarkup(text)
+	text = text:gsub("||", "\1")
 	text = text:gsub("|H.-|h(.-)|h", "%1")
 	text = text:gsub("|T.-|t", "")
+	text = text:gsub("|A.-|a", "")
+	text = text:gsub("|K.-|k", "")
 	text = text:gsub("|c%x%x%x%x%x%x%x%x", "")
+	text = text:gsub("|cn[^:|]*:", "")
 	text = text:gsub("|r", "")
-	text = text:gsub("||", "|")
+	text = text:gsub("|n", "\n")
+	text = text:gsub("\1", "|")
 	return text
 end
 
@@ -149,6 +156,8 @@ function History.Mirror(entry, key, label, chatType)
 	return copy
 end
 
+History.BATTLE_NET_LABEL = "Battle.net"
+
 -- Battle.net whisper partners are keyed by BattleTag ("Name#1234"): the
 -- account id may change between sessions and the Real ID name in chat events
 -- can't be saved; the BattleTag stays. Lines and labels show its name part.
@@ -230,9 +239,10 @@ function History.Route(def, sender, bnetID, channelIndex, baseName, fullName, pu
 				{ kind = def.kind, chatType = def.chatType, label = name, bnetID = bnetID, battleTag = battleTag }
 			return History.BattleNetKey(battleTag), opts, nil, nil, name
 		end
-		-- No account info: keyed by the session id, as before.
+		-- No account info: keyed by the session id, as before. The sender is
+		-- the Real ID name, which is never saved, so the label stays neutral.
 		return History.BattleNetKey(bnetID),
-			{ kind = def.kind, chatType = def.chatType, label = sender, bnetID = bnetID }
+			{ kind = def.kind, chatType = def.chatType, label = History.BATTLE_NET_LABEL, bnetID = bnetID }
 	end
 	-- The full name answers the right player even across realms; the label shows
 	-- the realm only for other realms, like Blizzard's chat.
@@ -262,12 +272,12 @@ end
 
 -- Index of the channel `step` places after `selected` in `keys` (the sidebar
 -- order), wrapping around; nil when there are none. With `selected` not in
--- the list it counts from before the first one.
+-- the list, "next" starts at the first channel and "previous" at the last.
 function History.NextIndex(keys, selected, step)
 	if #keys == 0 then
 		return nil
 	end
-	local index = 0
+	local index = step < 0 and #keys + 1 or 0
 	for i, key in ipairs(keys) do
 		if key == selected then
 			index = i
@@ -276,10 +286,24 @@ function History.NextIndex(keys, selected, step)
 	return (index - 1 + step) % #keys + 1
 end
 
+-- Drops the oldest of `messages` down to `limit`.
+local function Trim(messages, limit)
+	local excess = #messages - limit
+	if excess > 0 then
+		for i = 1, #messages do
+			messages[i] = messages[i + excess]
+		end
+	end
+end
+
 -- `saved` is the SavedVariables table (may be empty); `limit` caps messages per
--- channel; `mainOn` keeps the merged channel from being deleted.
+-- channel, also for saved channels (a lowered limit deletes what is above it);
+-- `mainOn` keeps the merged channel from being deleted.
 function History.New(saved, limit, mainOn)
 	saved.channels = saved.channels or {}
+	for _, channel in pairs(saved.channels) do
+		Trim(channel.messages, limit)
+	end
 	return setmetatable({ db = saved, limit = limit, mainOn = mainOn }, Store)
 end
 
@@ -340,9 +364,7 @@ function Store:Add(key, opts, entry, markUnread)
 	local channel = self:Ensure(key, opts)
 	local messages = channel.messages
 	messages[#messages + 1] = entry
-	if #messages > self.limit then
-		table.remove(messages, 1)
-	end
+	Trim(messages, self.limit)
 	channel.last = entry.time or channel.last
 	if markUnread and not channel.silent then
 		channel.unread = channel.unread + 1

@@ -1,9 +1,9 @@
 local _, ns = ...
 
-local config = ns.config.actionbars
+local config = ns.config.actionBars
 local style = ns.config.style
 
-local ActionBars = ns.RegisterModule("actionbars", {})
+local ActionBars = ns.RegisterModule("actionBars", {})
 
 -- Blizzard's own bars and buttons are kept, only restyled and moved: paging,
 -- keybinds, cooldowns, range tint and proc glows keep working under the
@@ -97,13 +97,31 @@ local function StripMainBarArt()
 	end)
 end
 
--- Kept in step with config.bars (Config.lua) and ns.layout.actionBars
--- (Core/Layout.lua): entry n of all three is the same bar.
-local barSystemIndices = {
-	Enum.EditModeActionBarSystemIndices.MainBar,
-	Enum.EditModeActionBarSystemIndices.Bar2,
-	Enum.EditModeActionBarSystemIndices.Bar3,
+-- Blizzard's frame of each Edit Mode bar named in ns.layout.actionBars.
+local barFrames = {
+	MainBar = "MainActionBar",
+	Bar2 = "MultiBarBottomLeft",
+	Bar3 = "MultiBarBottomRight",
+	Bar4 = "MultiBarRight",
+	Bar5 = "MultiBarLeft",
+	Bar6 = "MultiBar5",
+	Bar7 = "MultiBar6",
+	Bar8 = "MultiBar7",
 }
+
+-- The entries of ns.layout.actionBars naming a known bar (the options panel
+-- may hold a mistyped one), each with its Edit Mode index and frame.
+local function ConfiguredBars()
+	local bars = {}
+	for _, layout in ipairs(ns.layout.actionBars) do
+		local frame = barFrames[layout.bar] and _G[barFrames[layout.bar]]
+		local systemIndex = Enum.EditModeActionBarSystemIndices[layout.bar]
+		if frame and systemIndex then
+			bars[#bars + 1] = { layout = layout, systemIndex = systemIndex, frame = frame }
+		end
+	end
+	return bars
+end
 
 local function PlaceBars()
 	local Setting = Enum.EditModeActionBarSetting
@@ -115,8 +133,8 @@ local function PlaceBars()
 		[Setting.IconPadding] = config.iconPadding,
 		[Setting.HideBarArt] = 1,
 	}
-	for index, systemIndex in ipairs(barSystemIndices) do
-		ns.SetEditModeSystem(Enum.EditModeSystem.ActionBar, systemIndex, ns.layout.actionBars[index], barSettings)
+	for _, bar in ipairs(ConfiguredBars()) do
+		ns.SetEditModeSystem(Enum.EditModeSystem.ActionBar, bar.systemIndex, bar.layout, barSettings)
 	end
 
 	ns.SetEditModeSystem(
@@ -132,8 +150,8 @@ local function PlaceBars()
 end
 
 function ActionBars:OnEnable()
-	for _, barName in ipairs(config.bars) do
-		StyleBar(_G[barName])
+	for _, bar in ipairs(ConfiguredBars()) do
+		StyleBar(bar.frame)
 	end
 	StyleBar(StanceBar)
 	StyleBar(PetActionBar)

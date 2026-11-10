@@ -75,7 +75,7 @@ do
 
 	key, opts, source, sourceType, name = Route(def, "|Kq2|k", 9, 0, "")
 	check(key == "bn:9", "no account info: keyed by the session id")
-	check(opts.label == "|Kq2|k" and opts.bnetID == 9 and opts.battleTag == nil, "session id options")
+	check(opts.label == "Battle.net" and opts.bnetID == 9 and opts.battleTag == nil, "session id options")
 	check(source == nil and sourceType == nil and name == nil, "no BattleTag: the sender stays")
 	check(Route(def, "|Kq3|k", 8, 0, "") == "bn:8", "empty BattleTag: keyed by the session id")
 

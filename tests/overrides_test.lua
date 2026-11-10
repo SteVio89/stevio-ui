@@ -105,12 +105,81 @@ local stale = {
 	["config/units/frames/#5/width"] = 100, -- the list has 2 entries
 	["config/chat/quiet"] = { 1 }, -- a boolean in code
 	["config/gone/x"] = 1, -- a removed table
-	["config/chat/newFlag"] = true, -- a new key in an existing table is fine
+	["config/chat/oldFlag"] = true, -- a key removed from an existing table
 }
 Overrides.ApplyAll(fresh, stale)
 check(fresh.config.units.frames[5] == nil and stale["config/units/frames/#5/width"] == nil, "missing list entry")
 check(fresh.config.chat.quiet == true and stale["config/chat/quiet"] == nil, "changed kind of value")
 check(fresh.config.gone == nil and stale["config/gone/x"] == nil, "removed table")
-check(fresh.config.chat.newFlag == true and stale["config/chat/newFlag"] == true, "new key kept")
+check(fresh.config.chat.oldFlag == nil and stale["config/chat/oldFlag"] == nil, "removed key")
 print("stale overrides ok")
+-- Rename: saved values move from a renamed path, a value at the new path wins.
+do
+	local migrating = {
+		["config/actionbars/enabled"] = false,
+		["config/actionbars/bars"] = { "a" },
+		["config/actionbarsExtra/x"] = 1, -- only a common prefix
+		["config/notch/colors/restedAlpha"] = 0.7,
+		["config/old"] = 1,
+		["config/new"] = 2,
+	}
+	Overrides.Rename(migrating, "config/actionbars", "config/actionBars")
+	Overrides.Rename(migrating, "config/notch/colors/restedAlpha", "config/notch/restedAlpha")
+	Overrides.Rename(migrating, "config/old", "config/new")
+	check(
+		migrating["config/actionBars/enabled"] == false and migrating["config/actionbars/enabled"] == nil,
+		"moved below"
+	)
+	check(migrating["config/actionBars/bars"][1] == "a", "tables move as they are")
+	check(migrating["config/actionbarsExtra/x"] == 1, "a key with the same start stays")
+	check(
+		migrating["config/notch/restedAlpha"] == 0.7 and migrating["config/notch/colors/restedAlpha"] == nil,
+		"moved itself"
+	)
+	check(migrating["config/new"] == 2 and migrating["config/old"] == nil, "the new path wins")
+end
+
+-- Migrate: each migration runs once per set of saved values.
+do
+	local runs = 0
+	local migrations = {
+		{ id = "rename", rename = { "config/a", "config/b" } },
+		{
+			id = "double",
+			run = function(target)
+				runs = runs + 1
+				target["config/n"] = target["config/n"] * 2
+			end,
+		},
+	}
+	local migrating, done = { ["config/a"] = 1, ["config/n"] = 2 }, {}
+	Overrides.Migrate(migrating, migrations, done)
+	Overrides.Migrate(migrating, migrations, done)
+	check(migrating["config/b"] == 1 and migrating["config/n"] == 4 and runs == 1, "ran once")
+	check(done.rename and done.double, "marked done")
+end
+
+-- The shipped migrations: absolute x positions beside the group grid become offsets from its edge.
+do
+	local migrating = {
+		["config/actionbars/iconSize"] = 70,
+		["layout/targetAuras/x"] = 340,
+		["layout/focus/x"] = -340,
+	}
+	Overrides.Migrate(migrating, Overrides.MIGRATIONS, {})
+	check(migrating["config/actionBars/iconSize"] == 70, "action bar key renamed")
+	check(migrating["layout/targetAuras/x"] == 9 and migrating["layout/focus/x"] == -9, "offsets from the grid edge")
+end
+
+-- A saved action bar list gets the bar names; entries past the third stay unnamed (and unused).
+do
+	local migrating = {
+		["layout/actionBars"] = { { point = "BOTTOM" }, { point = "TOP" }, { point = "LEFT" }, { point = "RIGHT" } },
+	}
+	Overrides.Migrate(migrating, Overrides.MIGRATIONS, {})
+	local list = migrating["layout/actionBars"]
+	check(list[1].bar == "MainBar" and list[2].bar == "Bar2" and list[3].bar == "Bar3", "bars named in order")
+	check(list[4].bar == nil and list[2].point == "TOP", "the rest as it was")
+end
+print("migrate ok")
 print("overrides tests passed")

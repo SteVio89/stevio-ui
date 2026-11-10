@@ -12,6 +12,9 @@ local chatFrames = {}
 local tabs = {}
 local editBoxes = {}
 local applyingAlpha = false
+local applyingMouse = false
+-- The C.hidden and showBlizzardChat that ApplyBlizzardVisibility last applied.
+local appliedHidden, appliedBlizzard
 
 -- Blizzard's chat windows are never shown: the channel view replaces them.
 -- Only their input box is still used (Enter / slash commands) while typing;
@@ -39,6 +42,35 @@ local function GuardAlpha(frame)
 			ApplyAlpha(self)
 		end
 	end)
+end
+
+-- Whether `frame` should take mouse input: Blizzard's windows and tabs only
+-- while they are shown for comparison, the input box while the chat is open.
+local function WantsMouse(frame)
+	if editBoxes[frame] then
+		return not C.hidden
+	end
+	return config.showBlizzardChat and true or false
+end
+
+-- Blizzard switches mouse input back on now and then (docking, new windows);
+-- a hidden window would then catch clicks. `method` is "EnableMouse" or
+-- "EnableMouseWheel".
+local function GuardMouse(frame, method)
+	hooksecurefunc(frame, method, function(self, enabled)
+		local wanted = WantsMouse(self)
+		if not applyingMouse and (enabled and true or false) ~= wanted then
+			applyingMouse = true
+			self[method](self, wanted)
+			applyingMouse = false
+		end
+	end)
+end
+
+local function ApplyMouse(frame, method)
+	applyingMouse = true
+	frame[method](frame, WantsMouse(frame))
+	applyingMouse = false
 end
 
 -- Blizzard anchors the input box to its own (invisible) chat window and
@@ -75,11 +107,14 @@ local function ManageChatFrame(frame)
 
 	ns.KeepHidden(frame.buttonFrame)
 	GuardAlpha(frame)
+	GuardMouse(frame, "EnableMouse")
+	GuardMouse(frame, "EnableMouseWheel")
 
 	local tab = _G[frame:GetName() .. "Tab"]
 	if tab and not tabs[tab] then
 		tabs[tab] = true
 		GuardAlpha(tab)
+		GuardMouse(tab, "EnableMouse")
 	end
 
 	-- Blizzard parents the input box to UIParent, so it doesn't inherit the chat's alpha.
@@ -87,6 +122,7 @@ local function ManageChatFrame(frame)
 	if editBox and not editBoxes[editBox] then
 		editBoxes[editBox] = true
 		GuardAlpha(editBox)
+		GuardMouse(editBox, "EnableMouse")
 		ns.PinFrame(editBox, PlaceEditBox)
 	end
 end
@@ -97,21 +133,28 @@ local function ScanChatFrames()
 	end
 end
 
--- Applies the current `C.hidden` to Blizzard's chat windows, tabs and input boxes.
-function C.ApplyBlizzardVisibility()
+-- Applies the current `C.hidden` to Blizzard's chat windows, tabs and input
+-- boxes. Runs on every chat update, but only does the work when the visibility
+-- changed (or with `force`, for newly managed windows): the alpha and mouse
+-- hooks keep it in place in between.
+function C.ApplyBlizzardVisibility(force)
 	local blizzard = config.showBlizzardChat
+	if not force and appliedHidden == C.hidden and appliedBlizzard == blizzard then
+		return
+	end
+	appliedHidden, appliedBlizzard = C.hidden, blizzard
 	for frame in pairs(chatFrames) do
 		ApplyAlpha(frame)
-		frame:EnableMouse(blizzard)
-		frame:EnableMouseWheel(blizzard)
+		ApplyMouse(frame, "EnableMouse")
+		ApplyMouse(frame, "EnableMouseWheel")
 	end
 	for tab in pairs(tabs) do
 		ApplyAlpha(tab)
-		tab:EnableMouse(blizzard)
+		ApplyMouse(tab, "EnableMouse")
 	end
 	for editBox in pairs(editBoxes) do
 		ApplyAlpha(editBox)
-		editBox:EnableMouse(not C.hidden)
+		ApplyMouse(editBox, "EnableMouse")
 	end
 	ApplyAlpha(GeneralDockManager)
 end
@@ -173,10 +216,14 @@ function C.SetupBlizzardChat()
 	ScanChatFrames()
 	ManageAlerts()
 	GuardAlpha(GeneralDockManager)
-	hooksecurefunc("FCF_OpenTemporaryWindow", function()
-		ScanChatFrames()
-		C.ApplyBlizzardVisibility()
-	end)
+	-- Temporary windows (whispers popped out, pet battle log, ...) get hidden
+	-- as they open; a client without this global loads the chat without it.
+	if FCF_OpenTemporaryWindow then
+		hooksecurefunc("FCF_OpenTemporaryWindow", function()
+			ScanChatFrames()
+			C.ApplyBlizzardVisibility(true)
+		end)
+	end
 
 	HookChatActivation("ActivateChat", "ChatEdit_ActivateChat", true)
 	HookChatActivation("DeactivateChat", "ChatEdit_DeactivateChat", false)

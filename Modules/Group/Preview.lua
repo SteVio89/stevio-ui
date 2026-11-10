@@ -139,10 +139,7 @@ local function HidePreview()
 	end
 end
 
-ns.RegisterSlashCommand("test", function(input)
-	if not config.enabled then
-		return
-	end
+ns.RegisterModuleCommand("test", "group", function(input)
 	local count = tonumber(input)
 	if count and count >= 1 then
 		ShowPreview(math.min(math.floor(count), MAX_UNITS))

@@ -74,6 +74,13 @@ local function RunChatType(chatType, message)
 	return true
 end
 
+local function GetGlobal(name)
+	return _G[name]
+end
+
+-- The command tables (see Parse.Lookups), chat types and emotes reused.
+local lookups
+
 -- Runs `text` (a line starting with "/"); unknown commands get a hint in System.
 function C.RunCommand(text)
 	local command, message = Parse.Command(text)
@@ -85,14 +92,14 @@ function C.RunCommand(text)
 		return
 	end
 
-	ChatFrameUtil.ImportAllListsToHash()
-	local kind, value = Parse.Classify(command, {
-		chatTypes = hash_ChatTypeInfoList,
+	lookups = Parse.Lookups({
+		slashCmdList = SlashCmdList,
 		chatTypeInfo = ChatTypeInfo,
-		slashCommands = hash_SlashCmdList,
+		getGlobal = GetGlobal,
 		isSecure = issecurevariable,
-		emotes = hash_EmoteTokenList,
-	})
+		maxEmoteIndex = MAXEMOTEINDEX,
+	}, lookups)
+	local kind, value = Parse.Classify(command, lookups)
 	if kind == "channel" then
 		if message == "" or not SendToChannel(value, message) then
 			HandOff(text)
@@ -105,6 +112,8 @@ function C.RunCommand(text)
 		value(message, DEFAULT_CHAT_FRAME.editBox)
 	elseif kind == "emote" then
 		C_ChatInfo.PerformEmote(value, message ~= "" and message or nil)
+	elseif kind == "blizzard" then
+		HandOff(text)
 	else
 		-- Blizzard would answer into its hidden chat window, so the hint goes to System.
 		ns.Print(ns.T("Unknown command: %s", "Unbekannter Befehl: %s"):format(command:lower()))

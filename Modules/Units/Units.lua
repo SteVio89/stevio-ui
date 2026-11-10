@@ -53,11 +53,11 @@ local function UpdatePowerType(frame)
 	end
 end
 
--- The level text and its color (none for a secret level, which can't be
--- compared): the difficulty color, or a red "??" for unknown levels (bosses).
+-- The level text and its color: the difficulty color, a red "??" for unknown
+-- levels (bosses), or white for a secret level, which can't be compared.
 function Units.LevelDisplay(level, isSecret, difficultyColor)
 	if isSecret then
-		return level
+		return level, 1, 1, 1
 	elseif level and level > 0 then
 		local color = difficultyColor(level)
 		return level, color.r, color.g, color.b
@@ -75,9 +75,7 @@ local function UpdateName(frame)
 	local level = UnitLevel(unit)
 	local text, r, g, b = Units.LevelDisplay(level, issecretvalue(level), GetCreatureDifficultyColor)
 	frame.level:SetText(text)
-	if r then
-		frame.level:SetTextColor(r, g, b)
-	end
+	frame.level:SetTextColor(r, g, b)
 end
 
 local function UpdateCombat(frame)
@@ -134,8 +132,15 @@ local function OnPollUpdate(frame, elapsed)
 	end
 end
 
+-- Returns nil for a frame that has nowhere to go: anchored to a unit missing
+-- from the list (the options panel can remove entries) and without a layout
+-- position of its own.
 local function CreateUnitFrame(spec)
 	local unit = spec.unit
+	local anchor = spec.anchorTo and Units.frames[spec.anchorTo]
+	if not anchor and not ns.layout[unit] then
+		return nil
+	end
 	local hasPower = spec.powerHeight > 0
 	local frame = CreateFrame("Button", "StevioUI_" .. unit, UIParent, "SecureUnitButtonTemplate")
 	frame.unit = unit
@@ -186,10 +191,10 @@ local function CreateUnitFrame(spec)
 		end
 	end
 
-	if spec.anchorTo then
-		frame:SetPoint("TOP" .. spec.align, Units.frames[spec.anchorTo], "BOTTOM" .. spec.align, 0, -spec.gap)
+	if anchor then
+		frame:SetPoint("TOP" .. spec.align, anchor, "BOTTOM" .. spec.align, 0, -spec.gap)
 	else
-		ns.SetPoint(frame, ns.layout[unit])
+		ns.SetPoint(frame, ns.LayoutPosition(unit))
 	end
 
 	if unit == "targettarget" then
@@ -228,7 +233,6 @@ local function HideBlizzardFrames()
 	ns.HideBlizzard(TargetFrame)
 	ns.HideBlizzard(FocusFrame)
 	ns.HideBlizzard(PetFrame)
-	ns.HideBlizzard(PartyFrame)
 	ns.HideBlizzard(PlayerCastingBarFrame)
 	ns.HideBlizzard(PetCastingBarFrame)
 end
@@ -240,9 +244,16 @@ function Units:OnEnable()
 		self.frames[spec.unit] = CreateUnitFrame(spec)
 	end
 
-	ns.CreateClassPower(self.frames.player)
-	ns.CreateCastBar("player", self.frames.player, self.frames.pet, "RIGHT")
-	ns.CreateCastBar("target", self.frames.target, self.frames.targettarget, "LEFT")
+	-- Any of these may have been removed from the list in the options panel;
+	-- a cast bar then sits below the unit's own frame instead.
+	local frames = self.frames
+	if frames.player then
+		ns.CreateClassPower(frames.player)
+		ns.CreateCastBar("player", frames.player, frames.pet or frames.player, "RIGHT")
+	end
+	if frames.target then
+		ns.CreateCastBar("target", frames.target, frames.targettarget or frames.target, "LEFT")
+	end
 	if self.frames.focus then
 		ns.CreateCastBar("focus", self.frames.focus, self.frames.focus, "RIGHT", {
 			height = config.castBar.focusHeight,

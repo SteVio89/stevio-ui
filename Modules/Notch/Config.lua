@@ -50,6 +50,7 @@ ns.config.notch = {
 		critical = { 1, 0.25, 0.25 },
 		xp = { 0.58, 0, 0.55 },
 		xpRested = { 0, 0.39, 0.88 },
-		restedAlpha = 0.4,
 	},
+	-- Opacity of the rested XP overlay, drawn in the xpRested color.
+	restedAlpha = 0.4,
 }

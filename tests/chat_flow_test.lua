@@ -68,7 +68,7 @@ do
 	check(History.NextIndex(keys, "a", -1) == 3, "previous wraps")
 	check(History.NextIndex(keys, "b", -1) == 1, "previous")
 	check(History.NextIndex(keys, "x", 1) == 1, "unknown selection: next is the first")
-	check(History.NextIndex(keys, nil, -1) == 2, "unknown selection: previous is the second to last")
+	check(History.NextIndex(keys, nil, -1) == 3, "unknown selection: previous is the last")
 	check(History.NextIndex({ "a" }, "a", 1) == 1 and History.NextIndex({ "a" }, nil, -1) == 1, "one channel")
 	check(History.NextIndex({}, nil, 1) == nil, "no channels")
 end
@@ -105,19 +105,15 @@ print("battle.net friends ok")
 
 -- Typed commands.
 do
-	local secure = { ["/HELP"] = true }
-	local slashCommands = {
-		["/SUI"] = function() end,
-		["/HELP"] = function() end,
-	}
 	local lists = {
 		chatTypes = { ["/P"] = "PARTY", ["/W"] = "WHISPER", ["/X"] = "IGNORED", ["/Y"] = "UNKNOWN" },
 		chatTypeInfo = { PARTY = {}, WHISPER = {}, IGNORED = { ignoreChatTypeProcessing = true } },
-		slashCommands = slashCommands,
-		isSecure = function(t, key)
-			check(t == slashCommands, "secure check on the slash command list")
-			return secure[key] == true
-		end,
+		slashCommands = {
+			["/SUI"] = function() end,
+			["/HELP"] = function() end,
+			["/WHO"] = function() end,
+		},
+		secure = { ["/SUI"] = false, ["/HELP"] = true, ["/WHO"] = true },
 		emotes = { ["/DANCE"] = "DANCE", ["/HELP"] = "HELPME", ["/X"] = "XEMOTE" },
 	}
 	local kind, value = Parse.Classify("/1", lists)
@@ -128,6 +124,8 @@ do
 	check(kind == "addon" and value == lists.slashCommands["/SUI"], "addon command")
 	kind, value = Parse.Classify("/HELP", lists)
 	check(kind == "emote" and value == "HELPME", "Blizzard's own command falls through to its emote")
+	kind, value = Parse.Classify("/WHO", lists)
+	check(kind == "blizzard" and value == nil, "Blizzard's own command")
 	kind, value = Parse.Classify("/X", lists)
 	check(kind == "emote" and value == "XEMOTE", "chat types ignoring processing fall through")
 	kind = Parse.Classify("/Y", lists)
@@ -138,6 +136,58 @@ do
 	check(kind == "unknown" and value == nil, "unknown command")
 	kind = Parse.Classify("/1A", lists)
 	check(kind == "unknown", "not a channel number")
+end
+
+-- Lookups: the command tables built from the game's lists and globals.
+do
+	local who, sui, mine = function() end, function() end, function() end
+	local slashCmdList = { WHO = who, STEVIOUI = sui, MINE = mine }
+	local globals = {
+		SLASH_WHO1 = "/who",
+		SLASH_WHO2 = "/wer",
+		SLASH_STEVIOUI1 = "/sui",
+		SLASH_MINE1 = "/Mine",
+		SLASH_PARTY1 = "/p",
+		SLASH_PARTY2 = "/party",
+		EMOTE1_TOKEN = "DANCE",
+		EMOTE1_CMD1 = "/dance",
+		EMOTE2_TOKEN = nil,
+		EMOTE2_CMD1 = "/ghost",
+		EMOTE3_TOKEN = "WAVE",
+		EMOTE3_CMD1 = "/wave",
+		EMOTE3_CMD2 = "/winken",
+	}
+	local game = {
+		slashCmdList = slashCmdList,
+		chatTypeInfo = { PARTY = {}, SAY = {} },
+		getGlobal = function(name)
+			return globals[name]
+		end,
+		isSecure = function(t, key)
+			check(t == slashCmdList, "secure check on the slash command list")
+			return key == "WHO"
+		end,
+		maxEmoteIndex = 3,
+	}
+	local lists = Parse.Lookups(game)
+	check(lists.slashCommands["/WHO"] == who and lists.slashCommands["/WER"] == who, "all spellings, upper case")
+	check(lists.slashCommands["/SUI"] == sui and lists.slashCommands["/MINE"] == mine, "addon commands")
+	check(lists.secure["/WHO"] == true and lists.secure["/WER"] == true, "Blizzard's commands are secure")
+	check(lists.secure["/SUI"] == false and lists.secure["/MINE"] == false, "addon commands are not")
+	check(lists.chatTypes["/P"] == "PARTY" and lists.chatTypes["/PARTY"] == "PARTY", "chat types")
+	check(lists.chatTypes["/S"] == nil, "chat type without a command")
+	check(lists.chatTypeInfo == game.chatTypeInfo, "chat type info passed on")
+	check(lists.emotes["/DANCE"] == "DANCE" and lists.emotes["/WINKEN"] == "WAVE", "emotes")
+	check(lists.emotes["/GHOST"] == nil, "emote without a token")
+	check(Parse.Classify("/WER", lists) == "blizzard", "classified from the built tables")
+
+	-- Chat types and emotes are reused, slash commands read again.
+	globals.SLASH_PARTY3 = "/gruppe"
+	slashCmdList.LATER = function() end
+	globals.SLASH_LATER1 = "/later"
+	local again = Parse.Lookups(game, lists)
+	check(again.chatTypes == lists.chatTypes and again.emotes == lists.emotes, "chat types and emotes reused")
+	check(again.slashCommands["/LATER"] ~= nil, "slash commands added later found")
 end
 print("commands ok")
 

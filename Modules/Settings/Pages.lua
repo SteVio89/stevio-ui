@@ -14,7 +14,7 @@ Pages.MODULES = {
 	-- Labels.group is "Group", which is too vague for a page of its own.
 	{ "group", title = { "Group grid", "Gruppenraster" }, layout = { "group" } },
 	{ "keyboardHealing" },
-	{ "actionbars", layout = { "actionBars", "actionSets", "stanceBar", "petBar", "menubar", "bags" } },
+	{ "actionBars", layout = { "actionBars", "actionSets", "stanceBar", "petBar", "menubar", "bags" } },
 	{ "minimap", layout = { "minimap" } },
 	{ "tooltip" },
 	{ "auras", layout = { "buffs", "debuffs" } },

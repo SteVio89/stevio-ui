@@ -33,8 +33,8 @@ check(text == "??" and r == 1, "no level")
 
 local secret = {}
 asked = nil
-text, r = LevelDisplay(secret, true, difficultyColor)
-check(text == secret and r == nil, "secret level unchanged and uncolored")
+text, r, g, b = LevelDisplay(secret, true, difficultyColor)
+check(text == secret and r == 1 and g == 1 and b == 1, "secret level unchanged and white")
 check(asked == nil, "secret level never compared")
 
 check(ns.UNIT_CHANGE_EVENTS.target == "PLAYER_TARGET_CHANGED", "target change event")

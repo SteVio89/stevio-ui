@@ -33,13 +33,16 @@ function Model.CVarOverrideFor(value, defaultValue, profileValue)
 end
 
 -- The override for a key set to `command` in the options panel (nil unbinds
--- it); none for the profile's own command. `profileCommand and false or nil`
--- is nil either way, so unbinding a key the profile binds saves no override.
+-- it); none for the profile's own command, `false` for unbinding a key the
+-- profile binds.
 function Model.BindingOverride(command, profileCommand)
 	if command == profileCommand then
 		return nil
 	elseif command == nil then
-		return profileCommand and false or nil
+		if profileCommand then
+			return false
+		end
+		return nil
 	end
 	return command
 end

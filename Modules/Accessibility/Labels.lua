@@ -10,30 +10,29 @@ ns.AccessibilityInternal = Internal
 local Labels = {}
 Internal.Labels = Labels
 
--- The first letter varies fastest, so the first labels all differ already in
--- the first keystroke. Windows with more targets than the base keys can label
--- borrow extra first letters; those are only ever leader-activated, so taking
--- movement keys is fine there. Never more labels than the keys can make.
-function Labels.Generate(count, leftKeys, rightKeys, extraLeftKeys)
-	if count > #leftKeys * #rightKeys then
-		local keys = {}
-		for _, key in ipairs(leftKeys) do
-			keys[#keys + 1] = key
-		end
-		for _, key in ipairs(extraLeftKeys) do
-			keys[#keys + 1] = key
-		end
-		leftKeys = keys
-	end
-	local labels = {}
+-- Adds `left .. right` labels for every pair, the first letter varying
+-- fastest, until `labels` holds `count`.
+local function AddLabels(labels, count, leftKeys, rightKeys)
 	for _, right in ipairs(rightKeys) do
 		for _, left in ipairs(leftKeys) do
 			if #labels == count then
-				return labels
+				return
 			end
 			labels[#labels + 1] = left .. right
 		end
 	end
+end
+
+-- The first letter varies fastest, so the first labels all differ already in
+-- the first keystroke. Windows with more targets than the base keys can label
+-- borrow extra first letters for the targets after those; they are only ever
+-- leader-activated, so taking movement keys is fine there. The base labels
+-- stay the same however many targets follow. Never more labels than the keys
+-- can make.
+function Labels.Generate(count, leftKeys, rightKeys, extraLeftKeys)
+	local labels = {}
+	AddLabels(labels, count, leftKeys, rightKeys)
+	AddLabels(labels, count, extraLeftKeys, rightKeys)
 	return labels
 end
 

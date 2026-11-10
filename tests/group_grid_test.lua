@@ -46,4 +46,20 @@ check(ns.HighestGroup({ 2, 1, 3, 1 }) == 3, "highest of several")
 check(ns.HighestGroup({ 1, nil, 7, nil, 2 }) == 7, "holes are skipped")
 check(ns.HighestGroup({ [3] = 6 }) == 6, "only a later entry")
 
+-- Positions beside the grid count from its edge; at the defaults they are
+-- where the absolute positions used to be (half width 331, gap 4).
+do
+	loadAddonFile("Core/Layout.lua", ns)
+	function ns.GetGroupHalfWidth()
+		return math.ceil(ns.GetGroupGridWidth(BASE_WIDTH) / 2)
+	end
+	check(ns.LayoutPosition("targetAuras").x == 335, "target auras right of the grid")
+	check(ns.LayoutPosition("focus").x == -335, "focus left of the grid")
+	check(ns.LayoutPosition("focus").y == ns.layout.focus.y, "y as it is")
+	check(ns.LayoutPosition("player") == ns.layout.player, "other positions as they are")
+	ns.config.group.spacing = 5
+	check(ns.LayoutPosition("targetAuras").x == math.ceil((8 * 80 + 7 * 5) / 2) + 4, "follows the spacing")
+	ns.config.group.spacing = SPACING
+	check(ns.layout.targetAuras.x == 4, "the layout itself unchanged")
+end
 print("group grid tests passed")

@@ -157,7 +157,9 @@ local function CreateMessages(frame)
 	C.ApplyFont(messages)
 	messages:SetJustifyH("LEFT")
 	messages:SetFading(false)
-	messages:SetMaxLines(config.historyLimit)
+	-- Room for a date line before each message, so date lines never push
+	-- stored messages out of the view.
+	messages:SetMaxLines(config.historyLimit * 2)
 	messages:SetPoint("TOPLEFT", ui.header, "BOTTOMLEFT", 0, -4)
 	messages:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, 4)
 	messages:EnableMouseWheel(true)

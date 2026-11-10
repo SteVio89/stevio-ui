@@ -1,12 +1,9 @@
 local _, ns = ...
 
-ns.config.actionbars = {
+ns.config.actionBars = {
 	enabled = true,
 
-	-- Blizzard bar frames in layout order; positions come from ns.layout.actionBars.
-	-- Entry n must match entry n of ns.layout.actionBars and of barSystemIndices in ActionBars.lua.
-	bars = { "MainActionBar", "MultiBarBottomLeft", "MultiBarBottomRight" },
-
+	-- Which bars are styled and where they go is ns.layout.actionBars (Core/Layout.lua).
 	-- Written into the Edit Mode layout; Layout.lua assumes 80% for the bar block width.
 	iconSize = 80,
 	iconPadding = 2,

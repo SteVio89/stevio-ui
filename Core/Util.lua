@@ -312,3 +312,30 @@ function ns.AuraButtonInitializer(size, countSize)
 		ns.InitAuraButton(button, size, countSize)
 	end
 end
+
+-- Blizzard's secure aura container with one aura group, growing in
+-- `options.growth` and then down. Its calls stay in one fixed order, as the
+-- template may depend on it: `options.place(container)` sizes and anchors it
+-- right after creation, then the setup, the group, the unit (if given) and
+-- enabling last. `options`: place, flowAnchor, growth, key, filter, max,
+-- spacing, initializeFrame, unit, and noMouse for display-only icons.
+function ns.CreateAuraContainer(parent, options)
+	local container = CreateFrame("AuraContainer", nil, parent, "CustomAuraContainerTemplate")
+	options.place(container)
+	container:SetEditModePreviewEnabled(false)
+	if options.noMouse then
+		container:EnableMouse(false)
+	end
+	container:SetFlowLayoutAnchorPoint(options.flowAnchor)
+	container:SetFlowLayoutGrowthDirection(options.growth, AnchorUtil.FlowDirection.Down)
+	container:AddAuraGroup(options.key, options.filter, {
+		maxFrameCount = options.max,
+		layout = { elementSpacing = options.spacing },
+		initializeFrame = options.initializeFrame,
+	})
+	if options.unit then
+		container:SetUnit(options.unit)
+	end
+	container:SetEnabled(true)
+	return container
+end
