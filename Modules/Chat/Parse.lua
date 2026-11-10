@@ -51,12 +51,69 @@ function Parse.WhisperTarget(text, isBattleNetName)
 	return text:sub(words[1].from, words[1].to), text:sub(words[2].from), false
 end
 
+-- Adds every command spelled by the globals `prefix .. 1`, `prefix .. 2`, ...
+-- (upper case) to `hash` with `value`, keeping commands already in it. With
+-- `marks`, each added command is also set to `mark` there.
+local function AddCommands(hash, getGlobal, prefix, value, marks, mark)
+	local i = 1
+	local command = getGlobal(prefix .. i)
+	while type(command) == "string" do
+		command = command:upper()
+		if hash[command] == nil then
+			hash[command] = value
+			if marks then
+				marks[command] = mark
+			end
+		end
+		i = i + 1
+		command = getGlobal(prefix .. i)
+	end
+end
+
+-- The command tables Parse.Classify looks commands up in, built from the
+-- game's own lists. Blizzard's ChatFrameUtil.ImportAllListsToHash would fill
+-- its hash_ tables from addon code, tainting them: Blizzard's commands would
+-- then look like addon commands and run from here. `game` holds slashCmdList,
+-- chatTypeInfo, getGlobal(name), isSecure(table, key) and maxEmoteIndex.
+-- Chat types and emotes don't change during a session, so pass the previous
+-- result as `cached` to reuse them; slash commands are read fresh each time
+-- (addons may add some later).
+function Parse.Lookups(game, cached)
+	local lists = {
+		chatTypeInfo = game.chatTypeInfo,
+		slashCommands = {},
+		secure = {},
+	}
+	for name, handler in pairs(game.slashCmdList) do
+		local secure = game.isSecure(game.slashCmdList, name) and true or false
+		AddCommands(lists.slashCommands, game.getGlobal, "SLASH_" .. name, handler, lists.secure, secure)
+	end
+
+	if cached then
+		lists.chatTypes, lists.emotes = cached.chatTypes, cached.emotes
+		return lists
+	end
+	lists.chatTypes = {}
+	for chatType in pairs(game.chatTypeInfo) do
+		AddCommands(lists.chatTypes, game.getGlobal, "SLASH_" .. chatType, chatType)
+	end
+	lists.emotes = {}
+	for i = 1, game.maxEmoteIndex or 0 do
+		local token = game.getGlobal("EMOTE" .. i .. "_TOKEN")
+		if token then
+			AddCommands(lists.emotes, game.getGlobal, "EMOTE" .. i .. "_CMD", token)
+		end
+	end
+	return lists
+end
+
 -- What a typed command (upper case, not a protected one) is, looked up in
--- `lists`: chatTypes (command -> chat type), chatTypeInfo (chat type -> info),
--- slashCommands (command -> handler), isSecure(table, key) and emotes
--- (command -> emote token). Returns "channel" and the channel number for
--- "/1"; "chatType" and the chat type; "addon" and the handler of an addon's
--- command; "emote" and the token; or "unknown".
+-- `lists` (see Parse.Lookups): chatTypes (command -> chat type), chatTypeInfo
+-- (chat type -> info), slashCommands (command -> handler), secure (command ->
+-- whether Blizzard's own code registered it) and emotes (command -> emote
+-- token). Returns "channel" and the channel number for "/1"; "chatType" and
+-- the chat type; "addon" and the handler of an addon's command; "emote" and
+-- the token; "blizzard" for Blizzard's own other commands; or "unknown".
 function Parse.Classify(command, lists)
 	local channelNumber = command:match("^/(%d+)$")
 	if channelNumber then
@@ -67,15 +124,16 @@ function Parse.Classify(command, lists)
 	if info and not info.ignoreChatTypeProcessing then
 		return "chatType", chatType
 	end
-	-- Commands registered by Blizzard's own code are secure variables; addon
-	-- commands are not.
 	local handler = lists.slashCommands[command]
-	if handler and not lists.isSecure(lists.slashCommands, command) then
+	if handler and not lists.secure[command] then
 		return "addon", handler
 	end
 	local token = lists.emotes[command]
 	if token then
 		return "emote", token
+	end
+	if handler then
+		return "blizzard"
 	end
 	return "unknown"
 end
