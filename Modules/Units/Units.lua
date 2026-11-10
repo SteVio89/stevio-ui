@@ -233,7 +233,6 @@ local function HideBlizzardFrames()
 	ns.HideBlizzard(TargetFrame)
 	ns.HideBlizzard(FocusFrame)
 	ns.HideBlizzard(PetFrame)
-	ns.HideBlizzard(PartyFrame)
 	ns.HideBlizzard(PlayerCastingBarFrame)
 	ns.HideBlizzard(PetCastingBarFrame)
 end
