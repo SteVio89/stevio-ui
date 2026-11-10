@@ -55,6 +55,9 @@ local popupSource = {
 		end
 		return popupRequested
 	end,
+	PeekOpen = function()
+		return popupRequested and AnyPopupShown()
+	end,
 	Collect = function()
 		local targets = {}
 		ForEachPopup(function(dialog)

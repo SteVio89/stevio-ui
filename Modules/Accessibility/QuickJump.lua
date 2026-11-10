@@ -283,6 +283,10 @@ function QuickJump:RequestRefresh()
 end
 
 -- Sources are asked by descending priority; the first open one with targets wins.
+-- A source: name, priority, IsOpen(), Collect(), and optionally GetScrollBar(),
+-- OnFinished(), and for the /sui qj dump, which must not change what gets
+-- labels next, side-effect free PeekOpen() and PeekCollect() where IsOpen or
+-- Collect change state.
 function QuickJump:RegisterSource(source)
 	sources[#sources + 1] = source
 	table.sort(sources, function(a, b)
@@ -325,15 +329,14 @@ end)
 
 -- Dumps what would be labelled right now, for diagnosing missing or dead
 -- labels. Saved for reading outside the game and shown in a copyable window.
--- Registered at load like every /sui command; with the module off there are
--- no sources, so the dump is empty.
+-- Only looks: the Peek functions leave the sources' state as it was.
 ns.RegisterModuleCommand("qj", "accessibility", function()
 	local lines = {}
 	for _, source in ipairs(sources) do
-		local open = source.IsOpen()
+		local open = (source.PeekOpen or source.IsOpen)()
 		lines[#lines + 1] = ("%s: %s"):format(source.name, open and "open" or "closed")
 		if open then
-			local ok, collected = pcall(source.Collect)
+			local ok, collected = pcall(source.PeekCollect or source.Collect)
 			if not ok then
 				lines[#lines + 1] = "  error: " .. tostring(collected)
 			else
