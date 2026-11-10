@@ -52,16 +52,10 @@ end
 -- Derived from the layout instead of a fixed size so the map scales with the
 -- space right of the target frame, whatever the screen width or UI scale.
 local function GetMapSize()
-	local targetWidth
-	for _, spec in ipairs(ns.config.units.frames) do
-		if spec.unit == "target" then
-			targetWidth = spec.width
-		end
-	end
 	return ns.MinimapGeometry.MapSize(
 		UIParent:GetWidth(),
 		ns.layout.target.x,
-		targetWidth,
+		ns.MinimapGeometry.TargetWidth(ns.config.units.frames),
 		ns.layout.minimap.x,
 		config.gapToTarget,
 		config.sizeScale
