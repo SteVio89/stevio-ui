@@ -123,14 +123,13 @@ function Overrides.Put(roots, path, value)
 	end
 end
 
--- Whether a saved value still fits the config: its parent table exists and it
--- doesn't change the kind of value (a code change may have removed or reshaped it).
+-- Whether a saved value still fits the config: its key exists and it doesn't
+-- change the kind of value (a code change may have removed or reshaped it).
+-- The options panel only edits existing keys; list entries it adds are saved
+-- with their whole list, which is applied first.
 local function Fits(roots, path, value)
-	if type(Overrides.Get(roots, Overrides.Prefix(path, #path - 1))) ~= "table" then
-		return false
-	end
 	local current = Overrides.Get(roots, path)
-	return current == nil and type(path[#path]) == "string" or current ~= nil and type(current) == type(value)
+	return current ~= nil and type(current) == type(value)
 end
 
 -- Applies all saved values; shorter paths first, so a replaced list is in

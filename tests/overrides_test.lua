@@ -105,12 +105,12 @@ local stale = {
 	["config/units/frames/#5/width"] = 100, -- the list has 2 entries
 	["config/chat/quiet"] = { 1 }, -- a boolean in code
 	["config/gone/x"] = 1, -- a removed table
-	["config/chat/newFlag"] = true, -- a new key in an existing table is fine
+	["config/chat/oldFlag"] = true, -- a key removed from an existing table
 }
 Overrides.ApplyAll(fresh, stale)
 check(fresh.config.units.frames[5] == nil and stale["config/units/frames/#5/width"] == nil, "missing list entry")
 check(fresh.config.chat.quiet == true and stale["config/chat/quiet"] == nil, "changed kind of value")
 check(fresh.config.gone == nil and stale["config/gone/x"] == nil, "removed table")
-check(fresh.config.chat.newFlag == true and stale["config/chat/newFlag"] == true, "new key kept")
+check(fresh.config.chat.oldFlag == nil and stale["config/chat/oldFlag"] == nil, "removed key")
 print("stale overrides ok")
 print("overrides tests passed")
