@@ -43,9 +43,26 @@ check(not store:Delete("nope"), "unknown channel")
 local saved = {}
 History.New(saved, 3):Add("party", party, { time = 1, text = "kept" }, false)
 check(History.New(saved, 3):Get("party").messages[1].text == "kept", "persists via saved table")
+
+-- A lowered limit trims saved channels at load, and Add trims to the limit.
+do
+	local big = History.New({}, 5)
+	for i = 1, 5 do
+		big:Add("party", party, { time = i, text = "m" .. i }, false)
+	end
+	local small = History.New(big.db, 2)
+	local messages = small:Get("party").messages
+	check(#messages == 2 and messages[1].text == "m4" and messages[2].text == "m5", "trimmed at load")
+	small.limit = 1
+	small:Add("party", party, { time = 6, text = "m6" }, false)
+	check(#messages == 1 and messages[1].text == "m6", "Add trims down to the limit")
+end
 print("ok")
 
 check(History.StripMarkup("|cffff0000hi|r |Hitem:1|h[Sword]|h |TFoo:0|t||") == "hi [Sword] |", "markup is stripped")
+check(History.StripMarkup("|Kq2|k: |Aicon:16:16|aok|na") == ": ok\na", "Battle.net names, atlases, line breaks")
+check(History.StripMarkup("|cnGREEN_FONT_COLOR:go|r") == "go", "named colors")
+check(History.StripMarkup("||cffff0000 stays") == "|cffff0000 stays", "escaped bar is no color")
 local transcript = History.Transcript(
 	{ messages = {
 		{ time = 5, sender = "A", text = "|cff00ff00x|r" },

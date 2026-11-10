@@ -68,7 +68,7 @@ do
 	check(History.NextIndex(keys, "a", -1) == 3, "previous wraps")
 	check(History.NextIndex(keys, "b", -1) == 1, "previous")
 	check(History.NextIndex(keys, "x", 1) == 1, "unknown selection: next is the first")
-	check(History.NextIndex(keys, nil, -1) == 2, "unknown selection: previous is the second to last")
+	check(History.NextIndex(keys, nil, -1) == 3, "unknown selection: previous is the last")
 	check(History.NextIndex({ "a" }, "a", 1) == 1 and History.NextIndex({ "a" }, nil, -1) == 1, "one channel")
 	check(History.NextIndex({}, nil, 1) == nil, "no channels")
 end
