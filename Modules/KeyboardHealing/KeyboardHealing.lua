@@ -30,13 +30,10 @@ local testActive = false
 local function UpdateCursorState()
 	local unit = cursor:GetAttribute("unit")
 	local isTarget = unit ~= nil and UnitIsUnit(unit, "target")
-	if issecretvalue(isTarget) then
-		cursor.activeBorder:SetShownFromBoolean(isTarget)
-		cursor.idleBorder:SetHiddenFromBoolean(isTarget)
-	else
-		cursor.activeBorder:SetShown(isTarget)
-		cursor.idleBorder:SetShown(not isTarget)
-	end
+	-- isTarget may be secret. The FromBoolean setters take it either way and
+	-- also reset the alpha a secret evaluation may have left at 0.
+	cursor.activeBorder:SetShownFromBoolean(isTarget)
+	cursor.idleBorder:SetHiddenFromBoolean(isTarget)
 end
 
 local function CreateCursor()
