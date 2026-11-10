@@ -92,12 +92,20 @@ local function PlayerClass(name, guid)
 			return class
 		end
 	end
-	local prefix = IsInRaid() and "raid" or "party"
-	for i = 1, GetNumGroupMembers() do
+	-- "partyN" leaves out the player, so a party has one token fewer than members.
+	-- Names may carry a realm on either side, so both are compared without it.
+	local inRaid = IsInRaid()
+	local prefix = inRaid and "raid" or "party"
+	local count = GetNumGroupMembers() - (inRaid and 0 or 1)
+	local shortName = Ambiguate(name, "short")
+	for i = 1, count do
 		local unit = prefix .. i
-		local unitName = UnitName(unit)
-		if unitName and not issecretvalue(unitName) and unitName == name then
-			return select(2, UnitClass(unit))
+		local unitName, unitRealm = UnitName(unit)
+		if unitName and not issecretvalue(unitName) and not issecretvalue(unitRealm) then
+			local fullName = unitRealm and unitRealm ~= "" and (unitName .. "-" .. unitRealm) or unitName
+			if Ambiguate(fullName, "short") == shortName then
+				return select(2, UnitClass(unit))
+			end
 		end
 	end
 end
