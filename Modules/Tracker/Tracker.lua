@@ -26,7 +26,11 @@ local function Apply()
 	ns.RunAfterCombat(ApplyShown)
 end
 
+-- Bound to a key even while the module is off; then there is nothing to toggle.
 function ns.ToggleTracker()
+	if not badge then
+		return
+	end
 	shown = not shown
 	Apply()
 end
