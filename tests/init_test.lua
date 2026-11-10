@@ -141,4 +141,26 @@ check(layoutApplied, "layout applied after a failing module")
 check(#reported == 1 and reported[1]:find("module broke", 1, true), "module error reported")
 print("module isolation ok")
 
+-- Module commands: listed always, run only for a module that enabled.
+do
+	ns.isGerman = false
+	local commandRuns, printed = {}, {}
+	local realPrint = print
+	_G.print = function(line)
+		printed[#printed + 1] = line
+	end
+	for _, name in ipairs({ "last", "off", "broken" }) do
+		ns.RegisterModuleCommand(name, name, function(input)
+			commandRuns[#commandRuns + 1] = name .. ":" .. input
+		end)
+	end
+	SlashCmdList.STEVIOUI("last now")
+	SlashCmdList.STEVIOUI("off")
+	SlashCmdList.STEVIOUI("broken")
+	_G.print = realPrint
+	check(table.concat(commandRuns, " ") == "last:now", "only the enabled module's command runs")
+	check(#printed == 2 and printed[1]:find("off is turned off", 1, true), "the others say the module is off")
+end
+print("module commands ok")
+
 print("init tests passed")

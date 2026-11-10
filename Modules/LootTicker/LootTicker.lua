@@ -410,5 +410,6 @@ function LootTicker:OnEnable()
 	ns.RegisterEvent("CHAT_MSG_CURRENCY", OnLoot)
 	ns.RegisterEvent("CHAT_MSG_MONEY", OnMoney)
 	ns.RegisterEvent("LOOT_HISTORY_UPDATE_DROP", OnDrop)
-	ns.RegisterSlashCommand("loot", Preview)
 end
+
+ns.RegisterModuleCommand("loot", "lootTicker", Preview)

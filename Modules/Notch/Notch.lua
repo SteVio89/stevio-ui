@@ -430,6 +430,6 @@ function Notch:OnEnable()
 		end)
 		Buttons.Scan(config.buttonSize)
 	end
-
-	ns.RegisterSlashCommand("notch", DumpGeometry)
 end
+
+ns.RegisterModuleCommand("notch", "notch", DumpGeometry)

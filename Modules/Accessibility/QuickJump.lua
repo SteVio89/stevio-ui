@@ -327,7 +327,7 @@ end)
 -- labels. Saved for reading outside the game and shown in a copyable window.
 -- Registered at load like every /sui command; with the module off there are
 -- no sources, so the dump is empty.
-ns.RegisterSlashCommand("qj", function()
+ns.RegisterModuleCommand("qj", "accessibility", function()
 	local lines = {}
 	for _, source in ipairs(sources) do
 		local open = source.IsOpen()

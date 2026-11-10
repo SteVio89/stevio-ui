@@ -18,10 +18,12 @@ ns.MAX_GROUPS = 8
 ns.UNITS_PER_GROUP = 5
 
 local modules = {}
+local modulesByName = {}
 
 function ns.RegisterModule(name, module)
 	module.name = name
 	modules[#modules + 1] = module
+	modulesByName[name] = module
 	return module
 end
 
@@ -101,6 +103,21 @@ function ns.ParseSlash(input)
 	return name:lower(), rest
 end
 
+-- A /sui command of module `moduleName`: always listed, but it only runs
+-- once the module is enabled (and its OnEnable succeeded); before that it
+-- says the module is off.
+function ns.RegisterModuleCommand(name, moduleName, handler)
+	ns.RegisterSlashCommand(name, function(input)
+		local module = modulesByName[moduleName]
+		if module and module.active then
+			handler(input)
+			return
+		end
+		local label = ns.ConfigLabel and ns.ConfigLabel(moduleName) or moduleName
+		ns.Print(ns.T("%s is turned off", "%s ist ausgeschaltet"):format(label))
+	end)
+end
+
 SLASH_STEVIOUI1 = "/sui"
 SlashCmdList.STEVIOUI = function(input)
 	local name, rest = ns.ParseSlash(input)
@@ -148,7 +165,7 @@ local function EnableModules()
 	for _, module in ipairs(modules) do
 		local config = ns.config[module.name]
 		if not config or config.enabled ~= false then
-			ns.SafeCall(module.OnEnable, module)
+			module.active = ns.SafeCall(module.OnEnable, module)
 		end
 	end
 	ns.ApplyEditModeLayout()
