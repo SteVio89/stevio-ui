@@ -47,10 +47,27 @@ local function UpdatePowerType(cell)
 	ns.UpdatePowerType(cell.power, cell.unit)
 end
 
+-- Whether the cell shows the player. UnitIsUnit may be secret in combat; then
+-- the answer from the last readable check of the same unit token is used.
+local function IsPlayerCell(cell)
+	local unit = cell.unit
+	if unit == "player" then
+		return true
+	end
+	local isPlayer = UnitIsUnit(unit, "player")
+	if not issecretvalue(isPlayer) then
+		cell.checkedUnit, cell.checkedIsPlayer = unit, isPlayer
+		return isPlayer
+	end
+	return cell.checkedUnit == unit and cell.checkedIsPlayer
+end
+
+-- The player's own cell can't be range checked and always stays at full alpha,
+-- in combat too. In combat checkedRange may be secret; every other group
+-- member can be checked, so inRange alone decides then.
 local function UpdateRange(cell)
 	local unit = cell.unit
-	local isPlayer = UnitIsUnit(unit, "player")
-	if not issecretvalue(isPlayer) and isPlayer then
+	if IsPlayerCell(cell) then
 		cell:SetAlpha(1)
 		return
 	end
