@@ -42,8 +42,7 @@ check(Model.BindingOverride("JUMP", "JUMP") == nil, "the profile's command")
 check(Model.BindingOverride("SITORSTAND", "JUMP") == "SITORSTAND", "another command")
 check(Model.BindingOverride("JUMP", nil) == "JUMP", "a key outside the profile")
 check(Model.BindingOverride(nil, nil) == nil, "unbinding a key outside the profile")
--- `profileCommand and false or nil` is always nil, so this saves no override.
-check(Model.BindingOverride(nil, "JUMP") == nil, "unbinding a profile key")
+check(Model.BindingOverride(nil, "JUMP") == false, "unbinding a profile key")
 print("panel bindings ok")
 
 -- AddUnknownProfileBindings: profile keys whose command is missing this
