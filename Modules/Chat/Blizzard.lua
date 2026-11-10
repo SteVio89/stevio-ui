@@ -216,10 +216,14 @@ function C.SetupBlizzardChat()
 	ScanChatFrames()
 	ManageAlerts()
 	GuardAlpha(GeneralDockManager)
-	hooksecurefunc("FCF_OpenTemporaryWindow", function()
-		ScanChatFrames()
-		C.ApplyBlizzardVisibility(true)
-	end)
+	-- Temporary windows (whispers popped out, pet battle log, ...) get hidden
+	-- as they open; a client without this global loads the chat without it.
+	if FCF_OpenTemporaryWindow then
+		hooksecurefunc("FCF_OpenTemporaryWindow", function()
+			ScanChatFrames()
+			C.ApplyBlizzardVisibility(true)
+		end)
+	end
 
 	HookChatActivation("ActivateChat", "ChatEdit_ActivateChat", true)
 	HookChatActivation("DeactivateChat", "ChatEdit_DeactivateChat", false)
