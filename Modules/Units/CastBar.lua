@@ -12,10 +12,14 @@ local TIME_INTERVAL = 0.05
 local startEvents = {
 	UNIT_SPELLCAST_START = false,
 	UNIT_SPELLCAST_DELAYED = false,
-	UNIT_SPELLCAST_INTERRUPTIBLE = false,
-	UNIT_SPELLCAST_NOT_INTERRUPTIBLE = false,
 	UNIT_SPELLCAST_CHANNEL_START = true,
 	UNIT_SPELLCAST_CHANNEL_UPDATE = true,
+}
+
+-- Fired for casts and channels alike, so they refresh whichever is running.
+local refreshEvents = {
+	UNIT_SPELLCAST_INTERRUPTIBLE = true,
+	UNIT_SPELLCAST_NOT_INTERRUPTIBLE = true,
 }
 
 local stopEvents = {
@@ -30,7 +34,7 @@ local CastBar = {}
 ns.CastBar = CastBar
 
 -- What an event means for the bar: "stop", "start" (plus whether it is a
--- channel) or, for unit changes, "refresh".
+-- channel) or, for unit changes and interruptible changes, "refresh".
 function CastBar.CastAction(event)
 	if stopEvents[event] then
 		return "stop"
@@ -129,6 +133,9 @@ function ns.CreateCastBar(unit, sizeFrame, anchor, align, options)
 	castBar:Hide()
 
 	for event in pairs(startEvents) do
+		castBar:RegisterUnitEvent(event, unit)
+	end
+	for event in pairs(refreshEvents) do
 		castBar:RegisterUnitEvent(event, unit)
 	end
 	for event in pairs(stopEvents) do
