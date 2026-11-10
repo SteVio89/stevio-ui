@@ -24,13 +24,12 @@ local function GetChoiceButtons()
 	return Choices.Buttons(rewardsFrame.RewardButtons or {}, true)
 end
 
--- `items` holds { count, itemID } per button, read from the quest before the
--- items were loaded.
-local function MarkMostValuable(buttons, items)
+local function MarkMostValuable(buttons)
 	local values = {}
-	for index, item in ipairs(items) do
-		local sellPrice = item.itemID and select(11, C_Item.GetItemInfo(item.itemID))
-		values[index] = (sellPrice or 0) * (item.count or 1)
+	for index, button in ipairs(buttons) do
+		local _, _, count, _, _, itemID = GetQuestItemInfo("choice", button:GetID())
+		local sellPrice = itemID and select(11, C_Item.GetItemInfo(itemID))
+		values[index] = (sellPrice or 0) * (count or 1)
 	end
 	local best = Choices.MostValuable(values)
 	if best then
@@ -58,10 +57,8 @@ local function Update(template)
 
 	-- Sell prices are only known once the items are cached.
 	local container = ContinuableContainer:Create()
-	local items = {}
-	for index, button in ipairs(buttons) do
-		local _, _, count, _, _, itemID = GetQuestItemInfo("choice", button:GetID())
-		items[index] = { count = count, itemID = itemID }
+	for _, button in ipairs(buttons) do
+		local itemID = select(6, GetQuestItemInfo("choice", button:GetID()))
 		if itemID then
 			container:AddContinuable(Item:CreateFromItemID(itemID))
 		end
@@ -69,7 +66,7 @@ local function Update(template)
 	pendingLoad = container
 	container:ContinueOnLoad(function()
 		pendingLoad = nil
-		MarkMostValuable(buttons, items)
+		MarkMostValuable(buttons)
 	end)
 end
 

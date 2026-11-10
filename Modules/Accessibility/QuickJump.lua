@@ -313,14 +313,15 @@ function Internal.SetupQuickJump()
 	scrollUp:SetScript("OnClick", function()
 		Scroll(ScrollControllerMixin.Directions.Decrease)
 	end)
-
-	-- PLAYER_REGEN_DISABLED still runs before lockdown starts, the last moment
-	-- bindings can be removed; leftover labels would keep letters bound in combat.
-	ns.RegisterEvent("PLAYER_REGEN_DISABLED", ClearLabels)
-	ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
-		QuickJump:RequestRefresh()
-	end)
 end
+
+-- PLAYER_REGEN_DISABLED still runs before lockdown starts, the last moment
+-- bindings can be removed; leftover labels would keep letters bound in combat.
+-- Registered at load, so they run before handlers modules add when enabled.
+ns.RegisterEvent("PLAYER_REGEN_DISABLED", ClearLabels)
+ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
+	QuickJump:RequestRefresh()
+end)
 
 -- Dumps what would be labelled right now, for diagnosing missing or dead
 -- labels. Saved for reading outside the game and shown in a copyable window.

@@ -62,15 +62,12 @@ local function QualityColor(quality, link)
 end
 
 -- Item qualities by link color ({ [quality] = "ffrrggbb" }), for items not
--- cached yet. Built on first use.
-local qualityHex
-
+-- cached yet. Built on every call, since the player can change quality colors
+-- in Blizzard's accessibility settings.
 local function QualityHex()
-	if not qualityHex then
-		qualityHex = {}
-		for quality, color in pairs(ITEM_QUALITY_COLORS) do
-			qualityHex[quality] = color.hex and color.hex:match("|c(%x%x%x%x%x%x%x%x)")
-		end
+	local qualityHex = {}
+	for quality, color in pairs(ITEM_QUALITY_COLORS) do
+		qualityHex[quality] = color.hex and color.hex:match("|c(%x%x%x%x%x%x%x%x)")
 	end
 	return qualityHex
 end
