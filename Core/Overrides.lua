@@ -195,6 +195,34 @@ function Overrides.Record(values, defaults, roots, path)
 	end
 end
 
+-- Config keys that were renamed or moved, as { old, new } encoded paths (or
+-- path prefixes), oldest first. Saved values still under an old path move to
+-- the new one when the saved variables load.
+Overrides.RENAMES = {
+	{ "config/actionbars", "config/actionBars" },
+	{ "config/notch/colors/restedAlpha", "config/notch/restedAlpha" },
+}
+
+-- Moves saved values in `values` from each renamed path (and below it) to its
+-- new path. A value already saved at the new path wins.
+function Overrides.Migrate(values, renames)
+	for _, rename in ipairs(renames) do
+		local old, new = rename[1], rename[2]
+		local moves = {}
+		for encoded in pairs(values) do
+			if encoded == old or encoded:sub(1, #old + 1) == old .. "/" then
+				moves[encoded] = new .. encoded:sub(#old + 1)
+			end
+		end
+		for from, to in pairs(moves) do
+			if values[to] == nil then
+				values[to] = values[from]
+			end
+			values[from] = nil
+		end
+	end
+end
+
 -- Keybindings and CVars are flat maps (key -> command, CVar -> value); their
 -- overrides hold what differs from the profile, `false` meaning "removed".
 function Overrides.Merge(profile, overrides)
@@ -243,6 +271,7 @@ if ns.RegisterEvent then
 
 		ns.overrideRoots = { config = ns.config, layout = ns.layout }
 		ns.overrideDefaults = Overrides.DeepCopy(ns.overrideRoots)
+		ns.SafeCall(Overrides.Migrate, StevioUIConfig.values, Overrides.RENAMES)
 		ns.SafeCall(Overrides.ApplyAll, ns.overrideRoots, StevioUIConfig.values)
 	end
 	ns.RegisterEvent("ADDON_LOADED", OnAddonLoaded)

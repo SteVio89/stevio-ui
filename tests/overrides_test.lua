@@ -113,4 +113,33 @@ check(fresh.config.chat.quiet == true and stale["config/chat/quiet"] == nil, "ch
 check(fresh.config.gone == nil and stale["config/gone/x"] == nil, "removed table")
 check(fresh.config.chat.oldFlag == nil and stale["config/chat/oldFlag"] == nil, "removed key")
 print("stale overrides ok")
+-- Migrate: migrating values move from renamed paths, a value at the new path wins.
+do
+	local migrating = {
+		["config/actionbars/enabled"] = false,
+		["config/actionbars/bars"] = { "a" },
+		["config/actionbarsExtra/x"] = 1, -- only a common prefix
+		["config/notch/colors/restedAlpha"] = 0.7,
+		["config/old"] = 1,
+		["config/new"] = 2,
+	}
+	Overrides.Migrate(migrating, {
+		{ "config/actionbars", "config/actionBars" },
+		{ "config/notch/colors/restedAlpha", "config/notch/restedAlpha" },
+		{ "config/old", "config/new" },
+	})
+	check(
+		migrating["config/actionBars/enabled"] == false and migrating["config/actionbars/enabled"] == nil,
+		"moved below"
+	)
+	check(migrating["config/actionBars/bars"][1] == "a", "tables move as they are")
+	check(migrating["config/actionbarsExtra/x"] == 1, "a key with the same start stays")
+	check(
+		migrating["config/notch/restedAlpha"] == 0.7 and migrating["config/notch/colors/restedAlpha"] == nil,
+		"moved itself"
+	)
+	check(migrating["config/new"] == 2 and migrating["config/old"] == nil, "the new path wins")
+	check(#Overrides.RENAMES >= 2, "renames listed")
+end
+print("migrate ok")
 print("overrides tests passed")

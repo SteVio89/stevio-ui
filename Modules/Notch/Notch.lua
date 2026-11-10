@@ -52,7 +52,7 @@ local function SetBar(row, min, max, value, overlayValue, r, g, b)
 	row.bar:SetStatusBarColor(r, g, b)
 	row.overlay:SetMinMaxValues(min, max)
 	row.overlay:SetValue(overlayValue)
-	row.overlay:SetStatusBarColor(r, g, b, colors.restedAlpha)
+	row.overlay:SetStatusBarColor(r, g, b, config.restedAlpha)
 end
 
 local function HasXP()

@@ -9,7 +9,6 @@ local labels = {
 	absorbColor = { "Absorb shields", "Absorbschilde" },
 	accessibility = { "Quickjump", "Schnellsprung" },
 	actionBars = { "Action bars", "Aktionsleisten" },
-	actionbars = { "Action bars", "Aktionsleisten" },
 	actionSets = { "Action set button", "Knopf Aktionsleisten-Sets" },
 	aggroColor = { "Aggro border", "Aggro-Rahmen" },
 	alertGap = {

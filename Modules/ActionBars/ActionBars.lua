@@ -1,9 +1,9 @@
 local _, ns = ...
 
-local config = ns.config.actionbars
+local config = ns.config.actionBars
 local style = ns.config.style
 
-local ActionBars = ns.RegisterModule("actionbars", {})
+local ActionBars = ns.RegisterModule("actionBars", {})
 
 -- Blizzard's own bars and buttons are kept, only restyled and moved: paging,
 -- keybinds, cooldowns, range tint and proc glows keep working under the

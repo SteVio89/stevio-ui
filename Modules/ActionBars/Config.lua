@@ -1,6 +1,6 @@
 local _, ns = ...
 
-ns.config.actionbars = {
+ns.config.actionBars = {
 	enabled = true,
 
 	-- Blizzard bar frames in layout order; positions come from ns.layout.actionBars.
