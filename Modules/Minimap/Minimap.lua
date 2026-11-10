@@ -5,9 +5,11 @@ local config = ns.config.minimap
 
 local SQUARE_MASK = "Interface\\Buttons\\WHITE8X8"
 
--- Read by other addons (e.g. LibDBIcon) to place their minimap buttons correctly.
+-- Read by other addons (e.g. LibDBIcon) to place their minimap buttons
+-- correctly. Defined at load, as they may place buttons before the module is
+-- enabled; with the module off they get Blizzard's round map.
 function GetMinimapShape()
-	return "SQUARE"
+	return config.enabled == false and "ROUND" or "SQUARE"
 end
 
 local function OnMouseWheel(minimap, delta)
