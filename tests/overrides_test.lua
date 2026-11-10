@@ -113,7 +113,7 @@ check(fresh.config.chat.quiet == true and stale["config/chat/quiet"] == nil, "ch
 check(fresh.config.gone == nil and stale["config/gone/x"] == nil, "removed table")
 check(fresh.config.chat.oldFlag == nil and stale["config/chat/oldFlag"] == nil, "removed key")
 print("stale overrides ok")
--- Migrate: migrating values move from renamed paths, a value at the new path wins.
+-- Rename: saved values move from a renamed path, a value at the new path wins.
 do
 	local migrating = {
 		["config/actionbars/enabled"] = false,
@@ -123,11 +123,9 @@ do
 		["config/old"] = 1,
 		["config/new"] = 2,
 	}
-	Overrides.Migrate(migrating, {
-		{ "config/actionbars", "config/actionBars" },
-		{ "config/notch/colors/restedAlpha", "config/notch/restedAlpha" },
-		{ "config/old", "config/new" },
-	})
+	Overrides.Rename(migrating, "config/actionbars", "config/actionBars")
+	Overrides.Rename(migrating, "config/notch/colors/restedAlpha", "config/notch/restedAlpha")
+	Overrides.Rename(migrating, "config/old", "config/new")
 	check(
 		migrating["config/actionBars/enabled"] == false and migrating["config/actionbars/enabled"] == nil,
 		"moved below"
@@ -139,7 +137,38 @@ do
 		"moved itself"
 	)
 	check(migrating["config/new"] == 2 and migrating["config/old"] == nil, "the new path wins")
-	check(#Overrides.RENAMES >= 2, "renames listed")
+end
+
+-- Migrate: each migration runs once per set of saved values.
+do
+	local runs = 0
+	local migrations = {
+		{ id = "rename", rename = { "config/a", "config/b" } },
+		{
+			id = "double",
+			run = function(target)
+				runs = runs + 1
+				target["config/n"] = target["config/n"] * 2
+			end,
+		},
+	}
+	local migrating, done = { ["config/a"] = 1, ["config/n"] = 2 }, {}
+	Overrides.Migrate(migrating, migrations, done)
+	Overrides.Migrate(migrating, migrations, done)
+	check(migrating["config/b"] == 1 and migrating["config/n"] == 4 and runs == 1, "ran once")
+	check(done.rename and done.double, "marked done")
+end
+
+-- The shipped migrations: absolute x positions beside the group grid become offsets from its edge.
+do
+	local migrating = {
+		["config/actionbars/iconSize"] = 70,
+		["layout/targetAuras/x"] = 340,
+		["layout/focus/x"] = -340,
+	}
+	Overrides.Migrate(migrating, Overrides.MIGRATIONS, {})
+	check(migrating["config/actionBars/iconSize"] == 70, "action bar key renamed")
+	check(migrating["layout/targetAuras/x"] == 9 and migrating["layout/focus/x"] == -9, "offsets from the grid edge")
 end
 print("migrate ok")
 print("overrides tests passed")

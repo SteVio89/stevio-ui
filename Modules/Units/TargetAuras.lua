@@ -14,7 +14,7 @@ function ns.CreateTargetAuras()
 	local container = ns.CreateAuraContainer(UIParent, {
 		place = function(container)
 			container:SetSize(options.max * (options.size + options.spacing), options.size)
-			ns.SetPoint(container, ns.layout.targetAuras)
+			ns.SetPoint(container, ns.LayoutPosition("targetAuras"))
 		end,
 		flowAnchor = "TOPLEFT",
 		growth = AnchorUtil.FlowDirection.Right,

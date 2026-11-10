@@ -13,6 +13,12 @@ function ns.GetGroupCellSize()
 	return template.width, template.height
 end
 
+-- Half the grid's width, rounded up; what sits beside it (Layout.lua) counts from there.
+function ns.GetGroupHalfWidth()
+	local baseWidth = ns.GetGroupCellSize()
+	return math.ceil(ns.GetGroupGridWidth(baseWidth) / 2)
+end
+
 function ns.CreateGroupContainer(baseWidth, cellHeight)
 	local container = CreateFrame("Frame", nil, UIParent)
 	container:SetSize(ns.GetGroupGridWidth(baseWidth), cellHeight)

@@ -195,30 +195,59 @@ function Overrides.Record(values, defaults, roots, path)
 	end
 end
 
--- Config keys that were renamed or moved, as { old, new } encoded paths (or
--- path prefixes), oldest first. Saved values still under an old path move to
--- the new one when the saved variables load.
-Overrides.RENAMES = {
-	{ "config/actionbars", "config/actionBars" },
-	{ "config/notch/colors/restedAlpha", "config/notch/restedAlpha" },
+-- Moves saved values in `values` from the encoded path `old` (and below it)
+-- to `new`. A value already saved at the new path wins.
+function Overrides.Rename(values, old, new)
+	local moves = {}
+	for encoded in pairs(values) do
+		if encoded == old or encoded:sub(1, #old + 1) == old .. "/" then
+			moves[encoded] = new .. encoded:sub(#old + 1)
+		end
+	end
+	for from, to in pairs(moves) do
+		if values[to] == nil then
+			values[to] = values[from]
+		end
+		values[from] = nil
+	end
+end
+
+-- Half the group grid's width when targetAuras and focus still had absolute
+-- x positions (8 cells of 80 and 7 gaps of 3, rounded up).
+local OLD_GROUP_HALF_WIDTH = 331
+
+-- Changes to the config's shape that saved values have to follow, oldest
+-- first. Each runs once on a set of saved values: `rename` moves a path (see
+-- Overrides.Rename), `run(values)` changes them in place.
+Overrides.MIGRATIONS = {
+	{ id = "actionBarsKey", rename = { "config/actionbars", "config/actionBars" } },
+	{ id = "restedAlpha", rename = { "config/notch/colors/restedAlpha", "config/notch/restedAlpha" } },
+	{
+		-- targetAuras and focus count their x from the group grid's edge now.
+		id = "besideGroupOffsets",
+		run = function(values)
+			local auras, focus = values["layout/targetAuras/x"], values["layout/focus/x"]
+			if type(auras) == "number" then
+				values["layout/targetAuras/x"] = auras - OLD_GROUP_HALF_WIDTH
+			end
+			if type(focus) == "number" then
+				values["layout/focus/x"] = focus + OLD_GROUP_HALF_WIDTH
+			end
+		end,
+	},
 }
 
--- Moves saved values in `values` from each renamed path (and below it) to its
--- new path. A value already saved at the new path wins.
-function Overrides.Migrate(values, renames)
-	for _, rename in ipairs(renames) do
-		local old, new = rename[1], rename[2]
-		local moves = {}
-		for encoded in pairs(values) do
-			if encoded == old or encoded:sub(1, #old + 1) == old .. "/" then
-				moves[encoded] = new .. encoded:sub(#old + 1)
+-- Runs the migrations not yet in `done` (a set of ids, saved with the values)
+-- on `values` and adds them to it.
+function Overrides.Migrate(values, migrations, done)
+	for _, migration in ipairs(migrations) do
+		if not done[migration.id] then
+			if migration.rename then
+				Overrides.Rename(values, migration.rename[1], migration.rename[2])
+			else
+				migration.run(values)
 			end
-		end
-		for from, to in pairs(moves) do
-			if values[to] == nil then
-				values[to] = values[from]
-			end
-			values[from] = nil
+			done[migration.id] = true
 		end
 	end
 end
@@ -268,10 +297,11 @@ if ns.RegisterEvent then
 		StevioUIConfig.values = StevioUIConfig.values or {}
 		StevioUIConfig.bindings = StevioUIConfig.bindings or {}
 		StevioUIConfig.cvars = StevioUIConfig.cvars or {}
+		StevioUIConfig.migrations = StevioUIConfig.migrations or {}
 
 		ns.overrideRoots = { config = ns.config, layout = ns.layout }
 		ns.overrideDefaults = Overrides.DeepCopy(ns.overrideRoots)
-		ns.SafeCall(Overrides.Migrate, StevioUIConfig.values, Overrides.RENAMES)
+		ns.SafeCall(Overrides.Migrate, StevioUIConfig.values, Overrides.MIGRATIONS, StevioUIConfig.migrations)
 		ns.SafeCall(Overrides.ApplyAll, ns.overrideRoots, StevioUIConfig.values)
 	end
 	ns.RegisterEvent("ADDON_LOADED", OnAddonLoaded)

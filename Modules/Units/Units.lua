@@ -194,7 +194,7 @@ local function CreateUnitFrame(spec)
 	if anchor then
 		frame:SetPoint("TOP" .. spec.align, anchor, "BOTTOM" .. spec.align, 0, -spec.gap)
 	else
-		ns.SetPoint(frame, ns.layout[unit])
+		ns.SetPoint(frame, ns.LayoutPosition(unit))
 	end
 
 	if unit == "targettarget" then
