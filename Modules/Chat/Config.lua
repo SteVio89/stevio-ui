@@ -13,12 +13,13 @@ local function With(base, fields)
 	return def
 end
 
-local party = { kind = "group", key = "party", chatType = "PARTY", label = "Party" }
-local raid = { kind = "group", key = "raid", chatType = "RAID", label = "Raid" }
-local instance = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT", label = "Instance" }
-local guild = { kind = "guild", key = "guild", chatType = "GUILD", label = "Guild" }
-local say = { kind = "public", key = "say", chatType = "SAY", label = "Say", quiet = true }
-local yell = { kind = "public", key = "yell", chatType = "YELL", label = "Yell", quiet = true }
+-- Their names come translated from C.Label (Shared.lua), so they carry no label.
+local party = { kind = "group", key = "party", chatType = "PARTY" }
+local raid = { kind = "group", key = "raid", chatType = "RAID" }
+local instance = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT" }
+local guild = { kind = "guild", key = "guild", chatType = "GUILD" }
+local say = { kind = "public", key = "say", chatType = "SAY", quiet = true }
+local yell = { kind = "public", key = "yell", chatType = "YELL", quiet = true }
 
 -- Read-only channels of finished lines without a sender; `format` names how a
 -- line is worded (see Format.lua).
@@ -26,7 +27,6 @@ local system = {
 	kind = "system",
 	key = "system",
 	chatType = "SYSTEM",
-	label = "System",
 	readOnly = true,
 	quiet = true,
 	format = "plain",
@@ -37,7 +37,6 @@ local notices = {
 	kind = "notices",
 	key = "notices",
 	chatType = "SYSTEM",
-	label = "Notices",
 	readOnly = true,
 	quiet = true,
 	silent = true,
@@ -47,7 +46,6 @@ local npc = {
 	kind = "npc",
 	key = "npc",
 	chatType = "MONSTER_SAY",
-	label = "NPC",
 	readOnly = true,
 	quiet = true,
 	format = "get",
@@ -56,7 +54,6 @@ local progress = {
 	kind = "progress",
 	key = "progress",
 	chatType = "LOOT",
-	label = "Loot & Progress",
 	readOnly = true,
 	quiet = true,
 	format = "plain",
@@ -113,7 +110,6 @@ ns.config.chat = {
 		key = "main",
 		kind = "main",
 		chatType = "SAY",
-		label = "Main",
 		kinds = { group = true, guild = true, whisper = true },
 	},
 
