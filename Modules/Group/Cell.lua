@@ -211,22 +211,21 @@ ns.GROUP_ICON_COUNT_SIZE = ICON_COUNT_SIZE
 -- only fills in the elements we hand it. `anchorPoint` is the cell corner or
 -- edge the icons start from (e.g. "LEFT", "TOPLEFT").
 local function CreateAuraGroup(cell, key, filter, anchorPoint, offsetX, offsetY, growth, count, size)
-	local container = CreateFrame("AuraContainer", nil, cell.health, "CustomAuraContainerTemplate")
-	container:SetFrameLevel(cell.health:GetFrameLevel() + 2)
-	container:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
-	container:SetEditModePreviewEnabled(false)
-	-- The icons are display only; clicks go through to the cell underneath.
-	container:EnableMouse(false)
-	local flowAnchor = anchorPoint:find("TOP") and anchorPoint or ("TOP" .. anchorPoint)
-	container:SetFlowLayoutAnchorPoint(flowAnchor)
-	container:SetFlowLayoutGrowthDirection(growth, AnchorUtil.FlowDirection.Down)
-	container:AddAuraGroup(key, filter, {
-		maxFrameCount = count,
-		layout = { elementSpacing = ICON_SPACING },
+	return ns.CreateAuraContainer(cell.health, {
+		place = function(container)
+			container:SetFrameLevel(cell.health:GetFrameLevel() + 2)
+			container:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
+		end,
+		-- The icons are display only; clicks go through to the cell underneath.
+		noMouse = true,
+		flowAnchor = anchorPoint:find("TOP") and anchorPoint or ("TOP" .. anchorPoint),
+		growth = growth,
+		key = key,
+		filter = filter,
+		max = count,
+		spacing = ICON_SPACING,
 		initializeFrame = ns.AuraButtonInitializer(size, ICON_COUNT_SIZE),
 	})
-	container:SetEnabled(true)
-	return container
 end
 
 -- A bar that continues the health fill to the right: it starts where the fill
