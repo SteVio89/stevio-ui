@@ -71,6 +71,18 @@ check(
 	f.noticeUser(nil, "SET_MODERATOR", "Bob", "Trade", nil, 2) == "[2. Trade] Bob is now moderator.",
 	"noticeUser without another player"
 )
+-- Community channels show their community name, in plain and user notices alike.
+_G.ChatFrameUtil = {
+	ResolvePrefixedChannelName = function(name)
+		return name == "Community:12:3" and "Guildies" or name
+	end,
+}
+check(f.notice(nil, "YOU_JOINED", nil, "Community:12:3", nil, 2) == "Joined Channel: [2. Guildies]", "community notice")
+check(
+	f.noticeUser(nil, "KICK", "Bob", "Community:12:3", "Al", 2) == "[2. Guildies] Bob kicked Al.",
+	"community noticeUser"
+)
+_G.ChatFrameUtil = nil
 print("notices ok")
 
 -- Battle.net

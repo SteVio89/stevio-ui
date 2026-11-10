@@ -97,6 +97,7 @@ function formatters.noticeUser(_, token, sender, channelName, otherPlayer, chann
 	if not template then
 		return nil
 	end
+	channelName = ChannelDisplayName(channelName)
 	if otherPlayer and not issecretvalue(otherPlayer) and otherPlayer ~= "" then
 		return format(template, channelIndex, channelName, sender, otherPlayer)
 	elseif token == "INVITE" then
