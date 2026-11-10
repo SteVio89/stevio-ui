@@ -12,7 +12,7 @@ local function Add(def, text, colorType)
 	if not text or text == "" then
 		return
 	end
-	C.Receive(def, def.key, def, { time = time(), text = text, colorType = colorType })
+	C.ReceiveLine(def, text, colorType)
 end
 
 local function AddSystem(text)
@@ -104,11 +104,8 @@ local handlers = {
 -- A notice failing (a global this client lacks) must not break the others.
 function C.SetupNotices()
 	for event, handler in pairs(handlers) do
-		ns:RegisterEvent(event, function(...)
-			local ok, err = pcall(handler, ...)
-			if not ok then
-				geterrorhandler()(err)
-			end
+		ns.RegisterEvent(event, function(...)
+			ns.SafeCall(handler, ...)
 		end)
 	end
 end

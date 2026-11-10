@@ -181,7 +181,6 @@ local labels = {
 		"Kanalarten, die gemeinsam in Haupt erscheinen.",
 	},
 	label = { "Label", "Bezeichnung" },
-	layout = { "Layout", "Layout" },
 	left = { "Left", "Links" },
 	leftKeys = { "First letters", "Erste Buchstaben" },
 	levelUp = { "Level-up", "Stufenaufstieg" },
@@ -374,4 +373,9 @@ function ns.ConfigLabel(key)
 		return key
 	end
 	return Words(key)
+end
+
+-- Whether `key` has an entry above (tests/settings_labels_test.lua checks every config key has one).
+function ns.HasConfigLabel(key)
+	return labels[key] ~= nil
 end

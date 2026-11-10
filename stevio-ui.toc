@@ -10,16 +10,20 @@
 ## X-Curse-Project-ID: 1739367
 
 Core\Init.lua
+Core\Bindings.lua
 Core\Overrides.lua
 Core\ErrorLog.lua
 Core\Consent.lua
 Core\Config.lua
 Core\Layout.lua
 Core\Util.lua
+Core\TextWindow.lua
+Core\EditModeSystems.lua
 Core\EditModeLayout.lua
 
 Modules\Units\Config.lua
 Modules\Units\Units.lua
+Modules\Units\TargetAuras.lua
 Modules\Units\CastBar.lua
 Modules\Units\ClassPower.lua
 
@@ -30,15 +34,18 @@ Modules\ActionBars\Sets.lua
 Modules\ActionBars\SetSwitcher.lua
 
 Modules\Group\Config.lua
+Modules\Group\Grid.lua
 Modules\Group\Cell.lua
 Modules\Group\Cell.xml
 Modules\Group\Group.lua
 Modules\Group\Preview.lua
 
 Modules\KeyboardHealing\Config.lua
+Modules\KeyboardHealing\Snippets.lua
 Modules\KeyboardHealing\KeyboardHealing.lua
 
 Modules\Minimap\Config.lua
+Modules\Minimap\Geometry.lua
 Modules\Minimap\Minimap.lua
 
 Modules\Tooltip\Config.lua
@@ -50,6 +57,7 @@ Modules\Tracker\Tracker.lua
 Modules\Notch\Config.lua
 Modules\Notch\Zone.lua
 Modules\Notch\Buttons.lua
+Modules\Notch\Layout.lua
 Modules\Notch\Notch.lua
 
 Modules\Chat\Config.lua
@@ -63,12 +71,15 @@ Modules\Chat\Format.lua
 Modules\Chat\Notices.lua
 Modules\Chat\Parse.lua
 Modules\Chat\Commands.lua
+Modules\Chat\Receive.lua
+Modules\Chat\Send.lua
 Modules\Chat\Chat.lua
 
 Modules\Auras\Config.lua
 Modules\Auras\Auras.lua
 
 Modules\QuestRewards\Config.lua
+Modules\QuestRewards\Choices.lua
 Modules\QuestRewards\QuestRewards.lua
 
 Modules\LootTicker\Config.lua
@@ -76,6 +87,7 @@ Modules\LootTicker\Feed.lua
 Modules\LootTicker\LootTicker.lua
 
 Modules\Accessibility\Config.lua
+Modules\Accessibility\Labels.lua
 Modules\Accessibility\QuickJump.lua
 Modules\Accessibility\DialogSources.lua
 Modules\Accessibility\Taxi.lua
@@ -84,8 +96,13 @@ Modules\Accessibility\Accessibility.lua
 
 Modules\Settings\Config.lua
 Modules\Settings\Profile.lua
+Modules\Settings\Model.lua
+Modules\Settings\Client.lua
 Modules\Settings\Export.lua
+Modules\Settings\Backup.lua
 Modules\Settings\Settings.lua
 Modules\Settings\Labels.lua
+Modules\Settings\Pages.lua
+Modules\Settings\EditorModel.lua
 Modules\Settings\Editor.lua
 Modules\Settings\Panel.lua

@@ -13,8 +13,12 @@ local function With(base, fields)
 	return def
 end
 
+local party = { kind = "group", key = "party", chatType = "PARTY", label = "Party" }
+local raid = { kind = "group", key = "raid", chatType = "RAID", label = "Raid" }
+local instance = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT", label = "Instance" }
 local guild = { kind = "guild", key = "guild", chatType = "GUILD", label = "Guild" }
 local say = { kind = "public", key = "say", chatType = "SAY", label = "Say", quiet = true }
+local yell = { kind = "public", key = "yell", chatType = "YELL", label = "Yell", quiet = true }
 
 -- Read-only channels of finished lines without a sender; `format` names how a
 -- line is worded (see Format.lua).
@@ -140,23 +144,18 @@ ns.config.chat = {
 	-- count as unread. Events not listed here (other players joining or leaving
 	-- channels, channel member lists, pet battle combat log, voice-to-text) are ignored.
 	events = {
-		CHAT_MSG_PARTY = { kind = "group", key = "party", chatType = "PARTY", label = "Party" },
-		CHAT_MSG_PARTY_LEADER = { kind = "group", key = "party", chatType = "PARTY", label = "Party" },
-		CHAT_MSG_RAID = { kind = "group", key = "raid", chatType = "RAID", label = "Raid" },
-		CHAT_MSG_RAID_LEADER = { kind = "group", key = "raid", chatType = "RAID", label = "Raid" },
-		CHAT_MSG_RAID_WARNING = { kind = "group", key = "raid", chatType = "RAID", label = "Raid", prefix = "[RW] " },
-		CHAT_MSG_INSTANCE_CHAT = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT", label = "Instance" },
-		CHAT_MSG_INSTANCE_CHAT_LEADER = {
-			kind = "group",
-			key = "instance",
-			chatType = "INSTANCE_CHAT",
-			label = "Instance",
-		},
+		CHAT_MSG_PARTY = With(party),
+		CHAT_MSG_PARTY_LEADER = With(party),
+		CHAT_MSG_RAID = With(raid),
+		CHAT_MSG_RAID_LEADER = With(raid),
+		CHAT_MSG_RAID_WARNING = With(raid, { prefix = "[RW] " }),
+		CHAT_MSG_INSTANCE_CHAT = With(instance),
+		CHAT_MSG_INSTANCE_CHAT_LEADER = With(instance),
 		CHAT_MSG_GUILD = With(guild),
 		CHAT_MSG_OFFICER = With(guild, { prefix = "[O] " }),
 		CHAT_MSG_GUILD_DISCORD = With(guild),
 		CHAT_MSG_SAY = With(say),
-		CHAT_MSG_YELL = { kind = "public", key = "yell", chatType = "YELL", label = "Yell", quiet = true },
+		CHAT_MSG_YELL = With(yell),
 		-- Emotes are local like say, so they share its channel: /e (`emote`) gives the
 		-- action without the name, /dance etc. (`textEmote`) the whole sentence.
 		CHAT_MSG_EMOTE = With(say, { emote = true }),
@@ -219,7 +218,7 @@ ns.config.chat = {
 	},
 
 	-- Lines Blizzard writes into its chat window without a chat event; each
-	-- names its channel definition (see Chat.lua for the wording).
+	-- names its channel definition (see Notices.lua for the wording).
 	notices = {
 		levelUp = With(progress),
 		guildMotd = With(guild, { quiet = true }),

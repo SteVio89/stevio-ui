@@ -13,5 +13,6 @@ ignore:
   - .stylua.toml
   - .luacheckrc
   - tests
+  - docs
   - Media/Icon.svg
   - Media/Icon.png

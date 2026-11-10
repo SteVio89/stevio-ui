@@ -51,6 +51,35 @@ function Parse.WhisperTarget(text, isBattleNetName)
 	return text:sub(words[1].from, words[1].to), text:sub(words[2].from), false
 end
 
+-- What a typed command (upper case, not a protected one) is, looked up in
+-- `lists`: chatTypes (command -> chat type), chatTypeInfo (chat type -> info),
+-- slashCommands (command -> handler), isSecure(table, key) and emotes
+-- (command -> emote token). Returns "channel" and the channel number for
+-- "/1"; "chatType" and the chat type; "addon" and the handler of an addon's
+-- command; "emote" and the token; or "unknown".
+function Parse.Classify(command, lists)
+	local channelNumber = command:match("^/(%d+)$")
+	if channelNumber then
+		return "channel", channelNumber
+	end
+	local chatType = lists.chatTypes[command]
+	local info = chatType and lists.chatTypeInfo[chatType]
+	if info and not info.ignoreChatTypeProcessing then
+		return "chatType", chatType
+	end
+	-- Commands registered by Blizzard's own code are secure variables; addon
+	-- commands are not.
+	local handler = lists.slashCommands[command]
+	if handler and not lists.isSecure(lists.slashCommands, command) then
+		return "addon", handler
+	end
+	local token = lists.emotes[command]
+	if token then
+		return "emote", token
+	end
+	return "unknown"
+end
+
 -- Splits "<first word> <rest>"; rest is nil when there is none.
 function Parse.FirstWord(text)
 	local first, rest = text:match("^(%S+)%s+(.+)$")

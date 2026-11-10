@@ -1,13 +1,7 @@
 -- Run with: lua tests/notch_zone_test.lua  (from the repo root)
-local ns = {}
-assert(loadfile("Modules/Notch/Zone.lua"))("stevio-ui", ns)
+local check, loadAddonFile = dofile("tests/helpers.lua")
+local ns = loadAddonFile("Modules/Notch/Zone.lua")
 local Zone = ns.NotchZone
-
-local function check(cond, msg)
-	if not cond then
-		error("FAIL: " .. msg, 2)
-	end
-end
 
 local notch = { left = 100, right = 300, bottom = 960 }
 local island = { left = 40, right = 360, bottom = 800 }

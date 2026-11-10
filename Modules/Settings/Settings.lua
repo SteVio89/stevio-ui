@@ -1,25 +1,28 @@
-local addonName, ns = ...
+local _, ns = ...
 
 local config = ns.config.settings
+local Model = ns.SettingsModel
 
-local Settings = ns:RegisterModule("settings", {})
+local SettingsModule = ns.RegisterModule("settings", {})
 
 -- Set while stevio-ui itself changes CVars or bindings, so those changes
 -- aren't taken for the player's own (see the capture below).
 local applying = false
 
 -- The profile with the options panel's overrides (StevioUIConfig) on top.
-function ns.EffectiveBindings()
+local function EffectiveBindings()
 	return ns.Overrides.Merge(config.profile.bindings or {}, StevioUIConfig.bindings)
 end
 
-function ns.EffectiveCVars()
+local function EffectiveCVars()
 	return ns.Overrides.Merge(config.profile.cvars or {}, StevioUIConfig.cvars)
 end
 
 local function ApplyActionBars(toggles)
+	local current = ns.CurrentActionBarToggles()
 	for index, enabled in ipairs(toggles) do
-		if (not not select(index, GetActionBarToggles())) ~= enabled then
+		-- A bar the client doesn't report counts as off.
+		if (not not current[index]) ~= enabled then
 			SetActionBarToggles(unpack(toggles))
 			return true
 		end
@@ -31,10 +34,9 @@ end
 -- value can't stop the capture for the rest of the session.
 local function Applying(fn, ...)
 	applying = true
-	local ok, result = pcall(fn, ...)
+	local ok, result = ns.SafeCall(fn, ...)
 	applying = false
 	if not ok then
-		geterrorhandler()(result)
 		return false
 	end
 	return result
@@ -53,29 +55,9 @@ local function ApplyCVars(cvars)
 	end)
 end
 
-function ns.GetBindingKeys(index)
-	local keys = {}
-	local count = select("#", GetBinding(index))
-	for i = 3, count do
-		local key = select(i, GetBinding(index))
-		if key then
-			keys[#keys + 1] = key
-		end
-	end
-	return keys
-end
-
 -- Strict: every key not bound in the profile gets unbound, so a fresh client
 -- ends up with exactly the bindings in code.
-local ApplyBindingsNow
-
-local function ApplyBindings(bindings, bindingSet)
-	return Applying(function()
-		return ApplyBindingsNow(bindings, bindingSet)
-	end)
-end
-
-function ApplyBindingsNow(bindings, bindingSet)
+local function ApplyBindingsNow(bindings, bindingSet)
 	bindingSet = bindingSet or Enum.BindingSet.Account
 	local changed = false
 	for index = 1, GetNumBindings() do
@@ -98,57 +80,20 @@ function ApplyBindingsNow(bindings, bindingSet)
 	return changed
 end
 
--- Taken once when the player agrees to the takeover, so /sui restore can hand
--- back what the profile overwrote. It holds every CVar, so CVars added to the
--- profile later can be handed back too.
-function ns.CaptureBackup()
-	local backup = {
-		actionBars = {},
-		bindings = {},
-		bindingSet = GetCurrentBindingSet(),
-		cvars = {},
-		editModeLayout = ns.GetActiveEditModeLayout(),
-	}
-	for i = 1, select("#", GetActionBarToggles()) do
-		backup.actionBars[i] = not not select(i, GetActionBarToggles())
-	end
-	for index = 1, GetNumBindings() do
-		local command = GetBinding(index)
-		for _, key in ipairs(ns.GetBindingKeys(index)) do
-			backup.bindings[key] = command
-		end
-	end
-	ns.ForEachCVar(function(name, value)
-		backup.cvars[name] = value
+local function ApplyBindings(bindings, bindingSet)
+	return Applying(function()
+		return ApplyBindingsNow(bindings, bindingSet)
 	end)
-	return backup
 end
 
--- Only the CVars stevio-ui manages (profile and overrides) go back, so
--- settings stevio-ui never touched stay. Backups from before the full snapshot
--- lack CVars the profile gained since; those go back to the default.
-local function RestoreCVars(backupCVars)
-	local values = {}
-	for name in pairs(ns.EffectiveCVars()) do
-		values[name] = backupCVars[name] or C_CVar.GetCVarDefault(name)
-	end
-	ApplyCVars(values)
-end
-
+-- /sui restore; a single function, so a restore asked for twice in combat runs once.
 local function Restore()
-	local backup = StevioUIState and StevioUIState.backup
-	if not backup then
-		ns.Print(ns.T("No backup found.", "Keine Sicherung vorhanden."))
-		return
-	end
-	ApplyActionBars(backup.actionBars)
-	RestoreCVars(backup.cvars)
-	ApplyBindings(backup.bindings, backup.bindingSet)
-	ns.RestoreEditModeLayout(backup.editModeLayout)
-	-- Forgetting the consent makes a later re-enable ask again and take a fresh backup.
-	StevioUIState = nil
-	C_AddOns.DisableAddOn(addonName)
-	ReloadUI()
+	ns.RestoreBackup({
+		ActionBars = ApplyActionBars,
+		CVars = ApplyCVars,
+		Bindings = ApplyBindings,
+		EffectiveCVars = EffectiveCVars,
+	})
 end
 
 -- Changes are only taken for the player's own once the profile is in place.
@@ -160,10 +105,10 @@ local function ApplyProfile()
 	if profile.actionBars and ApplyActionBars(profile.actionBars) then
 		changed[#changed + 1] = ns.T("action bars", "Aktionsleisten")
 	end
-	if profile.cvars and ApplyCVars(ns.EffectiveCVars()) then
+	if profile.cvars and ApplyCVars(EffectiveCVars()) then
 		changed[#changed + 1] = ns.T("settings", "Einstellungen")
 	end
-	if profile.bindings and ApplyBindings(ns.EffectiveBindings()) then
+	if profile.bindings and ApplyBindings(EffectiveBindings()) then
 		changed[#changed + 1] = ns.T("key bindings", "Tastenbelegung")
 	end
 	profileApplied = true
@@ -179,20 +124,8 @@ end
 -- Profile keys whose command isn't there this session (an addon turned off)
 -- count as unchanged, so they aren't saved as removed.
 local function CurrentBindings()
-	local current, commands = {}, {}
-	for index = 1, GetNumBindings() do
-		local command = GetBinding(index)
-		commands[command] = true
-		for _, key in ipairs(ns.GetBindingKeys(index)) do
-			current[key] = command
-		end
-	end
-	for key, command in pairs(config.profile.bindings) do
-		if current[key] == nil and not commands[command] then
-			current[key] = command
-		end
-	end
-	return current
+	local current, commands = ns.BoundKeys()
+	return Model.AddUnknownProfileBindings(current, commands, config.profile.bindings)
 end
 
 local function OnBindingsChanged()
@@ -204,55 +137,40 @@ end
 
 -- CVar names are case-insensitive; the profile's or override's spelling wins.
 function ns.KnownCVarName(name)
-	local lower = name:lower()
-	for _, map in ipairs({ config.profile.cvars or {}, StevioUIConfig.cvars }) do
-		for known in pairs(map) do
-			if known:lower() == lower then
-				return known
-			end
-		end
-	end
-	return name
+	return Model.KnownCVarName(name, { config.profile.cvars or {}, StevioUIConfig.cvars })
 end
 
 local function OnCVarChanged(_, name)
 	if applying or not profileApplied or not config.profile.cvars or not name or ns.IsIgnoredCVar(name) then
 		return
 	end
-	local value, defaultValue, _, _, isLocked, isSecure, isReadOnly = C_CVar.GetCVarInfo(name)
-	if value == nil or isLocked or isSecure or isReadOnly then
+	local value, defaultValue = ns.SettableCVar(name)
+	if value == nil then
 		return
 	end
 	name = ns.KnownCVarName(name)
-	local profileValue = config.profile.cvars[name]
-	-- Back at the profile's value (or, for a CVar outside the profile, at the
-	-- game default) the override goes away again.
-	if value == (profileValue or defaultValue) then
-		StevioUIConfig.cvars[name] = nil
-	else
-		StevioUIConfig.cvars[name] = value
-	end
+	StevioUIConfig.cvars[name] = Model.CVarOverrideFor(value, defaultValue, config.profile.cvars[name])
 end
 
 -- Applies the effective bindings and CVars right away (out of combat), after
 -- the options panel changed an override; `cvarName` is first set to `cvarValue`
 -- (a CVar that stopped being managed, back to its default).
 function ns.ApplyOverridesNow(cvarName, cvarValue)
-	ns:RunAfterCombat(function()
+	ns.RunAfterCombat(function()
 		if cvarName and cvarValue then
 			Applying(SetCVar, cvarName, cvarValue)
 		end
 		if config.profile.cvars then
-			ApplyCVars(ns.EffectiveCVars())
+			ApplyCVars(EffectiveCVars())
 		end
 		if config.profile.bindings then
-			ApplyBindings(ns.EffectiveBindings())
+			ApplyBindings(EffectiveBindings())
 		end
 	end)
 end
 
-ns:RegisterEvent("UPDATE_BINDINGS", OnBindingsChanged)
-ns:RegisterEvent("CVAR_UPDATE", OnCVarChanged)
+ns.RegisterEvent("UPDATE_BINDINGS", OnBindingsChanged)
+ns.RegisterEvent("CVAR_UPDATE", OnCVarChanged)
 
 -- Bindings and account CVars arrive from the server around login; by the
 -- first PLAYER_ENTERING_WORLD both are in place. The module only enables after
@@ -264,15 +182,17 @@ local function TryApply()
 		return
 	end
 	applied = true
-	ns:RunAfterCombat(ApplyProfile)
+	ns.RunAfterCombat(ApplyProfile)
 end
 
-ns:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+local function OnEnteringWorld()
+	ns.UnregisterEvent("PLAYER_ENTERING_WORLD", OnEnteringWorld)
 	enteredWorld = true
 	TryApply()
-end)
+end
+ns.RegisterEvent("PLAYER_ENTERING_WORLD", OnEnteringWorld)
 
-function Settings:OnEnable()
+function SettingsModule:OnEnable()
 	enabled = true
 	TryApply()
 
@@ -280,21 +200,18 @@ function Settings:OnEnable()
 		SetConsoleKey(config.consoleKey)
 	end
 
-	ns:RegisterSlashCommand("export", function()
+	ns.RegisterSlashCommand("export", function()
 		local text = ns.BuildProfileExport()
 		StevioUIExport = text
-		ns.ShowExportWindow(text)
+		ns.ShowTextWindow(text)
 	end)
-	ns:RegisterSlashCommand("apply", function()
-		ns:RunAfterCombat(ApplyProfile)
+	ns.RegisterSlashCommand("apply", function()
+		ns.RunAfterCombat(ApplyProfile)
 	end)
-	ns:RegisterSlashCommand("restore", function()
-		ns:RunAfterCombat(Restore)
+	ns.RegisterSlashCommand("restore", function()
+		ns.RunAfterCombat(Restore)
 	end)
 
 	-- Last, so a failing panel can't take /sui restore down with it.
-	local ok, err = pcall(ns.SetupOptionsPanel)
-	if not ok then
-		geterrorhandler()(err)
-	end
+	ns.SafeCall(ns.SetupOptionsPanel)
 end

@@ -2,7 +2,7 @@ local _, ns = ...
 
 local config = ns.config.group
 
-local Group = ns:RegisterModule("group", {})
+local Group = ns.RegisterModule("group", {})
 
 local MAX_GROUPS = ns.MAX_GROUPS
 local UNITS_PER_GROUP = ns.UNITS_PER_GROUP
@@ -13,38 +13,9 @@ function ns.GetGroupCellSize()
 	return template.width, template.height
 end
 
--- Up to rowsUpToGroup groups, each group is a row of five stacking upwards from
--- the bars. Bigger raids would grow too tall that way, so they switch to one
--- column per group side by side. Shared with the preview.
-function ns.GetGroupLayoutMode(highestGroup)
-	return highestGroup > config.rowsUpToGroup and "columns" or "rows"
-end
-
--- Both modes span the width of all group columns, so the grid keeps one fixed
--- footprint; in row mode the five cells of a group stretch to fill it.
-local function GridWidth(baseWidth)
-	return MAX_GROUPS * baseWidth + (MAX_GROUPS - 1) * config.spacing
-end
-
-function ns.GetGroupCellWidth(mode, baseWidth)
-	if mode == "rows" then
-		return (GridWidth(baseWidth) - (UNITS_PER_GROUP - 1) * config.spacing) / UNITS_PER_GROUP
-	end
-	return baseWidth
-end
-
--- Offsets of a cell's BOTTOMLEFT from the container's BOTTOMLEFT.
-function ns.GetGroupCellOffset(mode, groupIndex, slot, cellWidth, cellHeight)
-	local stepX, stepY = cellWidth + config.spacing, cellHeight + config.spacing
-	if mode == "rows" then
-		return (slot - 1) * stepX, (groupIndex - 1) * stepY
-	end
-	return (groupIndex - 1) * stepX, (UNITS_PER_GROUP - slot) * stepY
-end
-
 function ns.CreateGroupContainer(baseWidth, cellHeight)
 	local container = CreateFrame("Frame", nil, UIParent)
-	container:SetSize(GridWidth(baseWidth), cellHeight)
+	container:SetSize(ns.GetGroupGridWidth(baseWidth), cellHeight)
 	ns.SetPoint(container, ns.layout.group)
 	return container
 end
@@ -106,19 +77,17 @@ function ns.GetHighestUsedGroup()
 	if not IsInRaid() then
 		return 1
 	end
-	local highest = 1
+	local subgroups = {}
 	for i = 1, GetNumGroupMembers() do
 		local _, _, subgroup = GetRaidRosterInfo(i)
-		if subgroup and subgroup > highest then
-			highest = subgroup
-		end
+		subgroups[i] = subgroup
 	end
-	return highest
+	return ns.HighestGroup(subgroups)
 end
 
 -- Alpha instead of Hide because headers are secure and may be in combat lockdown.
 function ns.SetLiveGroupAlpha(alpha)
-	for _, header in ipairs(Group.headers or {}) do
+	for _, header in ipairs(ns.groupHeaders or {}) do
 		header:SetAlpha(alpha)
 	end
 end
@@ -128,12 +97,13 @@ function Group:OnEnable()
 	local container = ns.CreateGroupContainer(baseWidth, cellHeight)
 	local currentMode
 
-	self.headers = {}
+	local headers = {}
 	for groupIndex = 1, MAX_GROUPS do
-		self.headers[groupIndex] = CreateHeader(groupIndex)
-		PrecreateCells(self.headers[groupIndex])
+		headers[groupIndex] = CreateHeader(groupIndex)
+		PrecreateCells(headers[groupIndex])
 	end
-	ns.groupHeaders = self.headers
+	-- Also read by the preview and keyboard healing.
+	ns.groupHeaders = headers
 
 	-- Secure headers can't be re-anchored in combat; a roster change mid-fight
 	-- switches the layout once combat ends.
@@ -144,14 +114,14 @@ function Group:OnEnable()
 		end
 		currentMode = mode
 		local cellWidth = ns.GetGroupCellWidth(mode, baseWidth)
-		for groupIndex, header in ipairs(self.headers) do
+		for groupIndex, header in ipairs(headers) do
 			ApplyHeaderMode(header, groupIndex, mode, container, cellWidth, cellHeight)
 		end
 	end
 	UpdateMode()
 
-	ns:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-		ns:RunAfterCombat(UpdateMode)
+	ns.RegisterEvent("GROUP_ROSTER_UPDATE", function()
+		ns.RunAfterCombat(UpdateMode)
 	end)
 
 	ns.HideBlizzard(CompactPartyFrame)

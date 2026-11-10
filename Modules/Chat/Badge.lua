@@ -15,12 +15,8 @@ function C.UpdateBadge()
 		if not C.hidden then
 			texture:SetColorTexture(unpack(badgeStyle.shownColor))
 		elseif C.store:HasUnread(segment.category) then
-			local info = ChatTypeInfo[segment.chatType]
-			if info and info.r then
-				texture:SetColorTexture(info.r, info.g, info.b, 1)
-			else
-				texture:SetColorTexture(unpack(segment.fallbackColor))
-			end
+			local r, g, b, a = C.TypeColor(segment.chatType, segment.fallbackColor)
+			texture:SetColorTexture(r, g, b, a or 1)
 		else
 			texture:SetColorTexture(unpack(badgeStyle.hiddenColor))
 		end
@@ -28,10 +24,8 @@ function C.UpdateBadge()
 end
 
 function C.CreateBadge()
-	local button = CreateFrame("Button", "StevioUI_ChatBadge", UIParent)
+	local button = ns.CreateEdgeBadge("StevioUI_ChatBadge", ns.layout.chatBadge, ns.ToggleChat)
 	local segments, gap = config.badge.segments, config.badge.segmentGap
-	button:SetSize(badgeStyle.width, badgeStyle.height)
-	ns.SetPoint(button, ns.layout.chatBadge)
 
 	local segmentHeight = (badgeStyle.height - gap * (#segments - 1)) / #segments
 	button.segments = {}
@@ -44,6 +38,5 @@ function C.CreateBadge()
 		texture:SetAllPoints()
 		button.segments[segment.category] = texture
 	end
-	button:SetScript("OnClick", ns.ToggleChat)
 	badge = button
 end

@@ -2,8 +2,8 @@ local _, ns = ...
 
 local style = ns.config.style
 
-ns.hiddenParent = CreateFrame("Frame")
-ns.hiddenParent:Hide()
+local hiddenParent = CreateFrame("Frame")
+hiddenParent:Hide()
 
 function ns.PixelSize(region)
 	return PixelUtil.ConvertPixelsToUIForRegion(1, region)
@@ -35,34 +35,33 @@ function Border:SetShown(shown)
 	end
 end
 
--- Lets the client resolve possibly-secret booleans (e.g. UnitIsUnit in combat).
-function Border:SetShownFromBoolean(value)
+-- Lets the client resolve possibly-secret booleans (e.g. UnitIsUnit in combat):
+-- the edges are shown while `value` equals `shownWhen`.
+local function SetShownWhen(border, value, shownWhen)
 	if issecretvalue(value) then
-		for _, edge in ipairs(self) do
+		for _, edge in ipairs(border) do
 			edge:Show()
-			edge:SetAlphaFromBoolean(value, 1, 0)
+			edge:SetAlphaFromBoolean(value, shownWhen and 1 or 0, shownWhen and 0 or 1)
 		end
 	else
-		for _, edge in ipairs(self) do
+		for _, edge in ipairs(border) do
 			edge:SetAlpha(1)
 		end
-		self:SetShown(value)
+		if shownWhen then
+			border:SetShown(value)
+		else
+			border:SetShown(not value)
+		end
 	end
+end
+
+function Border:SetShownFromBoolean(value)
+	SetShownWhen(self, value, true)
 end
 
 -- The opposite of SetShownFromBoolean: shown while the value is false.
 function Border:SetHiddenFromBoolean(value)
-	if issecretvalue(value) then
-		for _, edge in ipairs(self) do
-			edge:Show()
-			edge:SetAlphaFromBoolean(value, 0, 1)
-		end
-	else
-		for _, edge in ipairs(self) do
-			edge:SetAlpha(1)
-		end
-		self:SetShown(not value)
-	end
+	SetShownWhen(self, value, false)
 end
 
 -- Edges sit outside the frame so the border never covers bar content.
@@ -92,11 +91,30 @@ function ns.CreateBorder(frame, sublevel, size)
 	return border
 end
 
-function ns.CreateBackground(frame)
-	local bg = frame:CreateTexture(nil, "BACKGROUND")
+-- Near-black backdrop of small overlay panels (Quickjump badges, flight list).
+ns.PANEL_COLOR = { 0, 0, 0, 0.9 }
+
+-- `color` defaults to the style's background colour.
+function ns.CreateBackground(frame, color, sublevel)
+	local bg = frame:CreateTexture(nil, "BACKGROUND", nil, sublevel)
 	bg:SetAllPoints()
-	bg:SetColorTexture(unpack(style.backgroundColor))
+	bg:SetColorTexture(unpack(color or style.backgroundColor))
 	return bg
+end
+
+-- Crops the built-in border off a square icon texture.
+function ns.CropIcon(texture)
+	texture:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+end
+
+-- A button at a screen edge (chat, tracker) that toggles what it belongs to.
+function ns.CreateEdgeBadge(name, layout, onClick)
+	local badge = style.badge
+	local button = CreateFrame("Button", name, UIParent)
+	button:SetSize(badge.width, badge.height)
+	ns.SetPoint(button, layout)
+	button:SetScript("OnClick", onClick)
+	return button
 end
 
 function ns.CreateStatusBar(parent)
@@ -126,7 +144,7 @@ function ns.HideBlizzard(frame, keepEvents)
 	if not keepEvents then
 		frame:UnregisterAllEvents()
 	end
-	frame:SetParent(ns.hiddenParent)
+	frame:SetParent(hiddenParent)
 end
 
 -- Only values used as table keys need an issecretvalue guard; colors themselves
@@ -177,7 +195,7 @@ function ns.PinFrame(frame, place)
 	-- Unprotected frames may move in combat, so only protected ones wait.
 	local function request()
 		if frame:IsProtected() then
-			ns:RunAfterCombat(apply)
+			ns.RunAfterCombat(apply)
 		else
 			apply()
 		end
@@ -214,4 +232,83 @@ function ns.KillTexture(texture)
 	texture:SetAlpha(0)
 	texture:Hide()
 	hooksecurefunc(texture, "Show", texture.Hide)
+end
+
+-- Unit frame parts shared by the unit frames (Units) and the group cells (Group)
+-- ------------------------------------------------------------------------------
+
+local UnitHealth, UnitHealthMax = UnitHealth, UnitHealthMax
+local UnitPower, UnitPowerMax = UnitPower, UnitPowerMax
+
+-- Health may be secret; the bar takes it as it is. Returned for callers that
+-- show it as text as well.
+function ns.UpdateHealthBar(bar, unit)
+	local health = UnitHealth(unit)
+	bar:SetMinMaxValues(0, UnitHealthMax(unit))
+	bar:SetValue(health)
+	return health
+end
+
+function ns.UpdatePowerBar(bar, unit)
+	bar:SetMinMaxValues(0, UnitPowerMax(unit))
+	bar:SetValue(UnitPower(unit))
+end
+
+function ns.SetPowerBarColor(bar, unit)
+	bar:SetStatusBarColor(ns.UnitPowerColor(unit))
+end
+
+-- UNIT_DISPLAYPOWER: another power type has another color and range.
+function ns.UpdatePowerType(bar, unit)
+	ns.SetPowerBarColor(bar, unit)
+	ns.UpdatePowerBar(bar, unit)
+end
+
+-- A border-colored line between health and power instead of a gap keeps the
+-- frame one solid block. It runs along `relativeTo`'s `relativeEdge` ("TOP"
+-- or "BOTTOM"), with its own `edge` there.
+function ns.CreateSeparator(frame, edge, relativeTo, relativeEdge)
+	local separator = frame:CreateTexture(nil, "ARTWORK")
+	separator:SetColorTexture(unpack(style.borderColor))
+	separator:SetPoint(edge .. "LEFT", relativeTo, relativeEdge .. "LEFT")
+	separator:SetPoint(edge .. "RIGHT", relativeTo, relativeEdge .. "RIGHT")
+	separator:SetHeight(ns.PixelSize(frame))
+end
+
+-- A cropped aura icon with a cooldown swipe, a stack count and a border.
+function ns.StyleAuraIcon(icon, size, countSize)
+	icon:SetSize(size, size)
+
+	icon.texture = icon:CreateTexture(nil, "ARTWORK")
+	icon.texture:SetAllPoints()
+	ns.CropIcon(icon.texture)
+
+	icon.cooldown = CreateFrame("Cooldown", nil, icon, "CooldownFrameTemplate")
+	icon.cooldown:SetAllPoints()
+	icon.cooldown:SetReverse(true)
+	icon.cooldown:SetDrawEdge(false)
+	icon.cooldown:SetHideCountdownNumbers(true)
+
+	icon.count = ns.CreateFontString(icon, countSize, "RIGHT")
+	icon.count:SetPoint("BOTTOMRIGHT", 1, -1)
+
+	ns.CreateBorder(icon)
+end
+
+-- Sets up a button of Blizzard's secure aura container. This runs once per
+-- button before Blizzard locks it against tainted access while auras are
+-- secret, so it is the only place our code may touch it.
+function ns.InitAuraButton(button, size, countSize)
+	button:EnableMouse(false)
+	ns.StyleAuraIcon(button, size, countSize)
+	button:SetIcon(button.texture)
+	button:SetDurationCooldown(button.cooldown)
+	button:SetApplicationCount(button.count)
+end
+
+-- An initializeFrame callback for AuraContainer:AddAuraGroup.
+function ns.AuraButtonInitializer(size, countSize)
+	return function(button)
+		ns.InitAuraButton(button, size, countSize)
+	end
 end

@@ -4,6 +4,7 @@ local _, ns = ...
 -- are selectable right now, in the order they should be labelled.
 
 local QuickJump = ns.QuickJump
+local Internal = ns.AccessibilityInternal
 
 local function RequestRefresh()
 	QuickJump:RequestRefresh()
@@ -25,14 +26,24 @@ end
 local popupRequested = false
 local POPUP_COUNT = 4
 
-local function AnyPopupShown()
+-- Calls fn with every popup frame that exists, until fn returns true;
+-- returns whether one did.
+local function ForEachPopup(fn)
 	for i = 1, POPUP_COUNT do
 		local dialog = _G["StaticPopup" .. i]
-		if dialog and dialog:IsShown() then
+		if dialog and fn(dialog) then
 			return true
 		end
 	end
 	return false
+end
+
+local function IsShown(frame)
+	return frame:IsShown()
+end
+
+local function AnyPopupShown()
+	return ForEachPopup(IsShown)
 end
 
 local popupSource = {
@@ -46,16 +57,15 @@ local popupSource = {
 	end,
 	Collect = function()
 		local targets = {}
-		for i = 1, POPUP_COUNT do
-			local dialog = _G["StaticPopup" .. i]
-			if dialog and dialog:IsShown() then
+		ForEachPopup(function(dialog)
+			if dialog:IsShown() then
 				local buttons = dialog.ButtonContainer
 				tAppendAll(
 					targets,
 					Shown(buttons.Button1, buttons.Button2, buttons.Button3, buttons.Button4, dialog.ExtraButton)
 				)
 			end
-		end
+		end)
 		return QuickJump.SortByPosition(targets)
 	end,
 	OnFinished = function()
@@ -64,7 +74,7 @@ local popupSource = {
 }
 
 -- Returns whether popups took the leader press.
-function ns.RequestPopupLabels()
+function Internal.RequestPopupLabels()
 	if AnyPopupShown() and not popupRequested then
 		popupRequested = true
 		RequestRefresh()
@@ -93,14 +103,9 @@ local questSource = {
 		elseif QuestFrameProgressPanel:IsShown() then
 			return { QuestFrameCompleteButton, QuestFrameGoodbyeButton }
 		elseif QuestFrameRewardPanel:IsShown() then
-			local targets = {}
 			-- QuestInfo picks the rewards frame per display, so read it from there.
-			local rewardsFrame = QuestInfoFrame.rewardsFrame or QuestInfoRewardsFrame
-			for _, button in ipairs(rewardsFrame and rewardsFrame.RewardButtons or {}) do
-				if button:IsShown() and button.type == "choice" then
-					targets[#targets + 1] = button
-				end
-			end
+			local rewardsFrame = ns.QuestChoices.RewardsFrame()
+			local targets = ns.QuestChoices.Buttons(rewardsFrame and rewardsFrame.RewardButtons or {}, false)
 			QuickJump.SortByPosition(targets)
 			targets[#targets + 1] = QuestFrameCompleteQuestButton
 			return targets
@@ -144,21 +149,18 @@ local gossipSource = {
 	end,
 }
 
-function ns.IsDialogOpen()
-	return questSource.IsOpen() or gossipSource.IsOpen() or ns.IsTaxiListOpen()
+function Internal.IsDialogOpen()
+	return questSource.IsOpen() or gossipSource.IsOpen() or Internal.IsTaxiListOpen()
 end
 
-function ns.SetupDialogSources()
+function Internal.SetupDialogSources()
 	QuickJump:RegisterSource(popupSource)
 	QuickJump:RegisterSource(questSource)
 	QuickJump:RegisterSource(gossipSource)
 
-	for i = 1, POPUP_COUNT do
-		local dialog = _G["StaticPopup" .. i]
-		if dialog then
-			dialog:HookScript("OnHide", RequestRefresh)
-		end
-	end
+	ForEachPopup(function(dialog)
+		dialog:HookScript("OnHide", RequestRefresh)
+	end)
 
 	QuestFrame:HookScript("OnHide", RequestRefresh)
 	for _, panel in ipairs({

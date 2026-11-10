@@ -8,6 +8,7 @@ local _, ns = ...
 -- saved as an override (see Core/Overrides.lua); it takes effect on reload.
 
 local Overrides = ns.Overrides
+local Model = ns.EditorModel
 
 local Editor = {}
 ns.ConfigEditor = Editor
@@ -21,65 +22,9 @@ local HEADING_COLOR = { 0.6, 0.8, 1 }
 
 local T = ns.T
 
--- Paths the editor never shows: the profile has pages of its own, and the
--- settings module builds this panel, so turning it off would lock it away.
-local HIDDEN = {
-	["config/settings/profile"] = true,
-	["config/settings/enabled"] = true,
-}
-
--- A list of 3 or 4 numbers between 0 and 1 (r, g, b and maybe alpha); the
--- config has no other lists like that.
-local function IsColor(key, value)
-	if not Overrides.IsList(value) or (#value ~= 3 and #value ~= 4) then
-		return false
-	end
-	for _, component in ipairs(value) do
-		if type(component) ~= "number" or component < 0 or component > 1 then
-			return false
-		end
-	end
-	return type(key) == "string"
-end
-
--- Keys in display order: "enabled" first, then plain values, then tables, each by label.
-local function SortedKeys(tbl)
-	if Overrides.IsList(tbl) then
-		local keys = {}
-		for index = 1, #tbl do
-			keys[index] = index
-		end
-		return keys
-	end
-	local keys = {}
-	for key in pairs(tbl) do
-		keys[#keys + 1] = key
-	end
-	local function Rank(key)
-		if key == "enabled" then
-			return 0
-		end
-		local value = tbl[key]
-		return (type(value) == "table" and not IsColor(key, value)) and 2 or 1
-	end
-	table.sort(keys, function(a, b)
-		local rankA, rankB = Rank(a), Rank(b)
-		if rankA ~= rankB then
-			return rankA < rankB
-		end
-		return ns.ConfigLabel(a):lower() < ns.ConfigLabel(b):lower()
-	end)
-	return keys
-end
-
-local function Copy(path, key)
-	local copy = {}
-	for i, part in ipairs(path) do
-		copy[i] = part
-	end
-	copy[#copy + 1] = key
-	return copy
-end
+local HIDDEN = Model.HIDDEN
+local IsColor = Model.IsColor
+local SortedKeys = Model.SortedKeys
 
 local function IsOverridden(path)
 	return Overrides.OverriddenAt(StevioUIConfig.values, path) ~= nil
@@ -102,11 +47,26 @@ end
 
 -- Row widgets ---------------------------------------------------------------
 
-local function CreateSmallButton(parent, text, width)
+-- Widgets the options panel's own pages (Panel.lua) share.
+function Editor.CreateButton(parent, text, width, height)
 	local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-	button:SetSize(width or 22, 20)
+	button:SetSize(width, height)
 	button:SetText(text)
 	return button
+end
+
+-- An input box that gives up the focus on Enter and Escape.
+function Editor.CreateInput(parent, width)
+	local input = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+	input:SetSize(width, 20)
+	input:SetAutoFocus(false)
+	input:SetScript("OnEnterPressed", input.ClearFocus)
+	input:SetScript("OnEscapePressed", input.ClearFocus)
+	return input
+end
+
+local function CreateSmallButton(parent, text, width)
+	return Editor.CreateButton(parent, text, width or 22, 20)
 end
 
 -- Picker values are rounded, so confirming an untouched color saves nothing.
@@ -180,10 +140,8 @@ local function CreateRow(page)
 		SetValue(page, row.path, self:GetChecked() and true or false)
 	end)
 
-	row.input = CreateFrame("EditBox", nil, row, "InputBoxTemplate")
-	row.input:SetSize(180, 20)
+	row.input = Editor.CreateInput(row, 180)
 	row.input:SetPoint("LEFT", CONTROL_X + 6, 0)
-	row.input:SetAutoFocus(false)
 	local function CommitInput(self)
 		local text = self:GetText()
 		local value = text
@@ -196,10 +154,8 @@ local function CreateRow(page)
 		end
 		SetValue(page, row.path, value)
 	end
-	row.input:SetScript("OnEnterPressed", function(self)
-		self:ClearFocus()
-	end)
 	row.input:SetScript("OnEditFocusLost", CommitInput)
+	-- Escape also puts the current value back.
 	row.input:SetScript("OnEscapePressed", function(self)
 		self:SetText(tostring(Overrides.Get(ns.overrideRoots, row.path)))
 		self:ClearFocus()
@@ -236,8 +192,6 @@ local function AcquireRow(page)
 end
 
 -- Rendering -----------------------------------------------------------------
-
-local Visit, ShowHeading
 
 local function SetLabel(row, path, text, depth, help)
 	row.path = path
@@ -285,7 +239,7 @@ local function AddToList(page, path)
 end
 
 -- A plain title row between sections, e.g. "Position" on a module page.
-function ShowHeading(page, text)
+local function ShowHeading(page, text)
 	local row = AcquireRow(page)
 	row.path = nil
 	row.toggle:ClearAllPoints()
@@ -297,7 +251,7 @@ function ShowHeading(page, text)
 end
 
 -- `labelOverride` names a page section's top row instead of its key.
-function Visit(page, path, value, depth, listPath, index, labelOverride)
+local function Visit(page, path, value, depth, listPath, index, labelOverride)
 	local encoded = Overrides.Encode(path)
 	if HIDDEN[encoded] then
 		return
@@ -350,7 +304,7 @@ function Visit(page, path, value, depth, listPath, index, labelOverride)
 		return
 	end
 	for _, childKey in ipairs(SortedKeys(value)) do
-		local childPath = Copy(path, childKey)
+		local childPath = Overrides.Child(path, childKey)
 		Visit(page, childPath, value[childKey], depth + 1, isList and path or nil, isList and childKey or nil)
 	end
 end
@@ -372,10 +326,10 @@ local function Render(page)
 			if value ~= nil and section.flatten and type(value) == "table" then
 				-- The table's own header row is left out (the page title names it).
 				for _, childKey in ipairs(SortedKeys(value)) do
-					Visit(page, Copy(section.path, childKey), value[childKey], section.depth or 0)
+					Visit(page, Overrides.Child(section.path, childKey), value[childKey], 0)
 				end
 			elseif value ~= nil then
-				Visit(page, section.path, value, section.depth or 0, nil, nil, section.label)
+				Visit(page, section.path, value, 0, nil, nil, section.label)
 			end
 		end
 	end
@@ -392,31 +346,19 @@ end
 
 -- Page frame ----------------------------------------------------------------
 
--- A scrollable page with a title, a reload hint and button, and the rows of
--- `sections`, each one of
---   { path = {...}, label = optional name of its top row }
---   { path = {...}, flatten = true }: the table's values without its own header row
---   { heading = "text" }: a title row
--- `extra(page, top)` may add own controls below the title and returns the
--- height it used.
-function Editor.CreatePage(title, sections, extra)
+-- A page with a title and a scroll area below it, for Blizzard's options panel.
+-- `extra(page, top)`, if given, may add own controls below the title and
+-- returns the height it used. Rows go into `page.content`.
+function Editor.CreateScrollPage(title, extra)
 	local page = CreateFrame("Frame")
-	page.sections = sections
-	page.rows, page.used, page.collapsed = {}, 0, {}
-	page.Render = Render
+	-- A parentless frame starts out shown, so the first time Blizzard's panel
+	-- displays it there is no OnShow and the page stayed empty until it was
+	-- hidden and shown again. Starting hidden makes every display an OnShow.
+	page:Hide()
 
 	local heading = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	heading:SetPoint("TOPLEFT", 16, -16)
 	heading:SetText(title)
-
-	local reload = CreateSmallButton(page, T("Reload UI", "UI neu laden"), 120)
-	reload:SetPoint("TOPRIGHT", -16, -12)
-	reload:SetScript("OnClick", ReloadUI)
-
-	page.reloadHint = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	page.reloadHint:SetPoint("RIGHT", reload, "LEFT", -8, 0)
-	page.reloadHint:SetText(T("Changes apply after a reload.", "Änderungen wirken nach dem Neuladen."))
-	page.reloadHint:Hide()
 
 	local top = 44
 	if extra then
@@ -432,13 +374,36 @@ function Editor.CreatePage(title, sections, extra)
 	scroll:SetScript("OnSizeChanged", function(_, width)
 		page.content:SetWidth(width)
 	end)
+	return page
+end
 
-	-- A parentless frame starts out shown, so the first time Blizzard's panel
-	-- displays it there is no OnShow and the page stayed empty until it was
-	-- hidden and shown again. Starting hidden makes every display an OnShow;
-	-- OnRefresh is what the settings panel calls on canvas pages, and a first
-	-- render here fills the page even if neither ever comes.
-	page:Hide()
+-- A scrollable page with a title, a reload hint and button, and the rows of
+-- `sections`, each one of
+--   { path = {...}, label = optional name of its top row }
+--   { path = {...}, flatten = true }: the table's values without its own header row
+--   { heading = "text" }: a title row
+-- `extra(page, top)` may add own controls below the title and returns the
+-- height it used.
+function Editor.CreatePage(title, sections, extra)
+	local page = Editor.CreateScrollPage(title, function(page, top)
+		local reload = CreateSmallButton(page, T("Reload UI", "UI neu laden"), 120)
+		reload:SetPoint("TOPRIGHT", -16, -12)
+		reload:SetScript("OnClick", ReloadUI)
+
+		page.reloadHint = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		page.reloadHint:SetPoint("RIGHT", reload, "LEFT", -8, 0)
+		page.reloadHint:SetText(T("Changes apply after a reload.", "Änderungen wirken nach dem Neuladen."))
+		page.reloadHint:Hide()
+
+		return extra and extra(page, top) or 0
+	end)
+	page.sections = sections
+	page.rows, page.used, page.collapsed = {}, 0, {}
+	page.Render = Render
+
+	-- Every display renders (see CreateScrollPage); OnRefresh is what the
+	-- settings panel calls on canvas pages, and a first render here fills the
+	-- page even if neither ever comes.
 	page:SetScript("OnShow", function(self)
 		self:Render()
 	end)

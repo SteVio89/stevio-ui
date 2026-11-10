@@ -1,6 +1,6 @@
 local _, ns = ...
 
-local LootTicker = ns:RegisterModule("lootTicker", {})
+local LootTicker = ns.RegisterModule("lootTicker", {})
 
 -- Own loot, gold and currency gains as a short list above the bags: icon, name in
 -- quality color and count. Lines enter at the bottom, move up as new ones
@@ -21,7 +21,6 @@ local ROLL_TIMEOUT = 150
 -- A loot line this many seconds older than the roll result is still taken
 -- back into the roll's line.
 local LOOT_BEFORE_RESULT = 10
-local GREY = "|cffaaaaaa%s|r"
 
 local L = ns.isGerman and {
 	rolling = "würfelt",
@@ -43,7 +42,8 @@ local stateLabels = {
 	[State.Pass] = PASS or "Pass",
 }
 
-local config, feed, container, patterns, moneyPatterns, groupPatterns
+local config = ns.config.lootTicker
+local feed, container, patterns, moneyPatterns, groupPatterns
 local rows = {}
 local rowHeight
 
@@ -56,18 +56,20 @@ local function QualityColor(quality, link)
 	end
 	local hex = Feed.LinkColor(link)
 	if hex then
-		return tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255, tonumber(hex:sub(7, 8), 16) / 255
+		return Feed.HexToRGB(hex)
 	end
 	return 1, 1, 1
 end
 
--- Item qualities by link color ({ [quality] = "ffrrggbb" }), for items not cached yet.
+-- Item qualities by link color ({ [quality] = "ffrrggbb" }), for items not
+-- cached yet. Built on every call, since the player can change quality colors
+-- in Blizzard's accessibility settings.
 local function QualityHex()
-	local hex = {}
+	local qualityHex = {}
 	for quality, color in pairs(ITEM_QUALITY_COLORS) do
-		hex[quality] = color.hex and color.hex:match("|c(%x%x%x%x%x%x%x%x)")
+		qualityHex[quality] = color.hex and color.hex:match("|c(%x%x%x%x%x%x%x%x)")
 	end
-	return hex
+	return qualityHex
 end
 
 -- Icon and quality of an item or currency link; an uncached item's quality
@@ -105,37 +107,6 @@ local function ClassColored(name, class)
 	return color and color:WrapTextInColorCode(name) or name
 end
 
--- "Need 87", or just "Need" before the numbers are rolled.
-local function RollText(roll)
-	local text = stateLabels[roll.state] or ""
-	if roll.roll then
-		text = text .. " " .. roll.roll
-	end
-	return text
-end
-
--- The right part of a roll line: "rolling · you: Need", "Bob Need 98 · you:
--- Greed 45", "You Need 87" or "all passed".
-local function RollDetail(summary)
-	if summary.allPassed then
-		return GREY:format(L.allPassed)
-	end
-	local winner, mine = summary.winner, summary.mine
-	if winner and winner.isSelf then
-		return ("|cff40ff40%s|r %s"):format(L.you, GREY:format(RollText(winner)))
-	end
-	local text
-	if winner then
-		text = ClassColored(winner.name, winner.class) .. " " .. GREY:format(RollText(winner))
-	else
-		text = GREY:format(L.rolling)
-	end
-	if mine then
-		text = text .. GREY:format((" · %s: %s"):format(L.yourRoll, RollText(mine)))
-	end
-	return text
-end
-
 local function CreateRow()
 	local row = CreateFrame("Frame", nil, container)
 	row:SetSize(config.width, config.iconSize)
@@ -144,7 +115,7 @@ local function CreateRow()
 	row.icon = row:CreateTexture(nil, "ARTWORK")
 	row.icon:SetSize(config.iconSize, config.iconSize)
 	row.icon:SetPoint("LEFT")
-	row.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+	ns.CropIcon(row.icon)
 
 	-- The details size to their text; the item name takes the space left.
 	row.detail = ns.CreateFontString(row, config.fontSize, "RIGHT")
@@ -153,18 +124,6 @@ local function CreateRow()
 	row.text:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
 	row.text:SetPoint("RIGHT", row.detail, "LEFT", -6, 0)
 	return row
-end
-
--- Count and looter of a loot line: "x3 Bob".
-local function LootDetail(entry)
-	local parts = {}
-	if entry.count > 1 then
-		parts[#parts + 1] = ("|cffffffffx%d|r"):format(entry.count)
-	end
-	if entry.looter then
-		parts[#parts + 1] = ClassColored(Feed.ShortName(entry.looter), entry.class)
-	end
-	return table.concat(parts, " ")
 end
 
 local function ShowEntry(row, entry)
@@ -178,7 +137,7 @@ local function ShowEntry(row, entry)
 	else
 		row.text:SetText(Feed.LinkName(entry.link))
 		row.text:SetTextColor(unpack(entry.color))
-		detail = entry.roll and entry.detail or LootDetail(entry)
+		detail = entry.roll and entry.detail or Feed.LootDetail(entry, ClassColored)
 	end
 	-- Very long details (a long name and both rolls) are capped too, so the
 	-- item name always keeps some room.
@@ -234,11 +193,7 @@ local function Add(link, count, looter, guid)
 		return
 	end
 	local icon, quality, isCurrency = LinkInfo(link)
-	if isCurrency and not config.showCurrency then
-		return
-	end
-	local minQuality = looter and config.groupMinQuality or config.minQuality
-	if quality and not isCurrency and quality < minQuality then
+	if not Feed.Passes(quality, isCurrency, looter ~= nil, config) then
 		return
 	end
 	AddEntry({
@@ -263,7 +218,7 @@ end
 -- the player passed on or didn't join are dimmed like other players' loot.
 local function AddDrop(key, drop)
 	local summary = Feed.RollSummary(drop)
-	local detail = RollDetail(summary)
+	local detail = Feed.RollDetail(summary, L, stateLabels, ClassColored)
 	local old = feed:Find(key)
 	if old and old.detail == detail then
 		return -- nothing new, e.g. the loot history window was opened
@@ -367,28 +322,27 @@ local function Preview()
 		AddMoney(12345)
 	end
 	if config.showRolls and links[1] then
-		local me = { playerName = UnitName("player"), playerClass = select(2, UnitClass("player")), isSelf = true }
-		local bob = { playerName = "Bob", playerClass = "MAGE", isSelf = false }
+		local myName, myClass = UnitName("player"), select(2, UnitClass("player"))
 		AddDrop("preview:open", {
 			itemHyperlink = links[1],
 			playerRollState = State.NeedMainSpec,
 			rollInfos = {
-				{ playerName = me.playerName, playerClass = me.playerClass, isSelf = true, state = State.NeedMainSpec },
+				{ playerName = myName, playerClass = myClass, isSelf = true, state = State.NeedMainSpec },
 			},
 		})
 		AddDrop("preview:won", {
 			itemHyperlink = links[2] or links[1],
 			playerRollState = State.Greed,
 			winner = {
-				playerName = bob.playerName,
-				playerClass = bob.playerClass,
+				playerName = "Bob",
+				playerClass = "MAGE",
 				state = State.NeedMainSpec,
 				roll = 98,
 			},
 			rollInfos = {
 				{
-					playerName = me.playerName,
-					playerClass = me.playerClass,
+					playerName = myName,
+					playerClass = myClass,
 					isSelf = true,
 					state = State.Greed,
 					roll = 45,
@@ -398,8 +352,7 @@ local function Preview()
 	end
 end
 
-function LootTicker:OnEnable(moduleConfig)
-	config = moduleConfig
+function LootTicker:OnEnable()
 	rowHeight = config.iconSize + config.rowGap
 	feed = Feed.New(config.maxRows)
 
@@ -445,9 +398,9 @@ function LootTicker:OnEnable(moduleConfig)
 		rows[i]:Hide()
 	end
 
-	ns:RegisterEvent("CHAT_MSG_LOOT", OnLoot)
-	ns:RegisterEvent("CHAT_MSG_CURRENCY", OnLoot)
-	ns:RegisterEvent("CHAT_MSG_MONEY", OnMoney)
-	ns:RegisterEvent("LOOT_HISTORY_UPDATE_DROP", OnDrop)
-	ns:RegisterSlashCommand("loot", Preview)
+	ns.RegisterEvent("CHAT_MSG_LOOT", OnLoot)
+	ns.RegisterEvent("CHAT_MSG_CURRENCY", OnLoot)
+	ns.RegisterEvent("CHAT_MSG_MONEY", OnMoney)
+	ns.RegisterEvent("LOOT_HISTORY_UPDATE_DROP", OnDrop)
+	ns.RegisterSlashCommand("loot", Preview)
 end

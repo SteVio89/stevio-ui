@@ -1,6 +1,7 @@
 local _, ns = ...
 
-local MinimapModule = ns:RegisterModule("minimap", {})
+local MinimapModule = ns.RegisterModule("minimap", {})
+local config = ns.config.minimap
 
 local SQUARE_MASK = "Interface\\Buttons\\WHITE8X8"
 
@@ -14,64 +15,65 @@ local function OnMouseWheel(minimap, delta)
 	minimap:SetZoom(zoom)
 end
 
+-- Moves a cluster part onto the map, pinned to the same corner of the map
+-- at the given offset.
+local function AttachToMap(frame, point, x, y)
+	frame:SetParent(Minimap)
+	frame:SetScale(config.iconScale)
+	ns.PinFrame(frame, function(pinned)
+		pinned:ClearAllPoints()
+		pinned:SetPoint(point, Minimap, point, x, y)
+	end)
+end
+
 -- Mail and tracking are the only cluster parts worth keeping; they move onto
 -- the map itself so the whole cluster (border, zone text, clock, calendar) can go.
-local function AdoptIndicators(config)
-	local indicators = MinimapCluster.IndicatorFrame
-	indicators:SetParent(Minimap)
-	indicators:SetScale(config.iconScale)
-	ns.PinFrame(indicators, function(frame)
-		frame:ClearAllPoints()
-		frame:SetPoint("TOPRIGHT", Minimap, "TOPRIGHT", -2, -2)
-	end)
+local function AdoptIndicators()
+	AttachToMap(MinimapCluster.IndicatorFrame, "TOPRIGHT", -2, -2)
 
 	local tracking = MinimapCluster.Tracking
-	tracking:SetParent(Minimap)
-	tracking:SetScale(config.iconScale)
 	ns.KillTexture(tracking.Background)
-	ns.PinFrame(tracking, function(frame)
-		frame:ClearAllPoints()
-		frame:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 2, -2)
-	end)
+	AttachToMap(tracking, "TOPLEFT", 2, -2)
 end
 
 -- Blizzard anchors the looking-for-group eye to the micro menu, which ends up
 -- covering the map; the map's lower left corner keeps it out of the way. The
 -- older names cover clients that still ship the minimap-cluster variant.
-local function PlaceQueueButton(config)
+local function PlaceQueueButton()
 	local button = QueueStatusButton or QueueStatusMinimapButton or MiniMapLFGFrame or LFGMinimapFrame
 	if not button then
 		return
 	end
-	button:SetParent(Minimap)
-	button:SetScale(config.iconScale)
+	AttachToMap(button, "BOTTOMLEFT", 2, 2)
+	-- Above the map; set after the reparenting, which changes the level.
 	button:SetFrameLevel(Minimap:GetFrameLevel() + 5)
-	ns.PinFrame(button, function(frame)
-		frame:ClearAllPoints()
-		frame:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 2, 2)
-	end)
 end
 
 -- Derived from the layout instead of a fixed size so the map scales with the
 -- space right of the target frame, whatever the screen width or UI scale.
-local function GetMapSize(config)
+local function GetMapSize()
 	local targetWidth
 	for _, spec in ipairs(ns.config.units.frames) do
 		if spec.unit == "target" then
 			targetWidth = spec.width
 		end
 	end
-	local targetRight = UIParent:GetWidth() / 2 + ns.layout.target.x + targetWidth
-	local mapRight = UIParent:GetWidth() + ns.layout.minimap.x
-	return math.floor((mapRight - targetRight - config.gapToTarget) * config.sizeScale)
+	return ns.MinimapGeometry.MapSize(
+		UIParent:GetWidth(),
+		ns.layout.target.x,
+		targetWidth,
+		ns.layout.minimap.x,
+		config.gapToTarget,
+		config.sizeScale
+	)
 end
 
 -- The leave button would sit on the action bars; under the map's lower left
 -- corner it stays clear of them. Via Edit Mode because Blizzard re-stacks it
 -- with the bottom bars, in combat too.
-local function PlaceVehicleLeaveButton(config, size)
+local function PlaceVehicleLeaveButton(size)
 	local mapLayout = ns.layout.minimap
-	ns:SetEditModeSystem(Enum.EditModeSystem.VehicleLeaveButton, nil, {
+	ns.SetEditModeSystem(Enum.EditModeSystem.VehicleLeaveButton, nil, {
 		point = "TOPLEFT",
 		relativePoint = "BOTTOMRIGHT",
 		x = mapLayout.x - size,
@@ -79,8 +81,8 @@ local function PlaceVehicleLeaveButton(config, size)
 	})
 end
 
-function MinimapModule:OnEnable(config)
-	local size = GetMapSize(config)
+function MinimapModule:OnEnable()
+	local size = GetMapSize()
 	Minimap:SetParent(UIParent)
 	Minimap:SetSize(size, size)
 	Minimap:SetMaskTexture(SQUARE_MASK)
@@ -90,9 +92,9 @@ function MinimapModule:OnEnable(config)
 
 	ns.CreateBorder(Minimap)
 
-	AdoptIndicators(config)
-	PlaceQueueButton(config)
-	PlaceVehicleLeaveButton(config, size)
+	AdoptIndicators()
+	PlaceQueueButton()
+	PlaceVehicleLeaveButton(size)
 
 	ns.KeepHidden(MinimapBackdrop)
 	ns.KeepHidden(Minimap.ZoomIn)

@@ -3,7 +3,7 @@ local _, ns = ...
 local config = ns.config.actionbars
 local style = ns.config.style
 
-local ActionBars = ns:RegisterModule("actionbars", {})
+local ActionBars = ns.RegisterModule("actionbars", {})
 
 -- Blizzard's own bars and buttons are kept, only restyled and moved: paging,
 -- keybinds, cooldowns, range tint and proc glows keep working under the
@@ -20,11 +20,14 @@ local deadButtonParts = {
 	"Name",
 }
 
+-- Kept outside the buttons so nothing is written onto Blizzard's secure frames.
+local styled = setmetatable({}, { __mode = "k" })
+
 local function StyleButton(button)
-	if button.stevioStyled then
+	if styled[button] then
 		return
 	end
-	button.stevioStyled = true
+	styled[button] = true
 
 	for _, key in ipairs(deadButtonParts) do
 		local region = button[key]
@@ -33,7 +36,11 @@ local function StyleButton(button)
 		end
 	end
 	-- Normal texture is also swapped by Blizzard via SetNormalTexture/Atlas, so the getter wins over the key.
-	ns.KillTexture(button:GetNormalTexture())
+	-- Usually it is the same texture as button.NormalTexture, which is already hooked above.
+	local normal = button:GetNormalTexture()
+	if normal ~= button.NormalTexture then
+		ns.KillTexture(normal)
+	end
 
 	local icon = button.icon or button.Icon
 	if icon then
@@ -68,6 +75,8 @@ local function StyleBar(bar)
 	end
 end
 
+local dividerPools = { "HorizontalDividersPool", "VerticalDividersPool" }
+
 local function StripMainBarArt()
 	local bar = MainActionBar
 	ns.KillTexture(bar.BorderArt)
@@ -76,7 +85,11 @@ local function StripMainBarArt()
 
 	-- Dividers come from a pool that is refilled on every button update.
 	hooksecurefunc(bar, "UpdateDividers", function(self)
-		for _, pool in ipairs({ self.HorizontalDividersPool, self.VerticalDividersPool }) do
+		for _, key in ipairs(dividerPools) do
+			local pool = self[key]
+			if not pool then
+				break
+			end
 			for divider in pool:EnumerateActive() do
 				divider:SetAlpha(0)
 			end
@@ -84,6 +97,8 @@ local function StripMainBarArt()
 	end)
 end
 
+-- Kept in step with config.bars (Config.lua) and ns.layout.actionBars
+-- (Core/Layout.lua): entry n of all three is the same bar.
 local barSystemIndices = {
 	Enum.EditModeActionBarSystemIndices.MainBar,
 	Enum.EditModeActionBarSystemIndices.Bar2,
@@ -96,20 +111,20 @@ local function PlaceBars()
 		[Setting.Orientation] = Enum.ActionBarOrientation.Horizontal,
 		[Setting.NumRows] = 1,
 		[Setting.NumIcons] = 12,
-		[Setting.IconSize] = ns.EditModeIconSize(config.iconSize),
+		[Setting.IconSize] = ns.EditModeStep(config.iconSize, 50, 10),
 		[Setting.IconPadding] = config.iconPadding,
 		[Setting.HideBarArt] = 1,
 	}
 	for index, systemIndex in ipairs(barSystemIndices) do
-		ns:SetEditModeSystem(Enum.EditModeSystem.ActionBar, systemIndex, ns.layout.actionBars[index], barSettings)
+		ns.SetEditModeSystem(Enum.EditModeSystem.ActionBar, systemIndex, ns.layout.actionBars[index], barSettings)
 	end
 
-	ns:SetEditModeSystem(
+	ns.SetEditModeSystem(
 		Enum.EditModeSystem.ActionBar,
 		Enum.EditModeActionBarSystemIndices.StanceBar,
 		ns.layout.stanceBar
 	)
-	ns:SetEditModeSystem(
+	ns.SetEditModeSystem(
 		Enum.EditModeSystem.ActionBar,
 		Enum.EditModeActionBarSystemIndices.PetActionBar,
 		ns.layout.petBar

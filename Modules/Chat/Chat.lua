@@ -4,22 +4,21 @@ local config = ns.config.chat
 local C = ns.ChatInternal
 local state = C.state
 
-local Chat = ns:RegisterModule("chat", {})
+local Chat = ns.RegisterModule("chat", {})
 
--- Chat organised in channels like Slack/Teams. This file holds the state and
--- the message flow; the frames live in View.lua, Copy.lua and Badge.lua, the
--- handling of Blizzard's own chat in Blizzard.lua and the channel store in History.lua.
+-- Chat organised in channels like Slack/Teams. This file holds the visibility
+-- state, channel switching and the setup; incoming messages are handled in
+-- Receive.lua and outgoing ones in Send.lua. The frames live in View.lua,
+-- Copy.lua and Badge.lua, the handling of Blizzard's own chat in Blizzard.lua,
+-- the wording of finished lines in Format.lua, lines without a chat event in
+-- Notices.lua, typed slash commands in Commands.lua and the channel store in
+-- History.lua.
 
 function C.Select(key)
-	state.selected = key
-	if C.ui.copy then
-		C.ui.copy:Hide()
-	end
-	local channel = C.Selected()
+	local channel = C.ShowChannel(key)
 	if channel and C.Attended() then
 		C.MarkRead(key)
 	end
-	C.RenderMessages(channel)
 	C.RefreshSidebar()
 end
 
@@ -78,6 +77,7 @@ local function IsMouseOverChat()
 	return C.ui.frame:IsVisible() and C.ui.frame:IsMouseOver()
 end
 
+-- Shows the chat for `duration` seconds (see Receive.lua).
 local function StartAutoTimer(duration)
 	if state.autoTimer then
 		state.autoTimer:Cancel()
@@ -92,232 +92,7 @@ local function StartAutoTimer(duration)
 		C.Update()
 	end)
 end
-
--- Whisper partners are keyed by full name (or BattleTag), group chats by type,
--- chat channels by name (see ns.ChatHistory.PublicChannel).
--- Returns key, channel options, and for "Other" the line's source channel and
--- its chat type; for Battle.net whispers the fifth value is the name to show
--- as sender. Returns nil when the channel can't be told (secret values).
-local function ChannelFor(def, sender, bnetID, channelIndex, baseName)
-	if def.key then
-		return def.key,
-			{
-				kind = def.kind,
-				chatType = def.chatType,
-				label = def.label,
-				readOnly = def.readOnly,
-				silent = def.silent,
-			}
-	end
-	if def.channel then
-		if issecretvalue(baseName) or issecretvalue(channelIndex) or not baseName then
-			return nil
-		end
-		local clubId, streamId = ns.ChatHistory.CommunityIds(baseName)
-		if clubId then
-			local resolve = ChatFrameUtil and ChatFrameUtil.ResolveChannelName
-			local label = resolve and resolve(baseName) or baseName
-			return ns.ChatHistory.CommunityKey(clubId, streamId),
-				{
-					kind = "community",
-					chatType = "CHANNEL" .. channelIndex,
-					label = label,
-					relabel = true,
-					clubId = clubId,
-					streamId = streamId,
-				}
-		end
-		local key, label, own = ns.ChatHistory.PublicChannel(baseName, config.publicChannels)
-		if own then
-			return key,
-				{ kind = def.kind, chatType = "CHANNEL" .. channelIndex, label = label, channelIndex = channelIndex }
-		end
-		local opts = { kind = "other", chatType = def.chatType, label = label, readOnly = true }
-		return key, opts, baseName, "CHANNEL" .. channelIndex
-	end
-	if issecretvalue(sender) or issecretvalue(bnetID) then
-		return nil
-	end
-	if def.bnet then
-		local info = C_BattleNet.GetAccountInfoByID(bnetID)
-		local battleTag = info and info.battleTag
-		if battleTag and battleTag ~= "" then
-			local name = ns.ChatHistory.BattleTagName(battleTag)
-			local opts =
-				{ kind = def.kind, chatType = def.chatType, label = name, bnetID = bnetID, battleTag = battleTag }
-			return ns.ChatHistory.BattleNetKey(battleTag), opts, nil, nil, name
-		end
-		-- No account info: keyed by the session id, as before.
-		return "bn:" .. bnetID, { kind = def.kind, chatType = def.chatType, label = sender, bnetID = bnetID }
-	end
-	-- The full name answers the right player even across realms; the label shows
-	-- the realm only for other realms, like Blizzard's chat.
-	local full = ns.ChatHistory.FullName(sender, GetNormalizedRealmName())
-	local label = Ambiguate(full, "none")
-	return ns.ChatHistory.WhisperKey(full), { kind = def.kind, chatType = def.chatType, label = label, target = full }
-end
-
-local function Append(channel, entry)
-	if state.selected == channel.key then
-		C.ShowEntry(channel, C.PreviousTimed(channel.messages, #channel.messages), entry)
-	end
-end
-
--- Stores a message (`entry`, nil when its contents are secret) in channel `key`
--- and shows it according to `def` (see config.events).
-function C.Receive(def, key, opts, entry)
-	local main = C.IsMerged(opts.kind) and config.main
-	local viewing = C.Attended() and (state.selected == key or (main and state.selected == main.key))
-	if not entry then
-		C.store:AddUnreadOnly(key, opts, time())
-	else
-		local channel = C.store:Add(key, opts, entry, not viewing and not def.outgoing)
-		Append(channel, entry)
-		if main then
-			local copy = ns.ChatHistory.Mirror(entry, key, C.Label(channel), channel.chatType)
-			Append(C.store:Add(main.key, main, copy, false), copy)
-		end
-	end
-	-- Lines of merged channels pop up in Main (see below).
-	local show = main and main.key or key
-
-	-- Busy public chat only counts as unread; it doesn't pop up the hidden chat.
-	if def.outgoing or def.quiet then
-		C.Update()
-		return
-	end
-	-- Peek at the channel the message arrived in while the chat is hidden;
-	-- `focus` channels are opened even when the chat is open, unless the
-	-- player is typing into another channel.
-	if C.hidden or (def.focus and state.selected ~= show and not C.ui.input:HasFocus()) then
-		state.selected = show
-		if C.ui.copy then
-			C.ui.copy:Hide()
-		end
-		C.RenderMessages(C.store:Get(show))
-	end
-	StartAutoTimer(config.autoShowDuration)
-	C.Update()
-end
-
--- Message contents may be secret (e.g. in encounters): those can't be stored and
--- only light up the channel as unread.
-local function OnChatMessage(event, text, sender, ...)
-	local def = config.events[event]
-	local _, channelName, otherPlayer, _, _, channelIndex, baseName = ...
-	local bnetID = select(11, ...)
-	local secret = issecretvalue(text) or issecretvalue(sender)
-	local chatType = event:sub(10)
-	if def.format then
-		if not secret then
-			text = C.FormatLine(def, chatType, text, sender, channelName, otherPlayer, channelIndex)
-			if not text then
-				return -- a notice that isn't shown as text
-			end
-		end
-		sender = nil -- finished lines name whoever they are about in their text
-	elseif def.textEmote then
-		sender = nil -- text emotes name the sender in their text
-	end
-
-	-- Character names are clickable (see View.lua); Battle.net names and our own aren't.
-	local player = not secret
-		and not def.format
-		and not def.textEmote
-		and not def.bnet
-		and not def.outgoing
-		and sender
-		and sender ~= ""
-		and ns.ChatHistory.FullName(sender, GetNormalizedRealmName())
-	local key, opts, source, sourceType, displayName = ChannelFor(def, sender, bnetID, channelIndex, baseName)
-	-- Lines show whisper partners with the realm when it isn't the own one, everyone else by name only.
-	if not def.format and not def.textEmote and not def.bnet and not issecretvalue(sender) then
-		sender = Ambiguate(sender, def.kind == "whisper" and "none" or "short")
-	end
-	sender = displayName or sender
-	if not key then
-		return -- no way to tell which channel this belongs to
-	end
-	local entry = not secret
-		and {
-			time = time(),
-			sender = def.outgoing and UnitName("player") or sender,
-			player = player or nil,
-			text = (def.prefix or "") .. text,
-			outgoing = def.outgoing,
-			emote = def.emote,
-			-- Finished lines take the color of their own kind (loot, boss emote, ...).
-			colorType = def.format and chatType,
-			-- "Other" mixes channels, so each line names its own.
-			source = source,
-			sourceType = sourceType,
-		}
-	C.Receive(def, key, opts, entry)
-end
-
--- Addon output (print()) normally lands in Blizzard's chat, which is never
--- shown; it goes to the System channel instead. Our own (/sui replies, see
--- ns.Print) opens it, since it answers something just typed; other addons'
--- output only counts as unread.
-local function OnPrint(...)
-	local def = ns.printing and config.print or config.notices.system
-	local parts = {}
-	for i = 1, select("#", ...) do
-		local value = select(i, ...)
-		if issecretvalue(value) then
-			C.Receive(def, def.key, def, nil)
-			return
-		end
-		parts[i] = tostring(value)
-	end
-	C.Receive(def, def.key, def, { time = time(), text = table.concat(parts, " "), colorType = "SYSTEM" })
-end
-
--- The account id may change between sessions, so channels with a BattleTag
--- look it up again in the friend list; a friend no longer in the list gets
--- nothing rather than whoever holds the old id now.
-local function CurrentBattleNetID(channel)
-	if not channel.battleTag then
-		return channel.bnetID
-	end
-	for index = 1, BNGetNumFriends() do
-		local info = C_BattleNet.GetFriendAccountInfo(index)
-		if info and info.battleTag == channel.battleTag then
-			channel.bnetID = info.bnetAccountID
-			return info.bnetAccountID
-		end
-	end
-end
-
-function C.Send(text)
-	-- Slash commands run in any channel, read-only ones included (see Commands.lua).
-	if text:sub(1, 1) == "/" then
-		C.RunCommand(text)
-		return
-	end
-	local channel = C.Selected()
-	if channel and C.IsMain(channel.key) then
-		channel = C.MainTarget()
-	end
-	-- "Other" mixes several channels and "System" has no sender: no one to answer to.
-	if not channel or text == "" or channel.readOnly then
-		return
-	end
-	if channel.clubId then
-		C_Club.SendMessage(channel.clubId, channel.streamId, text)
-	elseif channel.bnetID or channel.battleTag or channel.chatType == "BN_WHISPER" then
-		local bnetID = CurrentBattleNetID(channel)
-		if bnetID then
-			C_BattleNet.SendWhisper(bnetID, text)
-		end
-	elseif channel.kind == "whisper" then
-		C_ChatInfo.SendChatMessage(text, "WHISPER", nil, channel.target)
-	elseif channel.channelIndex then
-		C_ChatInfo.SendChatMessage(text, "CHANNEL", nil, channel.channelIndex)
-	else
-		C_ChatInfo.SendChatMessage(text, channel.chatType)
-	end
-end
+C.StartAutoTimer = StartAutoTimer
 
 -- Opens the whisper channel with `fullName` ("Name-Realm"), creating it when
 -- there is none yet, and starts typing into it: what a click on a player's
@@ -348,22 +123,15 @@ end
 
 function C.CycleChannel(step)
 	local channels = C.store:Sorted(config.kindOrder)
-	if #channels == 0 then
-		return
-	end
-	local index = 0
+	local keys = {}
 	for i, channel in ipairs(channels) do
-		if channel.key == state.selected then
-			index = i
-		end
+		keys[i] = channel.key
 	end
-	C.Select(channels[(index - 1 + step) % #channels + 1].key)
+	local index = ns.ChatHistory.NextIndex(keys, state.selected, step)
+	if index then
+		C.Select(keys[index])
+	end
 end
-
-BINDING_NAME_STEVIOUI_TOGGLE_CHAT = C.german and "Chat ein-/ausblenden" or "Toggle chat"
-BINDING_NAME_STEVIOUI_CHAT_INPUT = C.german and "Chat: Nachricht schreiben" or "Chat: write message"
-BINDING_NAME_STEVIOUI_CHAT_NEXT = C.german and "Chat: nächster Kanal" or "Chat: next channel"
-BINDING_NAME_STEVIOUI_CHAT_PREVIOUS = C.german and "Chat: voriger Kanal" or "Chat: previous channel"
 
 function ns.ToggleChat()
 	state.manual = not state.manual
@@ -430,10 +198,10 @@ function Chat:OnEnable()
 
 	-- Registered first, so messages are stored even if a Blizzard hook below fails.
 	for event in pairs(config.events) do
-		ns:RegisterEvent(event, OnChatMessage)
+		ns.RegisterEvent(event, C.OnChatMessage)
 	end
-	ns:RegisterSlashCommand("chat", PrintChannels)
-	hooksecurefunc("print", OnPrint)
+	ns.RegisterSlashCommand("chat", PrintChannels)
+	hooksecurefunc("print", C.OnPrint)
 
 	C.SetupBlizzardChat()
 	C.SetupNotices()

@@ -7,12 +7,19 @@ local Feed = {}
 ns.LootFeed = Feed
 Feed.__index = Feed
 
+-- Escapes the pattern characters of a format string and turns its positional
+-- specifiers (%1$s, which some locales use) of the `conversions` pattern class
+-- ("[sd]" or "d") into plain ones.
+local function EscapeFormat(format, conversions)
+	local pattern = format:gsub("[%^%$%(%)%.%[%]%*%+%-%?]", "%%%0")
+	return (pattern:gsub("%%%d+%%%$(" .. conversions .. ")", "%%%1"))
+end
+
 -- Turns a format string such as LOOT_ITEM_SELF_MULTIPLE ("You receive loot:
 -- %sx%d.") into an anchored Lua pattern; positional specifiers (%1$s) are
 -- understood because some locales use them.
 function Feed.PatternFromFormat(format)
-	local pattern = format:gsub("[%^%$%(%)%.%[%]%*%+%-%?]", "%%%0")
-	pattern = pattern:gsub("%%%d+%%%$([sd])", "%%%1")
+	local pattern = EscapeFormat(format, "[sd]")
 	pattern = pattern:gsub("%%s", "(.+)")
 	pattern = pattern:gsub("%%d", "(%%d+)")
 	return "^" .. pattern .. "$"
@@ -81,8 +88,7 @@ end
 function Feed.MoneyPatterns(goldFormat, silverFormat, copperFormat)
 	local patterns = {}
 	for i, format in ipairs({ goldFormat, silverFormat, copperFormat }) do
-		local pattern = format:gsub("[%^%$%(%)%.%[%]%*%+%-%?]", "%%%0")
-		pattern = pattern:gsub("%%%d+%%%$d", "%%d")
+		local pattern = EscapeFormat(format, "d")
 		pattern = pattern:gsub("%%d", "(%%d[%%d.,]*)")
 		patterns[i] = pattern
 	end
@@ -114,6 +120,11 @@ end
 -- Color of the link text as "ffrrggbb", for when the quality is unknown.
 function Feed.LinkColor(link)
 	return link:match("|c(%x%x%x%x%x%x%x%x)")
+end
+
+-- Red, green and blue (0 to 1) of a color as "ffrrggbb".
+function Feed.HexToRGB(hex)
+	return tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255, tonumber(hex:sub(7, 8), 16) / 255
 end
 
 -- Opacity of an entry `age` seconds old, or nil once it has faded out. It
@@ -246,6 +257,66 @@ function Feed.RollSummary(drop)
 	end
 	summary.pending = not summary.winner and not summary.allPassed
 	return summary
+end
+
+local GREY = "|cffaaaaaa%s|r"
+
+-- "Need 87", or just "Need" before the numbers are rolled; `stateLabels`
+-- names the roll states.
+function Feed.RollText(roll, stateLabels)
+	local text = stateLabels[roll.state] or ""
+	if roll.roll then
+		text = text .. " " .. roll.roll
+	end
+	return text
+end
+
+-- The right part of a roll line: "rolling · you: Need", "Bob Need 98 · you:
+-- Greed 45", "You Need 87" or "all passed". `L` holds the texts rolling,
+-- allPassed, you and yourRoll; `classColored(name, class)` colors a name.
+function Feed.RollDetail(summary, L, stateLabels, classColored)
+	if summary.allPassed then
+		return GREY:format(L.allPassed)
+	end
+	local winner, mine = summary.winner, summary.mine
+	if winner and winner.isSelf then
+		return ("|cff40ff40%s|r %s"):format(L.you, GREY:format(Feed.RollText(winner, stateLabels)))
+	end
+	local text
+	if winner then
+		text = classColored(winner.name, winner.class) .. " " .. GREY:format(Feed.RollText(winner, stateLabels))
+	else
+		text = GREY:format(L.rolling)
+	end
+	if mine then
+		text = text .. GREY:format((" · %s: %s"):format(L.yourRoll, Feed.RollText(mine, stateLabels)))
+	end
+	return text
+end
+
+-- Count and looter of a loot line: "x3 Bob".
+function Feed.LootDetail(entry, classColored)
+	local parts = {}
+	if entry.count > 1 then
+		parts[#parts + 1] = ("|cffffffffx%d|r"):format(entry.count)
+	end
+	if entry.looter then
+		parts[#parts + 1] = classColored(Feed.ShortName(entry.looter), entry.class)
+	end
+	return table.concat(parts, " ")
+end
+
+-- Whether a loot line is shown: currency only with showCurrency, items of a
+-- known quality from minQuality on (groupMinQuality for other players' loot).
+function Feed.Passes(quality, isCurrency, isGroup, options)
+	if isCurrency and not options.showCurrency then
+		return false
+	end
+	local minQuality = isGroup and options.groupMinQuality or options.minQuality
+	if quality and not isCurrency and quality < minQuality then
+		return false
+	end
+	return true
 end
 
 -- Whether a roll entry was won by `looter` (nil: the player) for an item

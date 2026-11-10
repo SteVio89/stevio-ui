@@ -7,42 +7,20 @@ local _, ns = ...
 
 local Editor = ns.ConfigEditor
 local config = ns.config.settings
+local Model = ns.SettingsModel
 
 local T = ns.T
 
--- Module pages in sidebar order: config key, titles and the Layout.lua
--- positions the module places, shown on its page below its options.
-local MODULES = {
-	{ "units", "Unit frames", "Einheitenfenster", layout = { "player", "target", "focus", "targetAuras" } },
-	{ "group", "Group grid", "Gruppenraster", layout = { "group" } },
-	{ "keyboardHealing", "Keyboard healing", "Tastaturheilung" },
-	{
-		"actionbars",
-		"Action bars",
-		"Aktionsleisten",
-		layout = { "actionBars", "actionSets", "stanceBar", "petBar", "menubar", "bags" },
-	},
-	{ "minimap", "Minimap", "Minikarte", layout = { "minimap" } },
-	{ "tooltip", "Tooltip", "Tooltip" },
-	{ "auras", "Auras", "Auren", layout = { "buffs", "debuffs" } },
-	{ "tracker", "Objective tracker", "Questverfolgung", layout = { "tracker", "trackerBadge" } },
-	{ "chat", "Chat", "Chat", layout = { "chat", "chatBadge" } },
-	{ "lootTicker", "Loot ticker", "Beuteticker", layout = { "lootTicker" } },
-	{ "notch", "Notch", "Notch" },
-	{ "questRewards", "Quest rewards", "Questbelohnungen" },
-	{ "accessibility", "Quickjump", "Schnellsprung" },
-	{ "settings", "Profile", "Profil" },
-}
-
-local function ModuleTitle(module)
-	return ns.isGerman and module[3] or module[2]
-end
+local Pages = ns.ConfigPages
+local MODULES = Pages.MODULES
+local ModuleTitle = Pages.Title
 
 -- The module's options without the redundant top row, then its positions.
 local function ModuleSections(module)
 	local sections = { { path = { "config", module[1] }, flatten = true } }
 	local positions = {}
 	for _, key in ipairs(module.layout or {}) do
+		-- A safety net for future layout keys and modules; today every key exists.
 		if ns.layout[key] ~= nil then
 			positions[#positions + 1] = { path = { "layout", key } }
 		end
@@ -54,24 +32,6 @@ local function ModuleSections(module)
 		end
 	end
 	return sections
-end
-
--- Layout.lua positions no module page shows; they stay on the General page.
-local function UnclaimedLayout()
-	local claimed = {}
-	for _, module in ipairs(MODULES) do
-		for _, key in ipairs(module.layout or {}) do
-			claimed[key] = true
-		end
-	end
-	local keys = {}
-	for key in pairs(ns.layout) do
-		if not claimed[key] then
-			keys[#keys + 1] = key
-		end
-	end
-	table.sort(keys)
-	return keys
 end
 
 local RESET_DIALOG = "STEVIOUI_RESET_CONFIG"
@@ -93,25 +53,16 @@ StaticPopupDialogs[RESET_DIALOG] = {
 }
 
 local function CreateButton(parent, text, width)
-	local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-	button:SetSize(width, 22)
-	button:SetText(text)
-	return button
+	return Editor.CreateButton(parent, text, width, 22)
 end
 
-local function CreateInput(parent, width)
-	local input = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
-	input:SetSize(width, 20)
-	input:SetAutoFocus(false)
-	input:SetScript("OnEnterPressed", input.ClearFocus)
-	input:SetScript("OnEscapePressed", input.ClearFocus)
-	return input
-end
+local CreateInput = Editor.CreateInput
 
 local function CreateGeneralPage()
 	local sections = {}
 	sections[1] = { heading = T("Modules", "Module") }
 	for _, module in ipairs(MODULES) do
+		-- The config checks are a safety net for future modules; today every module has a config with `enabled`.
 		if module[1] ~= "settings" and ns.config[module[1]] and ns.config[module[1]].enabled ~= nil then
 			sections[#sections + 1] = {
 				path = { "config", module[1], "enabled" },
@@ -120,7 +71,8 @@ local function CreateGeneralPage()
 		end
 	end
 	sections[#sections + 1] = { path = { "config", "style" } }
-	local unclaimed = UnclaimedLayout()
+	-- A safety net for future layout keys; today every position has a module page.
+	local unclaimed = Pages.UnclaimedLayout(ns.layout)
 	if #unclaimed > 0 then
 		sections[#sections + 1] = { heading = T("Other positions", "Weitere Positionen") }
 		for _, key in ipairs(unclaimed) do
@@ -150,24 +102,8 @@ end
 
 -- A list of override rows for a flat map (key -> command, CVar -> value).
 local function CreateListPage(title, extra, fillRow)
-	local page = CreateFrame("Frame")
-	-- Starts hidden so the first display fires OnShow (see Editor.CreatePage).
-	page:Hide()
+	local page = Editor.CreateScrollPage(title, extra)
 	page.rows = {}
-	local heading = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-	heading:SetPoint("TOPLEFT", 16, -16)
-	heading:SetText(title)
-	local top = 44 + extra(page, 44)
-
-	local scroll = CreateFrame("ScrollFrame", nil, page, "UIPanelScrollFrameTemplate")
-	scroll:SetPoint("TOPLEFT", 16, -top)
-	scroll:SetPoint("BOTTOMRIGHT", -32, 12)
-	page.content = CreateFrame("Frame", nil, scroll)
-	page.content:SetSize(1, 1)
-	scroll:SetScrollChild(page.content)
-	scroll:SetScript("OnSizeChanged", function(_, width)
-		page.content:SetWidth(width)
-	end)
 
 	function page:Render(entries)
 		for index, entry in ipairs(entries) do
@@ -209,14 +145,7 @@ end
 
 -- Sets (or with `command` nil, unbinds) `key` as an override and applies it.
 local function SetBindingOverride(key, command)
-	local profileCommand = (config.profile.bindings or {})[key]
-	if command == profileCommand then
-		StevioUIConfig.bindings[key] = nil
-	elseif command == nil then
-		StevioUIConfig.bindings[key] = profileCommand and false or nil
-	else
-		StevioUIConfig.bindings[key] = command
-	end
+	StevioUIConfig.bindings[key] = Model.BindingOverride(command, (config.profile.bindings or {})[key])
 	ns.ApplyOverridesNow()
 end
 
@@ -238,7 +167,7 @@ local function ChooseAction(owner, onChoose)
 		for index = 1, GetNumBindings() do
 			local command, category = GetBinding(index)
 			if command and not command:find("^HEADER") then
-				local categoryName = category and _G[category] or category or OTHER
+				local categoryName = ns.BindingCategoryName(category, OTHER)
 				local submenu = submenus[categoryName]
 				if not submenu then
 					submenu = root:CreateButton(categoryName)
@@ -338,23 +267,14 @@ end
 -- Sets `name` to `value` as an override (nil removes it) and applies it.
 local function SetCVarOverride(name, value)
 	name = ns.KnownCVarName(name)
-	local profileValue = (config.profile.cvars or {})[name]
-	if value == nil or value == profileValue then
-		StevioUIConfig.cvars[name] = nil
-	else
-		StevioUIConfig.cvars[name] = value
-	end
+	local override, backToDefault = Model.CVarOverride(value, (config.profile.cvars or {})[name])
+	StevioUIConfig.cvars[name] = override
 	-- A CVar outside the profile is no longer managed: back to the game default.
-	if value == nil and profileValue == nil then
+	if backToDefault then
 		ns.ApplyOverridesNow(name, C_CVar.GetCVarDefault(name))
 	else
 		ns.ApplyOverridesNow()
 	end
-end
-
-local function IsSettableCVar(name)
-	local value, _, _, _, isLocked, isSecure, isReadOnly = C_CVar.GetCVarInfo(name)
-	return value ~= nil and not isLocked and not isSecure and not isReadOnly
 end
 
 local function CreateCVarsPage()
@@ -371,7 +291,7 @@ local function CreateCVarsPage()
 		hint:SetText(T("CVar name and value", "CVar-Name und Wert"))
 		add:SetScript("OnClick", function()
 			local cvar = name:GetText():match("^%s*(.-)%s*$")
-			if cvar == "" or not IsSettableCVar(cvar) then
+			if cvar == "" or ns.SettableCVar(cvar) == nil then
 				hint:SetText(T("Unknown or protected CVar", "Unbekannte oder geschützte CVar"))
 				return
 			end
@@ -409,6 +329,7 @@ local rootCategory
 function ns.SetupOptionsPanel()
 	rootCategory = Settings.RegisterCanvasLayoutCategory(CreateGeneralPage(), "stevio-ui")
 	for _, module in ipairs(MODULES) do
+		-- A safety net for future modules; today every module has a config.
 		if ns.config[module[1]] then
 			local page = Editor.CreatePage(ModuleTitle(module), ModuleSections(module))
 			Settings.RegisterCanvasLayoutSubcategory(rootCategory, page, ModuleTitle(module))
@@ -422,10 +343,10 @@ function ns.SetupOptionsPanel()
 	)
 	Settings.RegisterAddOnCategory(rootCategory)
 
-	ns:RegisterSlashCommand("config", function()
+	ns.RegisterSlashCommand("config", function()
 		Settings.OpenToCategory(rootCategory:GetID())
 	end)
-	ns:RegisterSlashCommand("reset", function()
+	ns.RegisterSlashCommand("reset", function()
 		StaticPopup_Show(RESET_DIALOG)
 	end)
 end

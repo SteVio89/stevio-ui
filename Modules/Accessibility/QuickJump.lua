@@ -1,6 +1,8 @@
 local _, ns = ...
 
 local config = ns.config.accessibility
+local Internal = ns.AccessibilityInternal
+local Labels = Internal.Labels
 
 -- Quick-jump labels: every selectable button of the open window gets a
 -- two-letter label; typing it clicks the button. An uppercase first letter
@@ -14,39 +16,15 @@ local config = ns.config.accessibility
 local QuickJump = {}
 ns.QuickJump = QuickJump
 
-local owner = CreateFrame("Frame")
-local overlay = CreateFrame("Frame", nil, UIParent)
-overlay:SetFrameStrata("TOOLTIP")
-overlay:SetAllPoints()
+-- Created by SetupQuickJump, so nothing exists while the module is off.
+local owner, overlay, scrollDown, scrollUp
 
 local sources = {}
 local badges = {}
 local proxies = {}
 local prefixButtons = {}
 
-local current -- { targets, labels, typed, mouseButton, scrollBar }
-
--- The first letter varies fastest, so the first labels all differ already in
--- the first keystroke. Windows with more targets than the base keys can label
--- borrow extra first letters; those are only ever leader-activated, so taking
--- movement keys is fine there.
-local function GenerateLabels(count)
-	local leftKeys = config.leftKeys
-	if count > #leftKeys * #config.rightKeys then
-		leftKeys = CopyTable(leftKeys)
-		tAppendAll(leftKeys, config.extraLeftKeys)
-	end
-	local labels = {}
-	for _, right in ipairs(config.rightKeys) do
-		for _, left in ipairs(leftKeys) do
-			if #labels == count then
-				return labels
-			end
-			labels[#labels + 1] = left .. right
-		end
-	end
-	return labels
-end
+local current -- { targets, labels, typed, mouseButton, source, scrollBar }
 
 local function GetBadge(index)
 	local badge = badges[index]
@@ -54,7 +32,7 @@ local function GetBadge(index)
 		return badge
 	end
 	badge = CreateFrame("Frame", nil, overlay)
-	ns.CreateBackground(badge):SetColorTexture(0, 0, 0, 0.9)
+	ns.CreateBackground(badge, ns.PANEL_COLOR)
 	ns.CreateBorder(badge)
 	badge.text = ns.CreateFontString(badge, config.badge.fontSize, "CENTER")
 	badge.text:SetPoint("CENTER")
@@ -103,11 +81,17 @@ local function GetFrameActivator(index)
 	return activator
 end
 
+local Narrow
+
+-- Bind sets the button's `letter` each time it binds the button.
 local function GetPrefixButton(index)
 	local button = prefixButtons[index]
 	if not button then
 		button = CreateFrame("Button", "StevioUI_QuickJumpPrefix" .. index, UIParent)
 		button:RegisterForClicks("AnyDown")
+		button:SetScript("OnClick", function(self, mouseButton)
+			Narrow(self.letter, mouseButton)
+		end)
 		prefixButtons[index] = button
 	end
 	return button
@@ -127,14 +111,9 @@ local function GetLeadingIcon(target)
 	end
 end
 
-local function ShowBadge(index, target, label, typed)
+local function ShowBadge(index, target, label, typed, typedHex)
 	local badge = GetBadge(index)
-	local remaining = label:sub(#typed + 1)
-	local typedColor = CreateColor(unpack(config.badge.typedColor)):GenerateHexColor()
-	-- The typed part shows its case, so a pending right click is visible as e.g. "F".
-	local shownTyped = current.mouseButton == "RightButton" and typed:upper() or typed:lower()
-	local text = (#typed > 0 and ("|c%s%s|r"):format(typedColor, shownTyped) or "") .. remaining:lower()
-	badge.text:SetText(text)
+	badge.text:SetText(Labels.BadgeText(label, typed, current.mouseButton == "RightButton", typedHex))
 	badge.text:SetTextColor(unpack(config.badge.textColor))
 	local padding = config.badge.padding
 	badge:SetSize(badge.text:GetStringWidth() + padding * 2, badge.text:GetStringHeight() + padding * 2)
@@ -157,23 +136,19 @@ local function Scroll(direction)
 	end
 end
 
-local scrollDown = CreateFrame("Button", "StevioUI_QuickJumpScrollDown", UIParent)
-scrollDown:RegisterForClicks("AnyDown")
-scrollDown:SetScript("OnClick", function()
-	Scroll(ScrollControllerMixin.Directions.Increase)
-end)
-
-local scrollUp = CreateFrame("Button", "StevioUI_QuickJumpScrollUp", UIParent)
-scrollUp:RegisterForClicks("AnyDown")
-scrollUp:SetScript("OnClick", function()
-	Scroll(ScrollControllerMixin.Directions.Decrease)
-end)
-
-local function ClearLabels()
-	ClearOverrideBindings(owner)
+local function HideBadges()
 	for _, badge in ipairs(badges) do
 		badge:Hide()
 	end
+end
+
+-- The leader key still runs a refresh while the module is off, and ends up
+-- here without an owner; it would have no bindings to clear then anyway.
+local function ClearLabels()
+	if owner then
+		ClearOverrideBindings(owner)
+	end
+	HideBadges()
 	current = nil
 end
 
@@ -195,15 +170,11 @@ function QuickJump:IsActive()
 	return current ~= nil
 end
 
-local Narrow
-
 -- Binds the next letter of every label still matching what was typed: a final
 -- letter clicks its target, an earlier one narrows the selection further.
 local function Bind()
 	ClearOverrideBindings(owner)
-	for _, badge in ipairs(badges) do
-		badge:Hide()
-	end
+	HideBadges()
 
 	if current.scrollBar then
 		SetOverrideBindingClick(owner, true, config.scrollDownKey, scrollDown:GetName(), "LeftButton")
@@ -211,37 +182,34 @@ local function Bind()
 	end
 
 	local typed = current.typed
-	local nextLetters = {}
-	for index, label in ipairs(current.labels) do
-		if label:sub(1, #typed) == typed then
-			local target = current.targets[index]
-			ShowBadge(index, target, label, typed)
-			local letter = label:sub(#typed + 1, #typed + 1)
-			if #label == #typed + 1 then
-				local clicker
-				if target:IsObjectType("Button") and target:GetScript("OnClick") then
-					clicker = GetProxy(index)
-					clicker:SetAttribute("clickbutton", target)
-				else
-					clicker = GetFrameActivator(index)
-					clicker.target = target
-				end
-				SetOverrideBindingClick(owner, true, letter, clicker:GetName(), current.mouseButton)
-				-- Shift may still be held from the first letter of a right click.
-				if current.mouseButton == "RightButton" then
-					SetOverrideBindingClick(owner, true, "SHIFT-" .. letter, clicker:GetName(), current.mouseButton)
-				end
-			elseif not nextLetters[letter] then
-				nextLetters[letter] = true
-				local button = GetPrefixButton(index)
-				button:SetScript("OnClick", function(_, mouseButton)
-					Narrow(letter, mouseButton)
-				end)
-				SetOverrideBindingClick(owner, true, letter, button:GetName(), "LeftButton")
-				-- Only the first letter has a Shift variant; it selects the right click.
-				if typed == "" then
-					SetOverrideBindingClick(owner, true, "SHIFT-" .. letter, button:GetName(), "RightButton")
-				end
+	-- Once per bind, not at login: the options panel changes the config live.
+	local typedHex
+	for _, step in ipairs(Labels.NextStep(current.labels, typed)) do
+		local index, letter = step.index, step.letter
+		local target = current.targets[index]
+		typedHex = typedHex or CreateColor(unpack(config.badge.typedColor)):GenerateHexColor()
+		ShowBadge(index, target, current.labels[index], typed, typedHex)
+		if step.final then
+			local clicker
+			if target:IsObjectType("Button") and target:GetScript("OnClick") then
+				clicker = GetProxy(index)
+				clicker:SetAttribute("clickbutton", target)
+			else
+				clicker = GetFrameActivator(index)
+				clicker.target = target
+			end
+			SetOverrideBindingClick(owner, true, letter, clicker:GetName(), current.mouseButton)
+			-- Shift may still be held from the first letter of a right click.
+			if current.mouseButton == "RightButton" then
+				SetOverrideBindingClick(owner, true, "SHIFT-" .. letter, clicker:GetName(), current.mouseButton)
+			end
+		elseif step.narrow then
+			local button = GetPrefixButton(index)
+			button.letter = letter
+			SetOverrideBindingClick(owner, true, letter, button:GetName(), "LeftButton")
+			-- Only the first letter has a Shift variant; it selects the right click.
+			if typed == "" then
+				SetOverrideBindingClick(owner, true, "SHIFT-" .. letter, button:GetName(), "RightButton")
 			end
 		end
 	end
@@ -263,9 +231,8 @@ local function Collect()
 		if source.IsOpen() then
 			local targets = {}
 			-- A failing source must not take the whole feature down with it.
-			local ok, collected = pcall(source.Collect)
+			local ok, collected = ns.SafeCall(source.Collect)
 			if not ok then
-				geterrorhandler()(collected)
 				collected = {}
 			end
 			for _, target in ipairs(collected) do
@@ -291,7 +258,7 @@ local function Refresh()
 	end
 	current = {
 		targets = targets,
-		labels = GenerateLabels(#targets),
+		labels = Labels.Generate(#targets, config.leftKeys, config.rightKeys, config.extraLeftKeys),
 		typed = "",
 		mouseButton = "LeftButton",
 		source = source,
@@ -325,26 +292,42 @@ end
 
 -- Sorted top to bottom, left to right, so labels follow reading order.
 function QuickJump.SortByPosition(targets)
-	table.sort(targets, function(a, b)
-		local aTop, bTop = a:GetTop() or 0, b:GetTop() or 0
-		if math.abs(aTop - bTop) > 1 then
-			return aTop > bTop
-		end
-		return (a:GetLeft() or 0) < (b:GetLeft() or 0)
-	end)
+	table.sort(targets, Labels.ByPosition)
 	return targets
+end
+
+function Internal.SetupQuickJump()
+	owner = CreateFrame("Frame")
+	overlay = CreateFrame("Frame", nil, UIParent)
+	overlay:SetFrameStrata("TOOLTIP")
+	overlay:SetAllPoints()
+
+	scrollDown = CreateFrame("Button", "StevioUI_QuickJumpScrollDown", UIParent)
+	scrollDown:RegisterForClicks("AnyDown")
+	scrollDown:SetScript("OnClick", function()
+		Scroll(ScrollControllerMixin.Directions.Increase)
+	end)
+
+	scrollUp = CreateFrame("Button", "StevioUI_QuickJumpScrollUp", UIParent)
+	scrollUp:RegisterForClicks("AnyDown")
+	scrollUp:SetScript("OnClick", function()
+		Scroll(ScrollControllerMixin.Directions.Decrease)
+	end)
 end
 
 -- PLAYER_REGEN_DISABLED still runs before lockdown starts, the last moment
 -- bindings can be removed; leftover labels would keep letters bound in combat.
-ns:RegisterEvent("PLAYER_REGEN_DISABLED", ClearLabels)
-ns:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+-- Registered at load, so they run before handlers modules add when enabled.
+ns.RegisterEvent("PLAYER_REGEN_DISABLED", ClearLabels)
+ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
 	QuickJump:RequestRefresh()
 end)
 
 -- Dumps what would be labelled right now, for diagnosing missing or dead
 -- labels. Saved for reading outside the game and shown in a copyable window.
-ns:RegisterSlashCommand("qj", function()
+-- Registered at load like every /sui command; with the module off there are
+-- no sources, so the dump is empty.
+ns.RegisterSlashCommand("qj", function()
 	local lines = {}
 	for _, source in ipairs(sources) do
 		local open = source.IsOpen()
@@ -374,7 +357,5 @@ ns:RegisterSlashCommand("qj", function()
 			end
 		end
 	end
-	local text = table.concat(lines, "\n")
-	StevioUIDebug = text
-	ns.ShowExportWindow(text)
+	ns.ShowDebugDump(table.concat(lines, "\n"))
 end)

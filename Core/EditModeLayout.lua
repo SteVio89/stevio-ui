@@ -7,14 +7,11 @@ local addonName, ns = ...
 
 local LAYOUT_NAME = addonName
 
+local Systems = ns.EditModeSystems
+
 local desiredSystems = {}
 
--- Edit Mode stores icon sizes (action bars, auras) as steps of 10 above 50%.
-function ns.EditModeIconSize(percent)
-	return (percent - 50) / 10
-end
-
-function ns:SetEditModeSystem(system, systemIndex, layout, settings)
+function ns.SetEditModeSystem(system, systemIndex, layout, settings)
 	desiredSystems[#desiredSystems + 1] = {
 		system = system,
 		systemIndex = systemIndex,
@@ -29,50 +26,6 @@ function ns:SetEditModeSystem(system, systemIndex, layout, settings)
 	}
 end
 
-local function FindSystem(layoutInfo, system, systemIndex)
-	for _, systemInfo in ipairs(layoutInfo.systems) do
-		if systemInfo.system == system and systemInfo.systemIndex == systemIndex then
-			return systemInfo
-		end
-	end
-end
-
-local function ApplyAnchor(systemInfo, anchorInfo)
-	local current = systemInfo.anchorInfo
-	local changed = systemInfo.isInDefaultPosition or systemInfo.anchorInfo2 ~= nil
-	for key, value in pairs(anchorInfo) do
-		if current[key] ~= value then
-			changed = true
-		end
-	end
-	systemInfo.anchorInfo = CopyTable(anchorInfo)
-	systemInfo.anchorInfo2 = nil
-	systemInfo.isInDefaultPosition = false
-	return changed
-end
-
--- Only settings the system already carries are touched; adding unknown ones
--- would make Blizzard reject or misread the layout.
-local function ApplySettings(systemInfo, settings)
-	local changed = false
-	for _, settingInfo in ipairs(systemInfo.settings) do
-		local value = settings[settingInfo.setting]
-		if value ~= nil and settingInfo.value ~= value then
-			settingInfo.value = value
-			changed = true
-		end
-	end
-	return changed
-end
-
-local function FindOwnLayout(customLayouts)
-	for index, layoutInfo in ipairs(customLayouts) do
-		if layoutInfo.layoutName == LAYOUT_NAME and layoutInfo.layoutType == Enum.EditModeLayoutType.Account then
-			return index, layoutInfo
-		end
-	end
-end
-
 local layoutsReady, systemsReady, applied = false, false, false
 
 local function ApplyLayout()
@@ -81,7 +34,7 @@ local function ApplyLayout()
 	local customLayouts = saved.layouts
 
 	local changed = false
-	local customIndex, layoutInfo = FindOwnLayout(customLayouts)
+	local customIndex, layoutInfo = Systems.FindOwnLayout(customLayouts, LAYOUT_NAME)
 	if not layoutInfo then
 		layoutInfo = CopyTable(presets[1])
 		layoutInfo.layoutName = LAYOUT_NAME
@@ -93,10 +46,10 @@ local function ApplyLayout()
 	end
 
 	for _, desired in ipairs(desiredSystems) do
-		local systemInfo = FindSystem(layoutInfo, desired.system, desired.systemIndex)
+		local systemInfo = Systems.Find(layoutInfo, desired.system, desired.systemIndex)
 		if systemInfo then
-			changed = ApplyAnchor(systemInfo, desired.anchorInfo) or changed
-			changed = ApplySettings(systemInfo, desired.settings) or changed
+			changed = Systems.ApplyAnchor(systemInfo, desired.anchorInfo) or changed
+			changed = Systems.ApplySettings(systemInfo, desired.settings) or changed
 		end
 	end
 
@@ -126,16 +79,18 @@ local function TryApply()
 		return
 	end
 	applied = true
-	ns:RunAfterCombat(ApplyLayout)
+	ns.RunAfterCombat(ApplyLayout)
 end
 
 local function OnLayoutsReady()
+	ns.UnregisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsReady)
+	ns.UnregisterEvent("PLAYER_ENTERING_WORLD", OnLayoutsReady)
 	layoutsReady = true
 	TryApply()
 end
 
-ns:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsReady)
-ns:RegisterEvent("PLAYER_ENTERING_WORLD", OnLayoutsReady)
+ns.RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsReady)
+ns.RegisterEvent("PLAYER_ENTERING_WORLD", OnLayoutsReady)
 
 -- Called by Init once all modules have registered their systems.
 function ns.ApplyEditModeLayout()

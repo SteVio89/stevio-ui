@@ -1,16 +1,19 @@
 -- Run with: lua tests/loot_feed_test.lua  (from the repo root)
-local ns = {}
-assert(loadfile("Modules/LootTicker/Feed.lua"))("stevio-ui", ns)
+local check, loadAddonFile = dofile("tests/helpers.lua")
+local ns = loadAddonFile("Modules/LootTicker/Feed.lua")
 local Feed = ns.LootFeed
-
-local function check(cond, msg)
-	if not cond then
-		error("FAIL: " .. msg, 2)
-	end
-end
 
 local link = "|cff0070dd|Hitem:2589::::::::80:::::|h[Linen Cloth]|h|r"
 local currency = "|cffffffff|Hcurrency:3008:0|h[Valorstones]|h|r"
+
+-- Format strings become anchored patterns: magic characters escaped,
+-- positional specifiers made plain.
+check(Feed.PatternFromFormat("You receive loot: %sx%d.") == "^You receive loot: (.+)x(%d+)%.$", "pattern")
+check(
+	Feed.PatternFromFormat("Ihr erhaltet Beute: %2$dx %1$s.") == "^Ihr erhaltet Beute: (%d+)x (.+)%.$",
+	"positional pattern"
+)
+check(Feed.PatternFromFormat("[%s] (+%d%%)?") == "^%[(.+)%] %(%+(%d+)%%%)%?$", "magic characters")
 
 -- Format strings as the enUS / deDE clients define them.
 local patterns = Feed.Patterns(
@@ -48,6 +51,10 @@ check(Feed.ParseMoney("2 Gold", Feed.MoneyPatterns("%1$d Gold", "%1$d Silver", "
 
 check(Feed.LinkName(link) == "Linen Cloth", "name without brackets")
 check(Feed.LinkColor(link) == "ff0070dd", "link color")
+local r, g, b = Feed.HexToRGB("ff0070dd")
+check(r == 0 and g == 0x70 / 255 and b == 0xdd / 255, "link color as RGB")
+r, g, b = Feed.HexToRGB("FFFFFFFF")
+check(r == 1 and g == 1 and b == 1, "uppercase hex")
 
 local options = { fadeInTime = 0.2, holdTime = 10, fadeOutTime = 5 }
 check(Feed.Alpha(0, options) == 0, "starts invisible")
@@ -181,5 +188,53 @@ check(Feed.EntryAlpha(pending, 0.1, opts) == 0.5, "open roll fades in")
 check(Feed.EntryAlpha(pending, 59, opts) == 1, "open roll held")
 check(Feed.EntryAlpha(pending, 65, opts) == 1, "held after it timed out")
 check(Feed.EntryAlpha(pending, 76, opts) == nil, "then fades out")
+
+-- Line details. Class colors are marked as "<class:name>".
+local function classColored(playerName, class)
+	return class and ("<%s:%s>"):format(class, playerName) or playerName
+end
+local texts = { rolling = "rolling", allPassed = "all passed", you = "You", yourRoll = "you" }
+local stateLabels = {
+	[State.NeedMainSpec] = "Need",
+	[State.NeedOffSpec] = "Need (OS)",
+	[State.Greed] = "Greed",
+	[State.Pass] = "Pass",
+}
+local function grey(text)
+	return "|cffaaaaaa" .. text .. "|r"
+end
+
+check(Feed.RollText({ state = State.NeedMainSpec }, stateLabels) == "Need", "roll text before the number")
+check(Feed.RollText({ state = State.NeedOffSpec, roll = 12 }, stateLabels) == "Need (OS) 12", "offspec roll")
+check(Feed.RollText({ state = State.NoRoll, roll = 3 }, stateLabels) == " 3", "unnamed state")
+check(Feed.RollDetail(open, texts, stateLabels, classColored) == grey("rolling") .. grey(" · you: Need"), "rolling")
+check(Feed.RollDetail(undecided, texts, stateLabels, classColored) == grey("rolling"), "rolling without own choice")
+check(Feed.RollDetail(passed, texts, stateLabels, classColored) == grey("all passed"), "all passed")
+check(
+	Feed.RollDetail(won, texts, stateLabels, classColored)
+		== "<MAGE:Bob> " .. grey("Need 98") .. grey(" · you: Greed 45"),
+	"winner and own roll"
+)
+local selfWin = { winner = { isSelf = true, state = State.NeedMainSpec, roll = 87 }, mine = won.mine }
+check(Feed.RollDetail(selfWin, texts, stateLabels, classColored) == "|cff40ff40You|r " .. grey("Need 87"), "own win")
+
+check(Feed.LootDetail({ count = 1 }, classColored) == "", "single own item")
+check(Feed.LootDetail({ count = 3 }, classColored) == "|cffffffffx3|r", "own stack")
+check(
+	Feed.LootDetail({ count = 3, looter = "Bob-Realm", class = "MAGE" }, classColored) == "|cffffffffx3|r <MAGE:Bob>",
+	"x3 Bob"
+)
+check(Feed.LootDetail({ count = 1, looter = "Bob" }, classColored) == "Bob", "looter without class")
+
+-- Filter: currency by option, items from their minimum quality on.
+local filter = { showCurrency = true, minQuality = 1, groupMinQuality = 3 }
+check(Feed.Passes(1, false, false, filter), "own item at the minimum")
+check(not Feed.Passes(0, false, false, filter), "own item below the minimum")
+check(not Feed.Passes(2, false, true, filter), "group item below the group minimum")
+check(Feed.Passes(3, false, true, filter), "group item at the group minimum")
+check(Feed.Passes(nil, false, true, filter), "unknown quality passes")
+check(Feed.Passes(0, true, false, filter), "currency ignores the quality")
+check(not Feed.Passes(5, true, false, { showCurrency = false, minQuality = 0 }), "currency off")
+check(Feed.Passes(1, false, true, { minQuality = 1 }), "no group minimum falls back")
 
 print("loot feed tests passed")

@@ -1,13 +1,7 @@
 -- Run with: lua tests/action_sets_test.lua  (from the repo root)
-local ns = {}
-assert(loadfile("Modules/ActionBars/Sets.lua"))("stevio-ui", ns)
+local check, loadAddonFile = dofile("tests/helpers.lua")
+local ns = loadAddonFile("Modules/ActionBars/Sets.lua")
 local Sets = ns.ActionSets
-
-local function check(cond, msg)
-	if not cond then
-		error("FAIL: " .. msg, 2)
-	end
-end
 
 local fireball = { type = "spell", id = 133 }
 local heal = { type = "spell", id = 2050 }
@@ -42,6 +36,10 @@ check(#Sets.Changes({ [181] = heal }, {}) == 0, "beyond the last slot")
 check(Sets.Next(1, 2) == 2 and Sets.Next(2, 2) == 1, "wraps")
 check(Sets.Next(nil, 3) == 1, "starts at one")
 check(Sets.Next(1, 0) == nil, "no sets")
+check(Sets.Previous(2, 2) == 1 and Sets.Previous(1, 2) == 2, "previous wraps")
+check(Sets.Previous(1, 3) == 3 and Sets.Previous(3, 3) == 2, "previous of three")
+check(Sets.Previous(1, 1) == 1, "previous of one")
+check(Sets.Previous(1, 0) == nil, "previous without sets")
 
 local names = { "Leveling", "Healing" }
 check(Sets.Find(names, "healing") == 2, "by name")
@@ -49,4 +47,4 @@ check(Sets.Find(names, "1") == 1, "by number")
 check(Sets.Find(names, "3") == nil, "number out of range")
 check(Sets.Find(names, "tank") == nil, "unknown name")
 
-print("action_sets_test: ok")
+print("action sets tests passed")

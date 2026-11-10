@@ -1,7 +1,6 @@
 local _, ns = ...
 
 local config = ns.config.chat
-local style = ns.config.style
 local C = ns.ChatInternal
 
 -- WoW's message frames can't select text, so "Copy" shows the channel as plain
@@ -17,9 +16,7 @@ local function ToggleCopy()
 	if not channel then
 		return
 	end
-	copy.text = ns.ChatHistory.Transcript(channel, function(t)
-		return date("%H:%M", t)
-	end, C.Day)
+	copy.text = ns.ChatHistory.Transcript(channel, C.Time, C.Day)
 	copy:Show()
 	copy.edit:SetText(copy.text)
 	copy.edit:SetFocus()
@@ -34,9 +31,7 @@ function C.CreateCopyView(frame)
 	copy:SetPoint("TOPLEFT", ui.messages)
 	copy:SetPoint("BOTTOMRIGHT", ui.messages)
 	copy:Hide()
-	local background = copy:CreateTexture(nil, "BACKGROUND")
-	background:SetAllPoints()
-	background:SetColorTexture(unpack(config.backgroundColor))
+	ns.CreateBackground(copy, config.backgroundColor)
 
 	local scroll = CreateFrame("ScrollFrame", nil, copy)
 	scroll:SetAllPoints()
@@ -49,7 +44,7 @@ function C.CreateCopyView(frame)
 	local edit = CreateFrame("EditBox", nil, scroll)
 	edit:SetMultiLine(true)
 	edit:SetAutoFocus(false)
-	edit:SetFont(style.font, config.fontSize, style.fontFlags)
+	C.ApplyFont(edit)
 	edit:SetMaxLetters(0)
 	edit:SetWidth(C.ChatWidth() - config.sidebarWidth - 12)
 	scroll:SetScrollChild(edit)
@@ -95,7 +90,7 @@ function C.CreateCopyView(frame)
 	button:SetPoint("TOPRIGHT", -6, 0)
 	button.text = ns.CreateFontString(button, nil, "RIGHT")
 	button.text:SetAllPoints()
-	button.text:SetText(C.german and "Kopieren" or "Copy")
+	button.text:SetText(ns.T("Copy", "Kopieren"))
 	button:SetWidth(button.text:GetStringWidth() + 4)
 	button:SetScript("OnClick", ToggleCopy)
 	ui.header:SetPoint("TOPRIGHT", button, "TOPLEFT", -6, 0)

@@ -1,8 +1,9 @@
 local _, ns = ...
 
-local QuestRewards = ns:RegisterModule("questRewards", {})
+local QuestRewards = ns.RegisterModule("questRewards", {})
 
-local config
+local config = ns.config.questRewards
+local Choices = ns.QuestChoices
 local coins = {}
 local pendingLoad
 
@@ -19,28 +20,20 @@ local function GetCoin(button)
 end
 
 local function GetChoiceButtons()
-	local buttons = {}
-	local rewardsFrame = QuestInfoFrame.rewardsFrame or QuestInfoRewardsFrame
-	for _, button in ipairs(rewardsFrame.RewardButtons or {}) do
-		if button:IsShown() and button.type == "choice" and button.objectType == "item" then
-			buttons[#buttons + 1] = button
-		end
-	end
-	return buttons
+	local rewardsFrame = Choices.RewardsFrame()
+	return Choices.Buttons(rewardsFrame.RewardButtons or {}, true)
 end
 
 local function MarkMostValuable(buttons)
-	local best, bestValue = nil, 0
-	for _, button in ipairs(buttons) do
+	local values = {}
+	for index, button in ipairs(buttons) do
 		local _, _, count, _, _, itemID = GetQuestItemInfo("choice", button:GetID())
 		local sellPrice = itemID and select(11, C_Item.GetItemInfo(itemID))
-		local value = (sellPrice or 0) * (count or 1)
-		if value > bestValue then
-			best, bestValue = button, value
-		end
+		values[index] = (sellPrice or 0) * (count or 1)
 	end
+	local best = Choices.MostValuable(values)
 	if best then
-		GetCoin(best):Show()
+		GetCoin(buttons[best]):Show()
 	end
 end
 
@@ -77,7 +70,6 @@ local function Update(template)
 	end)
 end
 
-function QuestRewards:OnEnable(moduleConfig)
-	config = moduleConfig
+function QuestRewards:OnEnable()
 	hooksecurefunc("QuestInfo_Display", Update)
 end

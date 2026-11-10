@@ -24,7 +24,6 @@ globals = {
 	-- Game tables addons add entries to
 	"SlashCmdList",
 	"StaticPopupDialogs",
-	"UISpecialFrames",
 	-- Slash command and keybinding names (Bindings.xml)
 	"SLASH_STEVIOUI1",
 	"BINDING_HEADER_STEVIOUI",

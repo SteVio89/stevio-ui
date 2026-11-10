@@ -4,6 +4,9 @@ local addonName, ns = ...
 -- only until the next /reload. Copying our entries into a SavedVariable keeps
 -- them readable from the WTF folder; reading its data needs no error-handler hook.
 
+local ErrorLog = {}
+ns.ErrorLog = ErrorLog
+
 local MAX_ENTRIES = 50
 
 -- Blizzard's frame indexes its entries by position, so clearing skips them instead of wiping them.
@@ -35,21 +38,44 @@ local function CollectSessionErrors()
 	return collected
 end
 
--- Earlier sessions stay in the log, so a /reload after an error burst doesn't wipe it.
-local function AllErrors()
-	local all = CopyTable(StevioUIErrors or {})
-	tAppendAll(all, CollectSessionErrors())
-	while #all > MAX_ENTRIES do
-		table.remove(all, 1)
+-- Appends `session` to `earlier` (changing it) and keeps the newest
+-- MAX_ENTRIES entries.
+function ErrorLog.Merge(earlier, session)
+	for _, entry in ipairs(session) do
+		earlier[#earlier + 1] = entry
 	end
-	return all
+	while #earlier > MAX_ENTRIES do
+		table.remove(earlier, 1)
+	end
+	return earlier
 end
 
-ns:RegisterEvent("PLAYER_LOGOUT", function()
+-- The text /sui errors shows.
+function ErrorLog.Format(entries)
+	local parts = {}
+	for i, entry in ipairs(entries) do
+		parts[i] = ("#%d  %s  x%d\n%s\n%s\nLocals:\n%s"):format(
+			i,
+			entry.time,
+			entry.count,
+			entry.message,
+			entry.stack,
+			entry.locals
+		)
+	end
+	return table.concat(parts, "\n\n")
+end
+
+-- Earlier sessions stay in the log, so a /reload after an error burst doesn't wipe it.
+local function AllErrors()
+	return ErrorLog.Merge(CopyTable(StevioUIErrors or {}), CollectSessionErrors())
+end
+
+ns.RegisterEvent("PLAYER_LOGOUT", function()
 	StevioUIErrors = AllErrors()
 end)
 
-ns:RegisterSlashCommand("errors", function(input)
+ns.RegisterSlashCommand("errors", function(input)
 	if input == "clear" then
 		StevioUIErrors = {}
 		if ScriptErrorsFrame then
@@ -64,16 +90,5 @@ ns:RegisterSlashCommand("errors", function(input)
 		ns.Print(ns.T("no errors logged – /sui errors clear", "keine Fehler protokolliert – /sui errors clear"))
 		return
 	end
-	local parts = {}
-	for i, entry in ipairs(all) do
-		parts[i] = ("#%d  %s  x%d\n%s\n%s\nLocals:\n%s"):format(
-			i,
-			entry.time,
-			entry.count,
-			entry.message,
-			entry.stack,
-			entry.locals
-		)
-	end
-	ns.ShowExportWindow(table.concat(parts, "\n\n"))
+	ns.ShowTextWindow(ErrorLog.Format(all))
 end)

@@ -19,7 +19,7 @@ ns.UNITS_PER_GROUP = 5
 
 local modules = {}
 
-function ns:RegisterModule(name, module)
+function ns.RegisterModule(name, module)
 	module.name = name
 	modules[#modules + 1] = module
 	return module
@@ -34,12 +34,38 @@ dispatcher:SetScript("OnEvent", function(_, event, ...)
 	end
 end)
 
-function ns:RegisterEvent(event, handler)
+function ns.RegisterEvent(event, handler)
 	if not handlers[event] then
 		handlers[event] = {}
 		dispatcher:RegisterEvent(event)
 	end
 	table.insert(handlers[event], handler)
+end
+
+-- Copies the handler list instead of changing it, so a handler may unregister
+-- itself while the dispatcher is still iterating over the old list.
+function ns.UnregisterEvent(event, handler)
+	local remaining = {}
+	for _, registered in ipairs(handlers[event] or {}) do
+		if registered ~= handler then
+			remaining[#remaining + 1] = registered
+		end
+	end
+	if #remaining > 0 then
+		handlers[event] = remaining
+	elseif handlers[event] then
+		handlers[event] = nil
+		dispatcher:UnregisterEvent(event)
+	end
+end
+
+-- Runs `fn`, reporting an error to the error handler instead of raising it.
+function ns.SafeCall(fn, ...)
+	local ok, result = pcall(fn, ...)
+	if not ok then
+		geterrorhandler()(result)
+	end
+	return ok, result
 end
 
 -- Addon output: "stevio-ui: text", or a further line without the prefix.
@@ -64,14 +90,20 @@ end
 
 local slashCommands = {}
 
-function ns:RegisterSlashCommand(name, handler)
+function ns.RegisterSlashCommand(name, handler)
 	slashCommands[name] = handler
+end
+
+-- What follows /sui: " Name some args " -> "name", "some args".
+function ns.ParseSlash(input)
+	local name, rest = input:match("^%s*(%S*)%s*(.-)%s*$")
+	return name:lower(), rest
 end
 
 SLASH_STEVIOUI1 = "/sui"
 SlashCmdList.STEVIOUI = function(input)
-	local name, rest = input:match("^%s*(%S*)%s*(.-)%s*$")
-	local handler = slashCommands[name:lower()]
+	local name, rest = ns.ParseSlash(input)
+	local handler = slashCommands[name]
 	if handler then
 		handler(rest)
 	else
@@ -84,19 +116,27 @@ end
 local combatQueue = {}
 
 -- Protected frames can't be moved, reparented or rebound during combat lockdown,
--- so such changes wait for the lockdown to end instead of erroring.
-function ns:RunAfterCombat(fn)
-	if InCombatLockdown() then
-		combatQueue[#combatQueue + 1] = fn
-	else
+-- so such changes wait for the lockdown to end instead of erroring. A function
+-- queued again only runs once, at its latest position: every caller passes one
+-- that brings things up to date, so the outcome is the same as running each.
+function ns.RunAfterCombat(fn)
+	if not InCombatLockdown() then
 		fn()
+		return
 	end
+	for i, queued in ipairs(combatQueue) do
+		if queued == fn then
+			table.remove(combatQueue, i)
+			break
+		end
+	end
+	combatQueue[#combatQueue + 1] = fn
 end
 
-ns:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-	local queued = combatQueue
+ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
+	local pending = combatQueue
 	combatQueue = {}
-	for _, fn in ipairs(queued) do
+	for _, fn in ipairs(pending) do
 		fn()
 	end
 end)
@@ -105,7 +145,7 @@ local function EnableModules()
 	for _, module in ipairs(modules) do
 		local config = ns.config[module.name]
 		if not config or config.enabled ~= false then
-			module:OnEnable(config)
+			module:OnEnable()
 		end
 	end
 	ns.ApplyEditModeLayout()
@@ -113,10 +153,10 @@ end
 
 -- A /reload during combat starts the addon under lockdown, where secure frames
 -- can't be configured; building everything afterwards avoids half-set-up frames.
-ns:RegisterEvent("PLAYER_LOGIN", function()
+ns.RegisterEvent("PLAYER_LOGIN", function()
 	if not (StevioUIState and StevioUIState.consented) then
 		ns.ShowConsent()
 		return
 	end
-	ns:RunAfterCombat(EnableModules)
+	ns.RunAfterCombat(EnableModules)
 end)

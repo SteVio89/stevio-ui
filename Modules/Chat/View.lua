@@ -1,45 +1,12 @@
 local _, ns = ...
 
 local config = ns.config.chat
-local style = ns.config.style
 local C = ns.ChatInternal
 
 -- The channel view: sidebar with the channels, header, messages and input line.
 
--- "time [channel] sender: text"; the channel only shows in "Other" and Main
--- (where a click on it writes to that channel), the sender
--- is missing on system messages. Channel and sender take their channel's color;
--- emotes ("time Bob waves.") are colored as a whole in the emote color.
--- Returns the line and its base color: finished lines without a sender (loot,
--- NPC, system, ...) take their kind's chat color, like in Blizzard's chat;
--- System lines stored before they carried a kind count as SYSTEM.
--- The sender's name (`text`, already formatted) as a link that opens a whisper
--- when the message came from another character (see OnHyperlinkClick below).
-local function Sender(entry, text)
-	return entry.player and ns.ChatHistory.PlayerLink(entry.player, text) or text
-end
-
-local function FormatEntry(channel, entry)
-	local stamp = "|cff808080" .. (entry.time and date("%H:%M", entry.time) or "--:--") .. "|r"
-	local colorType = entry.colorType or (channel.kind == "system" and not entry.sender and "SYSTEM")
-	if colorType then
-		return ns.ChatHistory.Line(entry, stamp), C.TypeColor(colorType)
-	end
-	if entry.emote then
-		local body = entry.sender and (Sender(entry, entry.sender) .. " " .. entry.text) or entry.text
-		return stamp .. " " .. C.ColorCode(C.TypeColor("EMOTE")) .. body .. "|r"
-	end
-	local source = entry.source
-		and (C.ColorCode(C.TypeColor(entry.sourceType or channel.chatType)) .. entry.source .. "|r")
-	if source and entry.sourceKey then
-		source = ns.ChatHistory.ChannelLink(entry.sourceKey, source)
-	end
-	local sender = entry.sender and Sender(entry, C.ColorCode(C.ChannelColor(channel)) .. entry.sender .. "|r")
-	return ns.ChatHistory.Line(entry, stamp, source, sender)
-end
-
 local function DayLine(entry)
-	return "|cff808080-- " .. C.Day(entry.time) .. " --|r"
+	return C.GREY .. "-- " .. C.Day(entry.time) .. " --|r"
 end
 
 -- Adds `entry` to the message frame, after a date line when it starts a new
@@ -48,17 +15,8 @@ function C.ShowEntry(channel, previous, entry)
 	if ns.ChatHistory.StartsDay(previous, entry, C.Day) then
 		C.ui.messages:AddMessage(DayLine(entry))
 	end
-	local line, r, g, b = FormatEntry(channel, entry)
+	local line, r, g, b = C.FormatEntry(channel, entry, C.TypeColor)
 	C.ui.messages:AddMessage(line, r or 1, g or 1, b or 1)
-end
-
--- The last message with a time before index `index` (nil when there is none).
-function C.PreviousTimed(messages, index)
-	for i = index - 1, 1, -1 do
-		if messages[i].time then
-			return messages[i]
-		end
-	end
 end
 
 function C.RenderMessages(channel)
@@ -73,6 +31,16 @@ function C.RenderMessages(channel)
 		previous = entry.time and entry or previous
 	end
 	messages:ScrollToBottom()
+end
+
+-- Opens channel `key` in the message area, closing the copy view; returns the
+-- channel. The sidebar and unread counts are left to the caller.
+function C.ShowChannel(key)
+	C.state.selected = key
+	C.ui.copy:Hide()
+	local channel = C.Selected()
+	C.RenderMessages(channel)
+	return channel
 end
 
 local function CreateRow(index)
@@ -149,7 +117,7 @@ end
 local function CreateInput(frame)
 	local ui = C.ui
 	local input = CreateFrame("EditBox", nil, frame)
-	input:SetFont(style.font, config.fontSize, style.fontFlags)
+	C.ApplyFont(input)
 	input:SetAutoFocus(false)
 	input:SetHeight(math.max(config.rowHeight, config.fontSize + 6))
 	input:SetPoint("BOTTOMLEFT", ui.sidebar, "BOTTOMRIGHT", 6, 2)
@@ -186,7 +154,7 @@ end
 local function CreateMessages(frame)
 	local ui = C.ui
 	local messages = CreateFrame("ScrollingMessageFrame", nil, frame)
-	messages:SetFont(style.font, config.fontSize, style.fontFlags)
+	C.ApplyFont(messages)
 	messages:SetJustifyH("LEFT")
 	messages:SetFading(false)
 	messages:SetMaxLines(config.historyLimit)
@@ -230,9 +198,7 @@ function C.CreateChannelView()
 	frame:SetFrameStrata("MEDIUM")
 	frame:EnableMouse(true)
 	frame:Hide()
-	local background = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
-	background:SetAllPoints()
-	background:SetColorTexture(unpack(config.backgroundColor))
+	ns.CreateBackground(frame, config.backgroundColor, -8)
 	ns.CreateBorder(frame)
 	ui.frame = frame
 	ui.rows = {}

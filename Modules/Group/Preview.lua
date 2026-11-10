@@ -36,6 +36,29 @@ local function FakeMember(index)
 	}
 end
 
+local function CreatePreviewIcon(cell, anchorPoint, offsetX, offsetY, size)
+	local icon = CreateFrame("Frame", nil, cell.health)
+	icon:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
+	icon:SetFrameLevel(cell.health:GetFrameLevel() + 2)
+	ns.StyleAuraIcon(icon, size, ns.GROUP_ICON_COUNT_SIZE)
+	icon:Hide()
+	return icon
+end
+
+-- Plain frames the /sui test preview fills with fake debuffs and HoTs.
+local function BuildPreviewIcons(cell)
+	local step = config.iconSize + ns.GROUP_ICON_SPACING
+	cell.leftIcons, cell.rightIcons, cell.ownIcons = {}, {}, {}
+	for i = 1, config.iconsPerSide do
+		cell.leftIcons[i] = CreatePreviewIcon(cell, "LEFT", 2 + (i - 1) * step, 0, config.iconSize)
+		cell.rightIcons[i] = CreatePreviewIcon(cell, "RIGHT", -2 - (i - 1) * step, 0, config.iconSize)
+	end
+	local ownStep = config.ownAuraSize + ns.GROUP_ICON_SPACING
+	for i = 1, config.ownAurasMax do
+		cell.ownIcons[i] = CreatePreviewIcon(cell, "TOPLEFT", 2 + (i - 1) * ownStep, -2, config.ownAuraSize)
+	end
+end
+
 local function ShowIcons(icons, count, texture)
 	for i, icon in ipairs(icons) do
 		icon.texture:SetTexture(texture)
@@ -80,7 +103,7 @@ local function CreatePreview()
 		local cell = CreateFrame("Frame", nil, container)
 		cell:SetSize(baseWidth, cellHeight)
 		ns.BuildGroupCell(cell)
-		ns.BuildGroupPreviewIcons(cell)
+		BuildPreviewIcons(cell)
 		ShowMember(cell, FakeMember(index))
 		cells[index] = cell
 	end
@@ -116,8 +139,8 @@ local function HidePreview()
 	end
 end
 
-ns:RegisterSlashCommand("test", function(input)
-	if not ns.config.group.enabled then
+ns.RegisterSlashCommand("test", function(input)
+	if not config.enabled then
 		return
 	end
 	local count = tonumber(input)

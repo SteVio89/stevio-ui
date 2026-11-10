@@ -12,7 +12,6 @@ local chatFrames = {}
 local tabs = {}
 local editBoxes = {}
 local applyingAlpha = false
-local placingEditBox = false
 
 -- Blizzard's chat windows are never shown: the channel view replaces them.
 -- Only their input box is still used (Enter / slash commands) while typing;
@@ -44,48 +43,28 @@ end
 
 -- Blizzard anchors the input box to its own (invisible) chat window and
 -- re-anchors it now and then (docking, chat style), so the anchor is restored
--- whenever Blizzard moves it.
+-- whenever Blizzard moves it (ns.PinFrame).
 local function PlaceEditBox(editBox)
-	placingEditBox = true
 	editBox:ClearAllPoints()
 	editBox:SetPoint("TOPLEFT", C.ui.frame, "BOTTOMLEFT", 0, -config.editBoxGap)
 	editBox:SetPoint("TOPRIGHT", C.ui.frame, "BOTTOMRIGHT", 0, -config.editBoxGap)
-	placingEditBox = false
-end
-
-local function GuardPlacement(editBox)
-	hooksecurefunc(editBox, "SetPoint", function(self)
-		if not placingEditBox then
-			PlaceEditBox(self)
-		end
-	end)
 end
 
 -- Blizzard stacks its chat toasts (Battle.net friend online, ...) upwards from
 -- ChatAlertFrame, which sits above its own chat window. That window is at the
 -- top of the screen, so the toasts ended up in the top left corner; they go
 -- right under the input box instead, which stays where it is.
-local placingAlerts = false
-
-local function PlaceAlerts()
-	local editBox = DEFAULT_CHAT_FRAME.editBox
-	placingAlerts = true
-	ChatAlertFrame:ClearAllPoints()
-	ChatAlertFrame:SetPoint("TOPLEFT", editBox, "BOTTOMLEFT", 0, -config.alertGap)
-	ChatAlertFrame:SetHeight(config.alertHeight)
-	placingAlerts = false
+local function PlaceAlerts(alerts)
+	alerts:ClearAllPoints()
+	alerts:SetPoint("TOPLEFT", DEFAULT_CHAT_FRAME.editBox, "BOTTOMLEFT", 0, -config.alertGap)
+	alerts:SetHeight(config.alertHeight)
 end
 
 local function ManageAlerts()
 	if not ChatAlertFrame or not DEFAULT_CHAT_FRAME.editBox then
 		return
 	end
-	PlaceAlerts()
-	hooksecurefunc(ChatAlertFrame, "SetPoint", function()
-		if not placingAlerts then
-			PlaceAlerts()
-		end
-	end)
+	ns.PinFrame(ChatAlertFrame, PlaceAlerts)
 end
 
 local function ManageChatFrame(frame)
@@ -108,8 +87,7 @@ local function ManageChatFrame(frame)
 	if editBox and not editBoxes[editBox] then
 		editBoxes[editBox] = true
 		GuardAlpha(editBox)
-		PlaceEditBox(editBox)
-		GuardPlacement(editBox)
+		ns.PinFrame(editBox, PlaceEditBox)
 	end
 end
 
@@ -157,15 +135,14 @@ local function BlizzardChatLayout()
 	return placed
 end
 
--- Edit Mode stores chat size split into hundreds and the remainder.
-local function SizeSettings()
-	local Setting = Enum.EditModeChatFrameSetting
-	local width = C.ChatWidth()
+-- Edit Mode stores chat size split into hundreds and the remainder;
+-- `Setting` is Enum.EditModeChatFrameSetting.
+function C.SizeSettings(Setting, width, height)
 	return {
 		[Setting.WidthHundreds] = math.floor(width / 100),
 		[Setting.WidthTensAndOnes] = width % 100,
-		[Setting.HeightHundreds] = math.floor(config.height / 100),
-		[Setting.HeightTensAndOnes] = config.height % 100,
+		[Setting.HeightHundreds] = math.floor(height / 100),
+		[Setting.HeightTensAndOnes] = height % 100,
 	}
 end
 
@@ -185,7 +162,12 @@ end
 
 -- Needs the channel view (C.ui.frame) to exist, since the input box hangs under it.
 function C.SetupBlizzardChat()
-	ns:SetEditModeSystem(Enum.EditModeSystem.ChatFrame, nil, BlizzardChatLayout(), SizeSettings())
+	ns.SetEditModeSystem(
+		Enum.EditModeSystem.ChatFrame,
+		nil,
+		BlizzardChatLayout(),
+		C.SizeSettings(Enum.EditModeChatFrameSetting, C.ChatWidth(), config.height)
+	)
 
 	HideChatButtons()
 	ScanChatFrames()

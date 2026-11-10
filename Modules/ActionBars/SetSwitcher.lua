@@ -14,8 +14,6 @@ local config = ns.config.actionbars
 local style = ns.config.style
 local T = ns.T
 
-BINDING_NAME_STEVIOUI_ACTIONSET_NEXT = T("Next action set", "Nächstes Aktionsleisten-Set")
-
 local state
 local button
 
@@ -210,9 +208,9 @@ function ns.NextActionSet()
 	end
 end
 
-function ns.PreviousActionSet()
+local function PreviousActionSet()
 	if state and #config.sets > 1 then
-		SwitchTo((state.current - 2) % #config.sets + 1)
+		SwitchTo(Sets.Previous(state.current, #config.sets))
 	end
 end
 
@@ -250,7 +248,7 @@ local function CreateButton()
 	b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	b:SetScript("OnClick", function(self, mouseButton)
 		if mouseButton == "RightButton" then
-			ns.PreviousActionSet()
+			PreviousActionSet()
 		else
 			ns.NextActionSet()
 		end
@@ -282,10 +280,10 @@ function ns.CreateActionSetSwitcher()
 
 	button = CreateButton()
 	UpdateButton()
-	ns:RegisterEvent("PLAYER_REGEN_DISABLED", UpdateButton)
-	ns:RegisterEvent("PLAYER_REGEN_ENABLED", UpdateButton)
+	ns.RegisterEvent("PLAYER_REGEN_DISABLED", UpdateButton)
+	ns.RegisterEvent("PLAYER_REGEN_ENABLED", UpdateButton)
 
-	ns:RegisterSlashCommand("bars", function(input)
+	ns.RegisterSlashCommand("bars", function(input)
 		if input == "" then
 			ListSets()
 			return

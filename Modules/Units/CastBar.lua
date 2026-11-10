@@ -25,11 +25,20 @@ local stopEvents = {
 	UNIT_SPELLCAST_CHANNEL_STOP = true,
 }
 
--- Unit changes that start over with whatever the new unit is casting.
-local unitChangeEvents = {
-	target = "PLAYER_TARGET_CHANGED",
-	focus = "PLAYER_FOCUS_CHANGED",
-}
+-- The pure part is kept on ns.CastBar for tests/cast_bar_test.lua.
+local CastBar = {}
+ns.CastBar = CastBar
+
+-- What an event means for the bar: "stop", "start" (plus whether it is a
+-- channel) or, for unit changes, "refresh".
+function CastBar.CastAction(event)
+	if stopEvents[event] then
+		return "stop"
+	elseif startEvents[event] ~= nil then
+		return "start", startEvents[event]
+	end
+	return "refresh"
+end
 
 -- The notInterruptible flag may be secret, and secret booleans can't be branched on;
 -- the FromBoolean setter lets the client resolve the color instead.
@@ -45,15 +54,14 @@ end
 -- Spell name and remaining seconds may be secret; the font strings take them as they are.
 local function Start(castBar, isChannel)
 	local unit = castBar.unit
-	local name, isTradeskill, notInterruptible, duration
+	local name, isTradeskill, notInterruptible, duration, _
 	if isChannel then
-		name = UnitChannelInfo(unit)
-		isTradeskill, notInterruptible = select(6, UnitChannelInfo(unit))
+		-- name, displayName, texture, startTime, endTime, isTradeskill, notInterruptible, ...
+		name, _, _, _, _, isTradeskill, notInterruptible = UnitChannelInfo(unit)
 		duration = UnitChannelDuration(unit)
 	else
-		local _
-		name = UnitCastingInfo(unit)
-		isTradeskill, _, notInterruptible = select(6, UnitCastingInfo(unit))
+		-- name, displayName, texture, startTime, endTime, isTradeskill, castID, notInterruptible, ...
+		name, _, _, _, _, isTradeskill, _, notInterruptible = UnitCastingInfo(unit)
 		duration = UnitCastingDuration(unit)
 	end
 
@@ -81,10 +89,11 @@ local function Refresh(castBar)
 end
 
 local function OnEvent(castBar, event)
-	if stopEvents[event] then
+	local action, isChannel = CastBar.CastAction(event)
+	if action == "stop" then
 		castBar:Hide()
-	elseif startEvents[event] ~= nil then
-		Start(castBar, startEvents[event])
+	elseif action == "start" then
+		Start(castBar, isChannel)
 	else
 		Refresh(castBar)
 	end
@@ -125,11 +134,10 @@ function ns.CreateCastBar(unit, sizeFrame, anchor, align, options)
 	for event in pairs(stopEvents) do
 		castBar:RegisterUnitEvent(event, unit)
 	end
-	if unitChangeEvents[unit] then
-		castBar:RegisterEvent(unitChangeEvents[unit])
+	-- A unit change starts over with whatever the new unit is casting.
+	if ns.UNIT_CHANGE_EVENTS[unit] then
+		castBar:RegisterEvent(ns.UNIT_CHANGE_EVENTS[unit])
 	end
 	castBar:SetScript("OnEvent", OnEvent)
 	castBar:SetScript("OnUpdate", OnUpdate)
-
-	return castBar
 end
