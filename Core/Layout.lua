@@ -10,10 +10,12 @@ local sideGap = 16
 
 ns.layout = {
 
+	-- The action bars that are styled and placed: `bar` names Blizzard's
+	-- Edit Mode bar ("MainBar", "Bar2" to "Bar8"), the rest is its position.
 	actionBars = {
-		{ point = "BOTTOM", x = 0, y = 38 }, -- bar 1 (main)
-		{ point = "BOTTOM", x = 0, y = 76 }, -- bar 2 (bottom left)
-		{ point = "BOTTOM", x = 0, y = 114 }, -- bar 3 (bottom right)
+		{ bar = "MainBar", point = "BOTTOM", x = 0, y = 38 },
+		{ bar = "Bar2", point = "BOTTOM", x = 0, y = 76 }, -- bottom left
+		{ bar = "Bar3", point = "BOTTOM", x = 0, y = 114 }, -- bottom right
 	},
 	-- Left of the main bar, the same height as one bar row.
 	actionSets = { point = "BOTTOMRIGHT", relativePoint = "BOTTOM", x = -(barBlockWidth / 2 + 4), y = 38 },

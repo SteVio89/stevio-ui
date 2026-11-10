@@ -170,5 +170,16 @@ do
 	check(migrating["config/actionBars/iconSize"] == 70, "action bar key renamed")
 	check(migrating["layout/targetAuras/x"] == 9 and migrating["layout/focus/x"] == -9, "offsets from the grid edge")
 end
+
+-- A saved action bar list gets the bar names; entries past the third stay unnamed (and unused).
+do
+	local migrating = {
+		["layout/actionBars"] = { { point = "BOTTOM" }, { point = "TOP" }, { point = "LEFT" }, { point = "RIGHT" } },
+	}
+	Overrides.Migrate(migrating, Overrides.MIGRATIONS, {})
+	local list = migrating["layout/actionBars"]
+	check(list[1].bar == "MainBar" and list[2].bar == "Bar2" and list[3].bar == "Bar3", "bars named in order")
+	check(list[4].bar == nil and list[2].point == "TOP", "the rest as it was")
+end
 print("migrate ok")
 print("overrides tests passed")

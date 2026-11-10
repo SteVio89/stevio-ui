@@ -235,6 +235,22 @@ Overrides.MIGRATIONS = {
 			end
 		end,
 	},
+	{
+		-- The action bar positions name their bar now; entry n used to be bar n
+		-- of three, and further entries were ignored (they still are).
+		id = "actionBarNames",
+		run = function(values)
+			local list = values["layout/actionBars"]
+			if type(list) ~= "table" then
+				return
+			end
+			for index, name in ipairs({ "MainBar", "Bar2", "Bar3" }) do
+				if type(list[index]) == "table" and list[index].bar == nil then
+					list[index].bar = name
+				end
+			end
+		end,
+	},
 }
 
 -- Runs the migrations not yet in `done` (a set of ids, saved with the values)
