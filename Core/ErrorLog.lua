@@ -9,11 +9,25 @@ ns.ErrorLog = ErrorLog
 
 local MAX_ENTRIES = 50
 
--- Blizzard's frame indexes its entries by position, so clearing skips them instead of wiping them.
-local firstSessionIndex = 1
+-- Clearing can't wipe Blizzard's frame, so it remembers each entry's count at
+-- that moment. Blizzard counts a repeated error on its existing entry, so an
+-- entry whose count grows after a clear shows again, with only the new repeats.
+local cleared = setmetatable({}, { __mode = "k" })
+
+-- How often `entry` occurred since it was cleared (its full count if it never was).
+function ErrorLog.CountSinceClear(entry, clearedCounts)
+	return (entry.count or 1) - (clearedCounts[entry] or 0)
+end
+
+-- Remembers the current count of every entry in `entries` as cleared.
+function ErrorLog.MarkCleared(entries, clearedCounts)
+	for _, entry in ipairs(entries) do
+		clearedCounts[entry] = entry.count or 1
+	end
+end
 
 local function IsOurs(entry)
-	return entry.message:find(addonName, 1, true) or entry.stack:find(addonName, 1, true)
+	return (entry.message or ""):find(addonName, 1, true) or (entry.stack or ""):find(addonName, 1, true)
 end
 
 local function CollectSessionErrors()
@@ -21,14 +35,14 @@ local function CollectSessionErrors()
 	if not ScriptErrorsFrame then
 		return collected
 	end
-	for i = firstSessionIndex, #ScriptErrorsFrame.errorData do
-		local entry = ScriptErrorsFrame.errorData[i]
+	for _, entry in ipairs(ScriptErrorsFrame.errorData) do
 		-- Secret values can't be searched or written to SavedVariables.
 		local readable = not (issecretvalue(entry.message) or issecretvalue(entry.stack) or issecretvalue(entry.locals))
-		if readable and IsOurs(entry) then
+		local count = ErrorLog.CountSinceClear(entry, cleared)
+		if readable and count > 0 and IsOurs(entry) then
 			collected[#collected + 1] = {
 				time = entry.time,
-				count = entry.count,
+				count = count,
 				message = entry.message,
 				stack = entry.stack,
 				locals = entry.locals,
@@ -56,11 +70,11 @@ function ErrorLog.Format(entries)
 	for i, entry in ipairs(entries) do
 		parts[i] = ("#%d  %s  x%d\n%s\n%s\nLocals:\n%s"):format(
 			i,
-			entry.time,
-			entry.count,
-			entry.message,
-			entry.stack,
-			entry.locals
+			tostring(entry.time or ""),
+			entry.count or 1,
+			tostring(entry.message or ""),
+			tostring(entry.stack or ""),
+			tostring(entry.locals or "")
 		)
 	end
 	return table.concat(parts, "\n\n")
@@ -79,7 +93,7 @@ ns.RegisterSlashCommand("errors", function(input)
 	if input == "clear" then
 		StevioUIErrors = {}
 		if ScriptErrorsFrame then
-			firstSessionIndex = #ScriptErrorsFrame.errorData + 1
+			ErrorLog.MarkCleared(ScriptErrorsFrame.errorData, cleared)
 		end
 		ns.Print(ns.T("error log cleared", "Fehlerprotokoll geleert"))
 		return
