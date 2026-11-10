@@ -28,9 +28,10 @@ end
 local dispatcher = CreateFrame("Frame")
 local handlers = {}
 
+-- Each handler runs protected, so one error doesn't skip the others.
 dispatcher:SetScript("OnEvent", function(_, event, ...)
 	for _, handler in ipairs(handlers[event]) do
-		handler(event, ...)
+		ns.SafeCall(handler, event, ...)
 	end
 end)
 
@@ -141,11 +142,13 @@ ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
 	end
 end)
 
+-- Each module enables protected: one failing module doesn't keep the later
+-- ones (Settings with /sui config and /sui restore last) from loading.
 local function EnableModules()
 	for _, module in ipairs(modules) do
 		local config = ns.config[module.name]
 		if not config or config.enabled ~= false then
-			module:OnEnable()
+			ns.SafeCall(module.OnEnable, module)
 		end
 	end
 	ns.ApplyEditModeLayout()

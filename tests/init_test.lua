@@ -92,4 +92,53 @@ onEvent(nil, "TEST_EVENT")
 check(calls == 1 and afterCalls == 2, "unregister during dispatch")
 print("event unregistering ok")
 
+-- A failing handler is reported and doesn't skip the handlers after it.
+local reported = {}
+function _G.geterrorhandler()
+	return function(err)
+		reported[#reported + 1] = err
+	end
+end
+local afterFailing = 0
+ns.RegisterEvent("FAIL_EVENT", function()
+	error("handler broke")
+end)
+ns.RegisterEvent("FAIL_EVENT", function()
+	afterFailing = afterFailing + 1
+end)
+onEvent(nil, "FAIL_EVENT")
+check(afterFailing == 1, "handler after a failing one still runs")
+check(#reported == 1 and reported[1]:find("handler broke", 1, true), "handler error reported")
+print("handler isolation ok")
+
+-- A failing module is reported and doesn't keep the later ones from enabling.
+reported = {}
+local enabled = {}
+ns.config.off = { enabled = false }
+ns.RegisterModule("broken", {
+	OnEnable = function()
+		error("module broke")
+	end,
+})
+ns.RegisterModule("off", {
+	OnEnable = function()
+		enabled[#enabled + 1] = "off"
+	end,
+})
+ns.RegisterModule("last", {
+	OnEnable = function(self)
+		enabled[#enabled + 1] = self.name
+	end,
+})
+local layoutApplied = false
+function ns.ApplyEditModeLayout()
+	layoutApplied = true
+end
+_G.StevioUIState = { consented = true }
+onEvent(nil, "PLAYER_LOGIN")
+check(table.concat(enabled, " ") == "last", "later module enabled, disabled one skipped")
+check(layoutApplied, "layout applied after a failing module")
+check(#reported == 1 and reported[1]:find("module broke", 1, true), "module error reported")
+print("module isolation ok")
+
 print("init tests passed")
