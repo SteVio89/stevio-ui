@@ -274,6 +274,7 @@ local labels = {
 	},
 	scrollDownKey = { "Scroll down key", "Taste runter scrollen" },
 	scrollStep = { "Scroll step", "Scrollschritt" },
+	scrollThumbColor = { "Scroll position", "Scrollposition" },
 	scrollUpKey = { "Scroll up key", "Taste hoch scrollen" },
 	segmentGap = { "Segment gap", "Segmentabstand" },
 	segments = { "Segments", "Segmente" },
