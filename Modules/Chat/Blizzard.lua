@@ -189,11 +189,15 @@ function C.SizeSettings(Setting, width, height)
 	}
 end
 
--- Typing in Blizzard's input box opens the chat. The hooks moved into
+-- Typing in Blizzard's input box (Enter, a slash command) opens the chat by
+-- hand: it stays open after the line is sent (see C.Pin). The hooks moved into
 -- ChatFrameUtil in newer clients; older ones still have the globals.
 local function HookChatActivation(name, legacy, typing)
 	local function OnActivation()
 		C.state.typing = typing
+		if typing then
+			C.Pin()
+		end
 		C.Update()
 	end
 	if ChatFrameUtil and ChatFrameUtil[name] then

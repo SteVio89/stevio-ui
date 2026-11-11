@@ -14,7 +14,11 @@ local Chat = ns.RegisterModule("chat", {})
 -- Notices.lua, typed slash commands in Commands.lua and the channel store in
 -- History.lua.
 
+-- Picking a channel in the open chat is opening it by hand.
 function C.Select(key)
+	if not C.hidden then
+		C.Pin()
+	end
 	local channel = C.ShowChannel(key)
 	if channel and C.Attended() then
 		C.MarkRead(key)
@@ -94,6 +98,17 @@ local function StartAutoTimer(duration)
 end
 C.StartAutoTimer = StartAutoTimer
 
+-- Keeps the chat open until it is toggled closed: anything the player does
+-- with it (toggle key, typing, picking a channel, a click on a name) opens it
+-- by hand. Only a chat that popped up by itself hides by itself (#37).
+function C.Pin()
+	state.manual = true
+	if state.autoTimer then
+		state.autoTimer:Cancel()
+		state.autoTimer = nil
+	end
+end
+
 -- Opens the whisper channel with `fullName` ("Name-Realm"), creating it when
 -- there is none yet, and starts typing into it: what a click on a player's
 -- name in the chat does.
@@ -151,13 +166,11 @@ function C.CycleChannel(step)
 end
 
 function ns.ToggleChat()
-	state.manual = not state.manual
-	if state.manual and state.autoTimer then
-		state.autoTimer:Cancel()
-		state.autoTimer = nil
-	end
-	if not state.manual then
+	if state.manual then
+		state.manual = false
 		C.ui.input:ClearFocus()
+	else
+		C.Pin()
 	end
 	C.Update()
 end

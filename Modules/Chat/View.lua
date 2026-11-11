@@ -195,6 +195,7 @@ local function CreateInput(frame)
 	-- elsewhere doesn't redirect the message.
 	input:SetScript("OnEditFocusGained", function()
 		C.state.typing = true
+		C.Pin()
 		if C.IsMain(C.state.selected) and not C.state.mainTarget then
 			local target = C.MainTarget()
 			C.state.mainTarget = target and target.key
