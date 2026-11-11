@@ -56,6 +56,7 @@ local ns = {
 			events = {
 				CHAT_MSG_PARTY = party,
 				CHAT_MSG_WHISPER = { kind = "whisper", chatType = "WHISPER" },
+				CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", bnet = true },
 			},
 			publicChannels = {},
 			autoShowDuration = 10,
@@ -111,6 +112,8 @@ lines[11] = { text = "need heal", sender = "Bob-Realm" }
 Event("CHAT_MSG_PARTY", SECRET, SECRET, 12) -- the client can't read this one back
 Event("CHAT_MSG_WHISPER", SECRET, SECRET, 13)
 lines[13] = { text = "psst", sender = "Ann-Other" }
+Event("CHAT_MSG_BN_WHISPER", SECRET, SECRET, 15) -- its account id stays secret: not kept
+lines[15] = { text = "lost", sender = "Cid" }
 check(#Messages("party") == 2 and Messages("party")[1].pending == 11, "placeholder in the party channel")
 check(Messages("party")[1].text:find("readable after the fight", 1, true), "placeholder says when")
 check(#Messages("main") == 2 and Messages("main")[1].pending == 11, "placeholder mirrored in Main")
@@ -136,6 +139,7 @@ local whisper = C.store:Get("whisper:Ann-Other")
 check(whisper and whisper.messages[1].text == "psst", "whisper arrives after the lockdown")
 check(whisper.messages[1].time == 100 and whisper.unread == 1, "with the time it was sent, unread")
 check(rendered == 1, "the open channel is drawn again")
+check(#C.store:Sorted({}) == 4, "no channel for the Battle.net whisper") -- main, party, guild, Ann
 
 C.ReadPending()
 check(rendered == 1, "nothing left to read")

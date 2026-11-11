@@ -161,9 +161,14 @@ local function UnreadableText()
 	return ns.T("(could not be read)", "(nicht lesbar)")
 end
 
--- Whether a secret line with chat line id `lineID` can be read later.
-local function CanReadLater(lineID)
-	return C_ChatInfo.GetChatLineText
+-- Whether a secret line of `def` with chat line id `lineID` can be read
+-- later. Battle.net whispers can't: their account id stays secret, so they
+-- can't be told apart. Neither can outgoing whispers, whose line names us
+-- rather than who they went to.
+local function CanReadLater(def, lineID)
+	return not def.bnet
+		and not def.outgoing
+		and C_ChatInfo.GetChatLineText
 		and C_ChatInfo.InChatMessagingLockdown
 		and not issecretvalue(lineID)
 		and type(lineID) == "number"
@@ -193,7 +198,7 @@ function C.OnChatMessage(event, text, sender, ...)
 	local now = time()
 	local lineID = select(9, ...)
 	local line = (issecretvalue(text) or issecretvalue(sender))
-		and CanReadLater(lineID)
+		and CanReadLater(config.events[event], lineID)
 		and Remember(event, now, lineID, ...)
 	local def, key, opts, entry = Read(event, now, text, sender, ...)
 	if not def then
@@ -236,7 +241,12 @@ function C.ReadPending()
 		local readable = text ~= nil and sender ~= nil and not issecretvalue(text) and not issecretvalue(sender)
 		local def, key, opts, entry
 		if readable then
-			def, key, opts, entry = Read(line.event, line.time, text, sender, unpack(line.args, 1, line.n))
+			-- One line failing to read mustn't lose the others.
+			local ok
+			ok, def, key, opts, entry = pcall(Read, line.event, line.time, text, sender, unpack(line.args, 1, line.n))
+			if not ok then
+				readable, def, key, opts, entry = false, nil, nil, nil, nil
+			end
 		end
 		if line.key then
 			if not readable then
