@@ -235,6 +235,7 @@ function Chat:OnEnable()
 
 	C.SetupBlizzardChat()
 	C.SetupNotices()
+	C.SetupLockdown()
 
 	C.Update()
 end
