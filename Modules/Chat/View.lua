@@ -207,8 +207,9 @@ local function CreateMessages(frame)
 	end)
 	messages:SetHyperlinksEnabled(true)
 	-- A click on a channel tag in Main writes to that channel;
-	-- a left click on a player's name opens the whisper channel with them;
-	-- other clicks (right click menu, shift click, ...) and links stay Blizzard's.
+	-- a left click on a player's name opens the whisper channel with them,
+	-- a right click our menu for them (see C.ShowPlayerMenu);
+	-- other clicks (shift click, ...) and links stay Blizzard's.
 	messages:SetScript("OnHyperlinkClick", function(self, link, text, button)
 		local channelKey = ns.ChatHistory.LinkedChannel(link)
 		if channelKey then
@@ -218,6 +219,10 @@ local function CreateMessages(frame)
 		local player = ns.ChatHistory.LinkedPlayer(link)
 		if player and button == "LeftButton" and not IsModifierKeyDown() then
 			C.OpenWhisper(player)
+			return
+		end
+		if player and button == "RightButton" and not IsModifierKeyDown() then
+			C.ShowPlayerMenu(self, player)
 			return
 		end
 		SetItemRef(link, text, button, self)
