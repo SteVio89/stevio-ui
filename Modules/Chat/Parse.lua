@@ -70,6 +70,16 @@ local function AddCommands(hash, getGlobal, prefix, value, marks, mark)
 	end
 end
 
+-- `list` and, when its metatable has one, the table behind its __index.
+local function ListAndProxy(list)
+	local meta = getmetatable(list)
+	local proxy = type(meta) == "table" and meta.__index
+	if type(proxy) == "table" then
+		return { list, proxy }
+	end
+	return { list }
+end
+
 -- The command tables Parse.Classify looks commands up in, built from the
 -- game's own lists. Blizzard's ChatFrameUtil.ImportAllListsToHash would fill
 -- its hash_ tables from addon code, tainting them: Blizzard's commands would
@@ -78,15 +88,23 @@ end
 -- Chat types and emotes don't change during a session, so pass the previous
 -- result as `cached` to reuse them; slash commands are read fresh each time
 -- (addons may add some later).
+--
+-- Blizzard's import (run once at load, before any addon, and again whenever
+-- its input box parses a line) moves the entries of SlashCmdList and
+-- ChatTypeInfo into a proxy table behind their metatable's __index, leaving
+-- the lists themselves empty. So both are read: the list (entries added since
+-- the last import) and its proxy (everything imported).
 function Parse.Lookups(game, cached)
 	local lists = {
 		chatTypeInfo = game.chatTypeInfo,
 		slashCommands = {},
 		secure = {},
 	}
-	for name, handler in pairs(game.slashCmdList) do
-		local secure = game.isSecure(game.slashCmdList, name) and true or false
-		AddCommands(lists.slashCommands, game.getGlobal, "SLASH_" .. name, handler, lists.secure, secure)
+	for _, list in ipairs(ListAndProxy(game.slashCmdList)) do
+		for name, handler in pairs(list) do
+			local secure = game.isSecure(list, name) and true or false
+			AddCommands(lists.slashCommands, game.getGlobal, "SLASH_" .. name, handler, lists.secure, secure)
+		end
 	end
 
 	if cached then
@@ -94,8 +112,10 @@ function Parse.Lookups(game, cached)
 		return lists
 	end
 	lists.chatTypes = {}
-	for chatType in pairs(game.chatTypeInfo) do
-		AddCommands(lists.chatTypes, game.getGlobal, "SLASH_" .. chatType, chatType)
+	for _, list in ipairs(ListAndProxy(game.chatTypeInfo)) do
+		for chatType in pairs(list) do
+			AddCommands(lists.chatTypes, game.getGlobal, "SLASH_" .. chatType, chatType)
+		end
 	end
 	lists.emotes = {}
 	for i = 1, game.maxEmoteIndex or 0 do
