@@ -145,6 +145,21 @@ function C.RefreshSidebar()
 	else
 		ui.header:SetText("")
 	end
+	C.RefreshInput()
+end
+
+-- The input line's placeholder (where it writes to) and its border: grey,
+-- or the target channel's color while typing.
+function C.RefreshInput()
+	local input = C.ui.input
+	local hint, target = C.InputHint(C.Selected())
+	input.hint:SetText(hint)
+	input.hint:SetShown(input:GetText() == "")
+	if input:HasFocus() and target then
+		input.border:SetColor(C.ChannelColor(target))
+	else
+		input.border:SetColor(unpack(config.inputBorderColor))
+	end
 end
 
 local function CreateInput(frame)
@@ -153,9 +168,19 @@ local function CreateInput(frame)
 	C.ApplyFont(input)
 	input:SetAutoFocus(false)
 	input:SetHeight(math.max(config.rowHeight, config.fontSize + 6))
-	input:SetPoint("BOTTOMLEFT", ui.sidebar, "BOTTOMRIGHT", 6, 2)
-	input:SetPoint("BOTTOMRIGHT", -6, 2)
+	input:SetPoint("BOTTOMLEFT", ui.sidebar, "BOTTOMRIGHT", 6, 4)
+	input:SetPoint("BOTTOMRIGHT", -6, 4)
+	input:SetTextInsets(4, 4, 0, 0)
 	input:SetMaxLetters(255)
+	ns.CreateBackground(input, config.inputBackgroundColor)
+	input.border = ns.CreateBorder(input)
+	input.hint = ns.CreateFontString(input, config.fontSize, "LEFT")
+	input.hint:SetPoint("LEFT", 4, 0)
+	input.hint:SetPoint("RIGHT", -4, 0)
+	input.hint:SetTextColor(unpack(config.inputHintColor))
+	input:SetScript("OnTextChanged", function(self)
+		self.hint:SetShown(self:GetText() == "")
+	end)
 	input:SetScript("OnEnterPressed", function(self)
 		local text = self:GetText()
 		self:SetText("")
@@ -194,7 +219,7 @@ local function CreateMessages(frame)
 	-- stored messages out of the view.
 	messages:SetMaxLines(config.historyLimit * 2)
 	messages:SetPoint("TOPLEFT", ui.header, "BOTTOMLEFT", 0, -4)
-	messages:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, 4)
+	messages:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, 6)
 	messages:EnableMouseWheel(true)
 	messages:SetScript("OnMouseWheel", function(self, delta)
 		for _ = 1, config.scrollStep do
