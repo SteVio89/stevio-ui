@@ -372,6 +372,47 @@ function Store:Add(key, opts, entry, markUnread)
 	return channel
 end
 
+-- Messages arriving secret during the chat lockdown (encounters, Mythic+,
+-- PvP, ...) are stored as a placeholder naming their chat line (`lineID`)
+-- until the lockdown ends and the line can be read (see Receive.lua, #38).
+function History.Placeholder(now, lineID, text)
+	return { time = now, text = text, pending = lineID }
+end
+
+-- Replaces the placeholder of `lineID` in channel `key` with `entry`, which
+-- keeps the placeholder's time; nil `entry` removes it. Unread counts stay as
+-- they are: the placeholder was counted when it arrived. Returns whether the
+-- placeholder was still there (the history limit may have dropped it).
+function Store:Fill(key, lineID, entry)
+	local channel = self.db.channels[key]
+	local messages = channel and channel.messages or {}
+	for i = #messages, 1, -1 do
+		if messages[i].pending == lineID then
+			if entry then
+				entry.time = messages[i].time
+				messages[i] = entry
+			else
+				table.remove(messages, i)
+			end
+			return true
+		end
+	end
+	return false
+end
+
+-- Placeholders left from an earlier session can't be read any more: chat line
+-- ids only hold within a session. They keep their place with `text`.
+function Store:ForgetPending(text)
+	for _, channel in pairs(self.db.channels) do
+		for _, entry in ipairs(channel.messages) do
+			if entry.pending then
+				entry.pending = nil
+				entry.text = text
+			end
+		end
+	end
+end
+
 -- Messages that couldn't be read (secret) still count as unread.
 function Store:AddUnreadOnly(key, opts, time)
 	local channel = self:Ensure(key, opts)

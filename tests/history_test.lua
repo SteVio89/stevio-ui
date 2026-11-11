@@ -115,6 +115,33 @@ recentStore:Add("yell", { kind = "public", chatType = "YELL", label = "Yell" }, 
 check(recentStore:MostRecent().key == "party", "most recent channel, secret messages included")
 print("most recent ok")
 
+-- Lines secret during the chat lockdown wait as placeholders until they can be read (#38).
+do
+	local lockdownStore = History.New({}, 10)
+	lockdownStore:Add("party", party, { time = 1, text = "before" }, true)
+	lockdownStore:Add("party", party, History.Placeholder(2, 77, "..."), true)
+	lockdownStore:Add("party", party, History.Placeholder(3, 78, "..."), true)
+	check(lockdownStore:Get("party").unread == 3, "placeholders count as unread")
+
+	check(lockdownStore:Fill("party", 77, { time = 9, sender = "Bob", text = "heal me" }), "placeholder found")
+	local filled = lockdownStore:Get("party").messages[2]
+	check(filled.text == "heal me" and filled.sender == "Bob", "placeholder replaced in place")
+	check(filled.time == 2 and not filled.pending, "keeps the time it arrived")
+	check(lockdownStore:Get("party").unread == 3, "filling doesn't count again")
+
+	check(lockdownStore:Fill("party", 78, nil), "placeholder removed")
+	check(#lockdownStore:Get("party").messages == 2, "removed line is gone")
+	check(not lockdownStore:Fill("party", 78, { text = "x" }), "already filled")
+	check(not lockdownStore:Fill("raid", 77, { text = "x" }), "no such channel")
+
+	lockdownStore:Add("party", party, History.Placeholder(4, 79, "..."), true)
+	lockdownStore:ForgetPending("unreadable")
+	local left = lockdownStore:Get("party").messages[3]
+	check(left.text == "unreadable" and not left.pending and left.time == 4, "leftover placeholder marked")
+	check(not lockdownStore:Fill("party", 79, { text = "x" }), "forgotten placeholder isn't filled")
+end
+print("placeholders ok")
+
 -- time first, then the chat channel (in "Other"), then the sender
 check(History.Line({ sender = "A", text = "hi" }, "12:00") == "12:00 A: hi", "line with sender")
 check(History.Line({ source = "LFG", sender = "A", text = "hi" }, "12:00") == "12:00 [LFG] A: hi", "line in Other")
