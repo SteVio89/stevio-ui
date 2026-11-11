@@ -54,7 +54,9 @@ until it is needed, and as much as possible can be done from the keyboard.
   bars hold, so a set is edited simply by changing the bars while it is active.
   A set used for the first time starts as a copy of the current bars. Sets are
   stored per character; actions that can't be placed right now (e.g. a talent
-  that isn't learned) stay in the set for later.
+  that isn't learned) stay in the set for later. Each switch names them with
+  their slot; `/sui bars forget` drops them from the active set (so does putting
+  something else in their slot).
 - **Minimap** – square, borderless, mouse-wheel zoom, the looking-for-group
   button in its lower left corner, size derived from the screen. Other
   addons' minimap buttons move into the notch island (the black panel that
@@ -170,6 +172,8 @@ first login.
 | `/sui test 1-40` | Preview the group grid with that many players (e.g. 5, 10, 25, 40); `/sui test` alone turns it off |
 | `/sui loot` | Preview the loot ticker with a few items from your bags |
 | `/sui bars [name\|number\|next]` | List the action sets or switch to one |
+| `/sui bars missing` | List the actions the active set could not place |
+| `/sui bars forget` | Drop those actions from the active set |
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui qj` | List the current Quickjump targets |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |
