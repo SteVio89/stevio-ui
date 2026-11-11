@@ -189,6 +189,44 @@ do
 	check(again.chatTypes == lists.chatTypes and again.emotes == lists.emotes, "chat types and emotes reused")
 	check(again.slashCommands["/LATER"] ~= nil, "slash commands added later found")
 end
+
+-- Lookups after Blizzard's import: its entries sit in a proxy behind the
+-- list's metatable, the lists hold only what was added since.
+do
+	local who, sui = function() end, function() end
+	local slashProxy = { WHO = who }
+	local slashCmdList = setmetatable({ STEVIOUI = sui }, { __index = slashProxy })
+	local chatTypeInfo = setmetatable({}, {
+		__index = { SMART_WHISPER = {}, WHISPER = {}, PARTY = {} },
+	})
+	local globals = {
+		SLASH_WHO1 = "/who",
+		SLASH_STEVIOUI1 = "/sui",
+		SLASH_SMART_WHISPER1 = "/w",
+		SLASH_SMART_WHISPER2 = "/whisper",
+		SLASH_WHISPER1 = "/cw",
+		SLASH_PARTY1 = "/p",
+	}
+	local lists = Parse.Lookups({
+		slashCmdList = slashCmdList,
+		chatTypeInfo = chatTypeInfo,
+		getGlobal = function(name)
+			return globals[name]
+		end,
+		isSecure = function(t, key)
+			check(t[key] ~= nil and rawget(t, key) ~= nil, "secure check on the table holding the entry")
+			return t == slashProxy
+		end,
+	})
+	local kind, value = Parse.Classify("/W", lists)
+	check(kind == "chatType" and value == "SMART_WHISPER", "/w from the imported chat types")
+	check(Parse.Classify("/WHISPER", lists) == "chatType", "other spelling of /w")
+	check(select(2, Parse.Classify("/CW", lists)) == "WHISPER", "character whisper")
+	check(select(2, Parse.Classify("/P", lists)) == "PARTY", "/p from the imported chat types")
+	check(Parse.Classify("/WHO", lists) == "blizzard", "imported Blizzard command")
+	kind, value = Parse.Classify("/SUI", lists)
+	check(kind == "addon" and value == sui, "addon command not imported yet")
+end
 print("commands ok")
 
 print("chat flow tests passed")

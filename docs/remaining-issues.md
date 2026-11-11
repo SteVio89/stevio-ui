@@ -25,6 +25,9 @@ need a check in game.
   pre-filled. Afterwards `/dump issecurevariable(hash_SlashCmdList, "/WHO")`
   should be `true`. `/p hi`, `/w Name hi`, `/dance` and `/sui` still run
   directly.
+- `/w Firstname Lastname hi` (a Battle.net friend's name) and `/w Name hi`
+  typed into the channel view send the whisper, also after Blizzard's own
+  input box was used once; `/p hi` speaks in the party.
 - Blizzard's hidden chat windows, tabs and input box don't catch clicks or the
   mouse wheel, also after opening a temporary window (pet battle log, popped-out
   whisper). Blizzard's chat is now re-hidden only when the visibility changes,
