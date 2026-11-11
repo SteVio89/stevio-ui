@@ -110,6 +110,23 @@ function C.OpenWhisper(fullName)
 	C.Select(key)
 end
 
+-- A right click on a player's name in the chat: a menu of what to do with
+-- that character, built from the name in the link alone. Blizzard's player
+-- menu works the player out from the chat line's location (line ID, GUID),
+-- which our lines (replayed from the history) don't carry, and didn't resolve
+-- the right name for whispers and invites (#35).
+function C.ShowPlayerMenu(owner, fullName)
+	MenuUtil.CreateContextMenu(owner, function(_, root)
+		root:CreateTitle(Ambiguate(fullName, "none"))
+		root:CreateButton(ns.T("Whisper", "Flüstern"), function()
+			C.OpenWhisper(fullName)
+		end)
+		root:CreateButton(ns.T("Invite", "Einladen"), function()
+			C_PartyInfo.InviteUnit(fullName)
+		end)
+	end)
+end
+
 -- A click on a line's channel tag in Main: writes to that channel from Main.
 function C.PickMainTarget(key)
 	local channel = C.store:Get(key)

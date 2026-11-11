@@ -97,7 +97,8 @@ until it is needed, and as much as possible can be done from the keyboard.
     or opens the chat. These four are read-only and coloured like Blizzard's chat.
 
   Clicking a player's name in a message opens the whisper channel with them
-  and starts typing into it; right click keeps Blizzard's player menu.
+  and starts typing into it; right click opens a menu to whisper or invite
+  them.
   `x` deletes any channel but guild and Main with its history. Say, emotes, yell, chat
   and community channels, NPC, Loot & Progress and System only count as unread and don't pop
   up the chat. Hidden by default, toggled by key or by the badge at the left
