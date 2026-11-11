@@ -70,6 +70,18 @@ do
 	check(C.store:Get("say").unread == 1, "other channels stay unread")
 	C.MarkRead("say")
 	check(C.store:Get("say").unread == 0, "mark read")
+
+	-- The input line's placeholder names where it writes to.
+	local hint, target = C.InputHint(C.store:Get("say"))
+	check(hint == "Write to Say ..." and target.key == "say", "hint names the channel: " .. hint)
+	C.store:Ensure("whisper:Bob-Realm", { kind = "whisper", chatType = "WHISPER", label = "Bob" })
+	hint = C.InputHint(C.store:Get("whisper:Bob-Realm"))
+	check(hint == "Write to Bob ...", "hint names the whisper partner: " .. hint)
+	hint, target = C.InputHint(C.store:Get(main.key))
+	check(hint == "Write to " .. C.MainTarget().label .. " ..." and target == C.MainTarget(), "Main names its target")
+	hint, target = C.InputHint({ key = "system", label = "System", readOnly = true })
+	check(hint == "Only /commands here" and target == nil, "read-only channels only take commands")
+	check(C.InputHint(nil) == "", "no channel, no hint")
 end
 print("main ok")
 

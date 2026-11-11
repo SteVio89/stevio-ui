@@ -73,6 +73,11 @@ ns.config.chat = {
 	-- Scroll position shown on the sidebar edge when the channels don't all fit.
 	scrollThumbColor = { 1, 1, 1, 0.35 },
 	deleteColor = { 0.8, 0.3, 0.3, 1 },
+	-- The input line is boxed so it doesn't read as part of the history; while
+	-- typing its border takes the color of the channel it writes to.
+	inputBackgroundColor = { 1, 1, 1, 0.08 },
+	inputBorderColor = { 0.35, 0.35, 0.35, 1 },
+	inputHintColor = { 0.5, 0.5, 0.5, 1 },
 
 	-- Debugging aid: keeps Blizzard's chat visible right of the channel view
 	-- (gap in pixels) to compare which messages arrive.

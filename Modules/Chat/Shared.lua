@@ -164,6 +164,24 @@ function C.MainTarget()
 	return C.store:ReplyChannel(config.main.key)
 end
 
+-- The placeholder of the empty input line: where Enter sends what is typed
+-- there, so the line reads as an input and not as part of the history.
+-- Returns the text and the channel written to (nil when only slash commands
+-- work, e.g. in System or a Main without a line to answer).
+function C.InputHint(channel)
+	if not channel then
+		return ""
+	end
+	local target = channel
+	if C.IsMain(channel.key) then
+		target = C.MainTarget()
+	end
+	if not target or target.readOnly then
+		return ns.T("Only /commands here", "Hier nur /Befehle")
+	end
+	return ns.T("Write to %s ...", "An %s schreiben ..."):format(C.Label(target)), target
+end
+
 -- Opening the chat by hand (toggle key, typing, clicking) counts as reading;
 -- the brief auto-show of an incoming message doesn't.
 function C.Attended()

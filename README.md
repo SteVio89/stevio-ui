@@ -96,6 +96,10 @@ until it is needed, and as much as possible can be done from the keyboard.
     what other players craft nearby out of System: it never counts as unread
     or opens the chat. These four are read-only and coloured like Blizzard's chat.
 
+  The boxed input line at the bottom of the channel view writes to the shown
+  channel; while empty it says where to ("Write to Bob ..."), and while typing
+  its border takes that channel's colour. Click it, or use the chat input key,
+  to type there; Enter still opens Blizzard's own input box below the view.
   Clicking a player's name in a message opens the whisper channel with them
   and starts typing into it; right click opens a menu to whisper or invite
   them.
