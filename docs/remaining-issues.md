@@ -52,3 +52,11 @@ need a check in game.
   while it is; `/sui qj` no longer changes which window gets labels next.
 - Quickjump in windows with more than 81 targets: the first 81 labels stay as
   they were, and later targets get the extra first letters.
+
+### Action sets (#33)
+- Switching to a set that can't place everything lists each missing action with
+  its slot and name instead of only a count. `/sui bars missing` lists them
+  again, `/sui bars forget` drops them; the next switch then reports nothing.
+- Spells a talent replaces (e.g. a healing spell whose slot shows the upgraded
+  version) are placed via the spell they replace instead of being reported as
+  missing. Check that such a slot shows and casts the upgraded spell.

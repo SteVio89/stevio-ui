@@ -61,10 +61,18 @@ local function FindFlyout(flyoutID)
 	return nil
 end
 
+local FindBaseSpell = C_Spell and C_Spell.GetBaseSpell or FindBaseSpellByID
+
 -- Puts an action on the cursor; the caller checks GetCursorInfo() for success.
 local pickup = {
 	spell = function(entry)
 		PickupSpellByID(entry.id)
+		-- A slot can report a talent's replacement spell, which is not in the
+		-- spellbook itself; the spell it replaces is, and shows the replacement.
+		local base = not GetCursorInfo() and FindBaseSpell and FindBaseSpell(entry.id)
+		if base and base ~= entry.id then
+			PickupSpellByID(base)
+		end
 	end,
 	item = function(entry)
 		PickupItemByID(entry.id)
@@ -144,6 +152,58 @@ local function CurrentName()
 	return config.sets[state.current] or "?"
 end
 
+local GetSpellName = C_Spell and C_Spell.GetSpellName or GetSpellInfo
+local GetItemName = C_Item and C_Item.GetItemNameByID or GetItemInfo
+
+-- A readable name for a stored action, e.g. "Flash Heal" or "Macro: Mount".
+local function ActionName(entry)
+	local name
+	if entry.type == "spell" then
+		name = GetSpellName(entry.id)
+	elseif entry.type == "item" then
+		name = GetItemName(entry.id)
+	elseif entry.type == "macro" then
+		return T("Macro: ", "Makro: ") .. (entry.name or tostring(entry.id))
+	elseif entry.type == "summonmount" and entry.id ~= RANDOM_FAVORITE_MOUNT then
+		name = C_MountJournal.GetMountInfoByID(entry.id)
+	end
+	return name or ("%s %s"):format(entry.type, tostring(entry.id))
+end
+
+-- Lists what the active set could not place. `always` also reports an empty list.
+local function ReportMissing(always)
+	local slots = {}
+	for slot in pairs(state.missing) do
+		slots[#slots + 1] = slot
+	end
+	if #slots == 0 then
+		if always then
+			ns.Print(
+				T("Action set %s has no unplaced actions.", "Aktionsleisten-Set %s hat keine fehlenden Aktionen."):format(
+					CurrentName()
+				)
+			)
+		end
+		return
+	end
+	table.sort(slots)
+	ns.Print(
+		T(
+			"Action set %s: %d actions could not be placed because your character does not know them right now (other talents or spec, deleted macro, item gone). They stay in the set and come back once known:",
+			"Aktionsleisten-Set %s: %d Aktionen konnten nicht platziert werden, weil dein Charakter sie gerade nicht kennt (andere Talente oder Spezialisierung, gelöschtes Makro, Gegenstand weg). Sie bleiben im Set und kehren zurück, sobald sie bekannt sind:"
+		):format(CurrentName(), #slots)
+	)
+	for _, slot in ipairs(slots) do
+		ns.PrintLine(("  %s %d: %s"):format(T("slot", "Platz"), slot, ActionName(state.missing[slot])))
+	end
+	ns.PrintLine(
+		T(
+			"  /sui bars forget removes them from the set; putting something else in their slot does too.",
+			"  /sui bars forget entfernt sie aus dem Set; etwas anderes in ihren Platz zu legen ebenfalls."
+		)
+	)
+end
+
 local function UpdateButton()
 	if not button then
 		return
@@ -186,18 +246,7 @@ local function SwitchTo(index)
 		)
 	else
 		state.missing = Apply(wanted)
-		local count = 0
-		for _ in pairs(state.missing) do
-			count = count + 1
-		end
-		if count > 0 then
-			ns.Print(
-				T(
-					"%d actions of %s could not be placed (not known right now); they are kept in the set.",
-					"%d Aktionen von %s konnten nicht platziert werden (gerade nicht bekannt); sie bleiben im Set."
-				):format(count, CurrentName())
-			)
-		end
+		ReportMissing(false)
 	end
 	UpdateButton()
 end
@@ -290,6 +339,24 @@ function ns.CreateActionSetSwitcher()
 		end
 		if input == "next" then
 			ns.NextActionSet()
+			return
+		end
+		if input == "missing" then
+			ReportMissing(true)
+			return
+		end
+		if input == "forget" then
+			local count = 0
+			for _ in pairs(state.missing) do
+				count = count + 1
+			end
+			state.missing = {}
+			ns.Print(
+				T(
+					"Removed %d unplaced actions from action set %s.",
+					"%d fehlende Aktionen aus Aktionsleisten-Set %s entfernt."
+				):format(count, CurrentName())
+			)
 			return
 		end
 		local index = Sets.Find(config.sets, input)
