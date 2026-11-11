@@ -45,7 +45,7 @@ end
 
 local function CreateRow(index)
 	local ui = C.ui
-	local row = CreateFrame("Button", nil, ui.sidebar)
+	local row = CreateFrame("Button", nil, ui.list)
 	row:SetHeight(config.rowHeight)
 	row:SetPoint("TOPLEFT", 0, -(index - 1) * config.rowHeight)
 	row:SetPoint("TOPRIGHT", 0, -(index - 1) * config.rowHeight)
@@ -75,9 +75,27 @@ local function CreateRow(index)
 	return row
 end
 
+-- Scrolls the channel list to `offset` (clamped) and moves the scroll thumb.
+local function SetSidebarScroll(offset)
+	local ui = C.ui
+	local count = ui.rowCount or 0
+	local viewHeight = ui.listScroll:GetHeight()
+	offset = C.ClampSidebarScroll(offset, viewHeight, count, config.rowHeight)
+	ui.listScroll:SetVerticalScroll(offset)
+	local listHeight = count * config.rowHeight
+	if viewHeight <= 0 or listHeight <= viewHeight then
+		ui.thumb:Hide()
+		return
+	end
+	ui.thumb:SetHeight(viewHeight * viewHeight / listHeight)
+	ui.thumb:SetPoint("TOPRIGHT", ui.sidebar, "TOPRIGHT", 0, -viewHeight * offset / listHeight)
+	ui.thumb:Show()
+end
+
 function C.RefreshSidebar()
 	local ui, store = C.ui, C.store
 	local channels = store:Sorted(config.kindOrder)
+	local selectedIndex
 	for index, channel in ipairs(channels) do
 		local row = ui.rows[index] or CreateRow(index)
 		ui.rows[index] = row
@@ -91,12 +109,27 @@ function C.RefreshSidebar()
 		row.text:SetText(text)
 		row.text:SetTextColor(r, g, b, unread > 0 and 1 or 0.7)
 		row.highlight:SetShown(channel.key == C.state.selected)
+		if channel.key == C.state.selected then
+			selectedIndex = index
+		end
 		row.delete:SetShown(store.IsDeletable(channel, config.main.enabled))
 		row:Show()
 	end
 	for index = #channels + 1, #ui.rows do
 		ui.rows[index]:Hide()
 	end
+
+	-- More channels than fit scroll; a newly selected one is scrolled into view,
+	-- otherwise the list stays where the player scrolled it.
+	ui.rowCount = #channels
+	ui.list:SetHeight(math.max(1, #channels * config.rowHeight))
+	local offset = ui.listScroll:GetVerticalScroll()
+	local viewHeight = ui.listScroll:GetHeight()
+	if selectedIndex and viewHeight > 0 and C.state.selected ~= ui.scrolledTo then
+		offset = C.ScrollToRow(offset, viewHeight, selectedIndex, config.rowHeight)
+		ui.scrolledTo = C.state.selected
+	end
+	SetSidebarScroll(offset)
 
 	local channel = C.Selected()
 	if channel then
@@ -192,6 +225,32 @@ local function CreateMessages(frame)
 	ui.messages = messages
 end
 
+-- The sidebar's channel rows sit in a scroll frame, which clips them, so a
+-- long list scrolls with the mouse wheel instead of running out of the chat.
+local function CreateChannelList()
+	local ui = C.ui
+	local scroll = CreateFrame("ScrollFrame", nil, ui.sidebar)
+	scroll:SetAllPoints()
+	scroll:EnableMouseWheel(true)
+	scroll:SetScript("OnMouseWheel", function(self, delta)
+		SetSidebarScroll(self:GetVerticalScroll() - delta * config.rowHeight)
+	end)
+	scroll:SetScript("OnSizeChanged", function(self)
+		SetSidebarScroll(self:GetVerticalScroll())
+	end)
+
+	local list = CreateFrame("Frame", nil, scroll)
+	list:SetSize(config.sidebarWidth, 1)
+	scroll:SetScrollChild(list)
+
+	local thumb = ui.sidebar:CreateTexture(nil, "OVERLAY")
+	thumb:SetColorTexture(unpack(config.scrollThumbColor))
+	thumb:SetWidth(2)
+	thumb:Hide()
+
+	ui.listScroll, ui.list, ui.thumb = scroll, list, thumb
+end
+
 function C.CreateChannelView()
 	local ui = C.ui
 	local frame = CreateFrame("Frame", "StevioUI_Chat", UIParent)
@@ -209,6 +268,7 @@ function C.CreateChannelView()
 	ui.sidebar:SetWidth(config.sidebarWidth)
 	ui.sidebar:SetPoint("TOPLEFT", 0, -4)
 	ui.sidebar:SetPoint("BOTTOMLEFT")
+	CreateChannelList()
 	local divider = frame:CreateTexture(nil, "ARTWORK")
 	divider:SetColorTexture(unpack(config.dividerColor))
 	divider:SetWidth(ns.PixelSize(frame))

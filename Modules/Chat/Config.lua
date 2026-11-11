@@ -70,6 +70,8 @@ ns.config.chat = {
 	backgroundColor = { 0, 0, 0, 1 },
 	selectedColor = { 1, 1, 1, 0.12 },
 	dividerColor = { 0.3, 0.3, 0.3, 1 },
+	-- Scroll position shown on the sidebar edge when the channels don't all fit.
+	scrollThumbColor = { 1, 1, 1, 0.35 },
 	deleteColor = { 0.8, 0.3, 0.3, 1 },
 
 	-- Debugging aid: keeps Blizzard's chat visible right of the channel view

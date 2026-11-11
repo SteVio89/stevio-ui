@@ -23,7 +23,7 @@ local C = {
 		mainTarget = nil,
 	},
 	store = nil,
-	ui = {}, -- frame, sidebar, header, messages, input, rows, copy
+	ui = {}, -- frame, sidebar, listScroll, list, thumb, header, messages, input, rows, copy
 }
 ns.ChatInternal = C
 
@@ -168,4 +168,23 @@ end
 -- the brief auto-show of an incoming message doesn't.
 function C.Attended()
 	return C.state.manual or C.state.typing
+end
+
+-- Sidebar scrolling: `offset` is how far the channel list is scrolled down,
+-- `viewHeight` how much of it fits. Returns `offset` kept within the list.
+function C.ClampSidebarScroll(offset, viewHeight, count, rowHeight)
+	return math.max(0, math.min(offset, count * rowHeight - viewHeight))
+end
+
+-- The scroll offset that shows row `index` whole, moving as little as possible.
+function C.ScrollToRow(offset, viewHeight, index, rowHeight)
+	local top = (index - 1) * rowHeight
+	if top < offset then
+		return top
+	end
+	local bottom = top + rowHeight
+	if bottom > offset + viewHeight then
+		return bottom - viewHeight
+	end
+	return offset
 end

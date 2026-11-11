@@ -141,3 +141,16 @@ end
 print("size ok")
 
 print("chat shared tests passed")
+
+-- Sidebar scrolling: 10 rows of 20 in a view 70 high (list 200 high).
+do
+	check(C.ClampSidebarScroll(-5, 70, 10, 20) == 0, "no scrolling above the first row")
+	check(C.ClampSidebarScroll(500, 70, 10, 20) == 130, "no scrolling past the last row")
+	check(C.ClampSidebarScroll(40, 70, 10, 20) == 40, "offsets within the list are kept")
+	check(C.ClampSidebarScroll(40, 300, 10, 20) == 0, "a list that fits doesn't scroll")
+	check(C.ScrollToRow(0, 70, 2, 20) == 0, "a visible row doesn't scroll")
+	check(C.ScrollToRow(0, 70, 5, 20) == 30, "a row below scrolls up to the bottom edge")
+	check(C.ScrollToRow(100, 70, 2, 20) == 20, "a row above scrolls down to the top edge")
+	check(C.ScrollToRow(15, 70, 1, 20) == 0, "a partly hidden row is shown whole")
+	print("sidebar scrolling ok")
+end
