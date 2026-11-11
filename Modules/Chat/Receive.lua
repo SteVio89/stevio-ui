@@ -89,9 +89,11 @@ function C.ReceiveLine(def, text, colorType)
 	C.Receive(def, def.key, def, { time = time(), text = text, colorType = colorType })
 end
 
--- Message contents may be secret (e.g. in encounters): those can't be stored and
--- only light up the channel as unread.
-function C.OnChatMessage(event, text, sender, ...)
+-- What a chat event makes: the channel def, key and options and the entry
+-- (nil when the contents are secret) of a message that arrived at `now`.
+-- Returns nothing for messages that aren't shown or whose channel can't be
+-- told (secret values).
+local function Read(event, now, text, sender, ...)
 	local def = config.events[event]
 	local _, channelName, otherPlayer, _, _, channelIndex, baseName = ...
 	local bnetID = select(11, ...)
@@ -127,7 +129,7 @@ function C.OnChatMessage(event, text, sender, ...)
 	end
 	sender = displayName or sender
 	if not key then
-		return -- no way to tell which channel this belongs to
+		return
 	end
 	local entry = not secret
 		and History.BuildEntry(
@@ -138,10 +140,144 @@ function C.OnChatMessage(event, text, sender, ...)
 			player,
 			source,
 			sourceType,
-			time(),
+			now,
 			def.outgoing and UnitName("player")
 		)
+	return def, key, opts, entry or nil
+end
+
+-- Chat lines that arrived secret during the chat lockdown (encounters,
+-- Mythic+, PvP, ...): the client hands addons only their chat line id then,
+-- and the line can be read by it once the lockdown is over (#38). Each is
+-- { event, time, lineID, args, n, key, mainKey }, `key`/`mainKey` where its
+-- placeholder went (nil when its channel couldn't be told, e.g. a whisper).
+local pending = {}
+
+local function PendingText()
+	return ns.T("… (readable after the fight)", "… (nach dem Kampf lesbar)")
+end
+
+local function UnreadableText()
+	return ns.T("(could not be read)", "(nicht lesbar)")
+end
+
+-- Whether a secret line of `def` with chat line id `lineID` can be read
+-- later. Battle.net whispers can't: their account id stays secret, so they
+-- can't be told apart. Neither can outgoing whispers, whose line names us
+-- rather than who they went to.
+local function CanReadLater(def, lineID)
+	return not def.bnet
+		and not def.outgoing
+		and C_ChatInfo.GetChatLineText
+		and C_ChatInfo.InChatMessagingLockdown
+		and not issecretvalue(lineID)
+		and type(lineID) == "number"
+		and lineID > 0
+end
+
+-- Keeps what the event said for the line `lineID` (secret values are left out:
+-- they are read again by line id).
+local function Remember(event, now, lineID, ...)
+	local n = select("#", ...)
+	local args = {}
+	for i = 1, n do
+		local value = select(i, ...)
+		if not issecretvalue(value) then
+			args[i] = value
+		end
+	end
+	local line = { event = event, time = now, lineID = lineID, args = args, n = n }
+	pending[#pending + 1] = line
+	return line
+end
+
+-- Message contents may be secret during the chat lockdown: those are stored as
+-- a placeholder and read once it ends (C.ReadPending); without a chat line id
+-- they only light up the channel as unread.
+function C.OnChatMessage(event, text, sender, ...)
+	local now = time()
+	local lineID = select(9, ...)
+	local line = (issecretvalue(text) or issecretvalue(sender))
+		and CanReadLater(config.events[event], lineID)
+		and Remember(event, now, lineID, ...)
+	local def, key, opts, entry = Read(event, now, text, sender, ...)
+	if not def then
+		return
+	end
+	if line and not entry then
+		entry = History.Placeholder(now, lineID, PendingText())
+		line.key = key
+		line.mainKey = C.IsMerged(opts.kind) and config.main.key
+	end
 	C.Receive(def, key, opts, entry)
+end
+
+-- Puts `entry` (nil: the line isn't shown after all) in place of the
+-- placeholder of `line`, in its channel and in Main.
+local function Fill(line, entry)
+	local channel = C.store:Get(line.key)
+	if not channel then
+		return
+	end
+	C.store:Fill(line.key, line.lineID, entry)
+	if line.mainKey then
+		local copy = entry and History.Mirror(entry, line.key, C.Label(channel), channel.chatType)
+		C.store:Fill(line.mainKey, line.lineID, copy)
+	end
+end
+
+-- Reads the lines kept during the chat lockdown once it is over: placeholders
+-- get their message, lines whose channel wasn't known then (whispers) arrive
+-- now, with the time they were sent.
+function C.ReadPending()
+	if #pending == 0 or C_ChatInfo.InChatMessagingLockdown() then
+		return
+	end
+	local lines = pending
+	pending = {}
+	for _, line in ipairs(lines) do
+		local text = C_ChatInfo.GetChatLineText(line.lineID)
+		local sender = C_ChatInfo.GetChatLineSenderName(line.lineID)
+		local readable = text ~= nil and sender ~= nil and not issecretvalue(text) and not issecretvalue(sender)
+		local def, key, opts, entry
+		if readable then
+			-- One line failing to read mustn't lose the others.
+			local ok
+			ok, def, key, opts, entry = pcall(Read, line.event, line.time, text, sender, unpack(line.args, 1, line.n))
+			if not ok then
+				readable, def, key, opts, entry = false, nil, nil, nil, nil
+			end
+		end
+		if line.key then
+			if not readable then
+				entry = { text = UnreadableText() }
+			end
+			Fill(line, entry)
+		elseif entry then
+			C.Receive(def, key, opts, entry)
+		end
+	end
+	C.RenderMessages(C.Selected())
+	C.Update()
+end
+
+-- The chat lockdown comes with the addon restrictions (combat, encounter,
+-- Mythic+, PvP); clients without it have nothing to read later.
+function C.SetupLockdown()
+	C.store:ForgetPending(UnreadableText())
+	if not (C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.GetChatLineText) then
+		return
+	end
+	-- A frame later: the lockdown may only be lifted once the event is through.
+	local function ReadSoon()
+		if #pending > 0 then
+			C_Timer.After(0, C.ReadPending)
+		end
+	end
+	if C_RestrictedActions then
+		ns.RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", ReadSoon)
+	end
+	ns.RegisterEvent("PLAYER_REGEN_ENABLED", ReadSoon)
 end
 
 -- Addon output (print()) normally lands in Blizzard's chat, which is never

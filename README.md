@@ -110,7 +110,9 @@ until it is needed, and as much as possible can be done from the keyboard.
   raid, instance) or guild messages. A new message that pops up the chat
   switches to its channel (or Main); otherwise the chat reopens on the
   channel last shown. Raid warnings and officer chat are marked `[RW]` and
-  `[O]`. The mouse wheel scrolls (`scrollStep`), and the Copy button in the
+  `[O]`. During boss fights, Mythic+ and PvP matches the game hides chat
+  from addons: those messages show as "… (readable after the fight)" and
+  are filled in once it is over; whispers from then arrive afterwards. The mouse wheel scrolls (`scrollStep`), and the Copy button in the
   header shows the channel as plain text to copy. Chat commands, emotes and addon
   commands typed into the channel view's own input run there (`/w Bob hi`,
   `/p hi`, `/dance`, `/sui`, ...); Blizzard's other commands (`/cast`,
