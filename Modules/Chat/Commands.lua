@@ -21,15 +21,27 @@ local function IsBattleNetName(name)
 end
 
 -- Also remembered as last told target, so Blizzard's input box offers it too.
+-- Sent through C.Whisper, which reports a whisper that doesn't go out.
 local function Whisper(target, message, isBattleNet)
+	-- The whisper channel with a character, when there is one, gets the report.
+	local key
+	if not isBattleNet then
+		key = ns.ChatHistory.WhisperKey(ns.ChatHistory.FullName(target, GetNormalizedRealmName()))
+		key = C.store:Get(key) and key or nil
+	end
 	if isBattleNet then
 		local bnetID = BNet_GetBNetIDAccount(target)
-		if bnetID then
+		local missing = not bnetID and ns.T("not in your friend list", "nicht in der Freundesliste")
+		C.Whisper(key, target, function()
 			C_BattleNet.SendWhisper(bnetID, message)
+		end, missing)
+		if bnetID then
 			ChatFrameUtil.SetLastToldTarget(target, "BN_WHISPER")
 		end
 	else
-		C_ChatInfo.SendChatMessage(message, "WHISPER", nil, target)
+		C.Whisper(key, target, function()
+			C_ChatInfo.SendChatMessage(message, "WHISPER", nil, target)
+		end)
 		ChatFrameUtil.SetLastToldTarget(target, "WHISPER")
 	end
 end

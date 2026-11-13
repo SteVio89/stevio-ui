@@ -195,6 +195,9 @@ end
 -- a placeholder and read once it ends (C.ReadPending); without a chat line id
 -- they only light up the channel as unread.
 function C.OnChatMessage(event, text, sender, ...)
+	if event == "CHAT_MSG_WHISPER_INFORM" or event == "CHAT_MSG_BN_WHISPER_INFORM" then
+		C.WhisperEchoed()
+	end
 	local now = time()
 	local lineID = select(9, ...)
 	local line = (issecretvalue(text) or issecretvalue(sender))

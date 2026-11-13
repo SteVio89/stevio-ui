@@ -28,6 +28,11 @@ need a check in game.
 - `/w Firstname Lastname hi` (a Battle.net friend's name) and `/w Name hi`
   typed into the channel view send the whisper, also after Blizzard's own
   input box was used once; `/p hi` speaks in the party.
+- A whisper that doesn't go out (#41) gets a grey line in its channel after
+  three seconds: `Whisper to Name-Realm was not sent (...)`, naming any error,
+  a blocked call (`blocked by the client: ...`), the chat lockdown or a realm
+  that restricts addon chat. With none of them it says `no answer from the
+  server`. A whisper that does go out adds no such line.
 - Blizzard's hidden chat windows, tabs and input box don't catch clicks or the
   mouse wheel, also after opening a temporary window (pet battle log, popped-out
   whisper). Blizzard's chat is now re-hidden only when the visibility changes,
