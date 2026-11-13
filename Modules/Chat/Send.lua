@@ -145,9 +145,11 @@ function C.Send(text)
 			C_BattleNet.SendWhisper(bnetID, text)
 		end, missing)
 	elseif channel.kind == "whisper" then
-		local missing = not channel.target and ns.T("no character name", "kein Charaktername")
-		C.Whisper(channel.key, channel.target or C.Label(channel), function()
-			C_ChatInfo.SendChatMessage(text, "WHISPER", nil, channel.target)
+		-- Sent without the realm, which WoW Forever refuses (see History.SendName).
+		local name = channel.target and ns.ChatHistory.SendName(channel.target)
+		local missing = not name and ns.T("no character name", "kein Charaktername")
+		C.Whisper(channel.key, name or C.Label(channel), function()
+			C_ChatInfo.SendChatMessage(text, "WHISPER", nil, name)
 		end, missing)
 	elseif channel.channelIndex then
 		C_ChatInfo.SendChatMessage(text, "CHANNEL", nil, channel.channelIndex)

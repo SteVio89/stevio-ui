@@ -236,6 +236,12 @@ print("communities ok")
 check(History.FullName("Bob", "Aegwynn") == "Bob-Aegwynn", "own realm is added")
 check(History.FullName("Bob-Thrall", "Aegwynn") == "Bob-Thrall", "other realm is kept")
 check(History.FullName("Bob", nil) == "Bob", "unknown realm leaves the name")
+check(
+	History.SendName("Jubylee Signatory-CAMWOWEU4Realm10RP") == "Jubylee Signatory",
+	"whispers go to First Last without the realm (#42)"
+)
+check(History.SendName("Jubylee Signatory") == "Jubylee Signatory", "a name without realm stays")
+check(History.SendName("Bob-Thrall") == "Bob", "other realms are dropped too")
 print("whisper names ok")
 
 -- Battle.net whispers are keyed by BattleTag
