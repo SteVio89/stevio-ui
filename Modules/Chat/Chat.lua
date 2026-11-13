@@ -137,7 +137,7 @@ function C.ShowPlayerMenu(owner, fullName)
 			C.OpenWhisper(fullName)
 		end)
 		root:CreateButton(ns.T("Invite", "Einladen"), function()
-			C_PartyInfo.InviteUnit(fullName)
+			C_PartyInfo.InviteUnit(ns.ChatHistory.SendName(fullName))
 		end)
 	end)
 end

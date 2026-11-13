@@ -113,6 +113,14 @@ function History.FullName(name, realm)
 	return name .. "-" .. realm
 end
 
+-- The name a whisper or invite goes to: WoW Forever names characters
+-- "First Last" and refuses a name with the realm ("First Last-Realm"), which
+-- FullName and the chat events add (#42). So everything from the last "-" on
+-- is dropped.
+function History.SendName(fullName)
+	return fullName:match("^(.+)%-[^-]*$") or fullName
+end
+
 function History.WhisperKey(fullName)
 	return "whisper:" .. fullName
 end

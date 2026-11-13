@@ -33,6 +33,11 @@ need a check in game.
   a blocked call (`blocked by the client: ...`), the chat lockdown or a realm
   that restricts addon chat. With none of them it says `no answer from the
   server`. A whisper that does go out adds no such line.
+- Whispers (#42) go to "First Last" without the realm: writing in a whisper
+  channel (opened by a received whisper or a click on a name), `/w First Last
+  hi` for someone with a whisper channel, `/r hi`, and Invite in the name's
+  right-click menu. `/w` with a name that has no whisper channel yet still
+  takes only the first word as the name.
 - Blizzard's hidden chat windows, tabs and input box don't catch clicks or the
   mouse wheel, also after opening a temporary window (pet battle log, popped-out
   whisper). Blizzard's chat is now re-hidden only when the visibility changes,

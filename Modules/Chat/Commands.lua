@@ -20,29 +20,44 @@ local function IsBattleNetName(name)
 	return BNet_GetBNetIDAccount(name) ~= nil
 end
 
+-- The key of the whisper channel with the character `name` (with or without
+-- the realm), or nil when there is none.
+local function WhisperChannelKey(name)
+	local wanted = ns.ChatHistory.SendName(name):lower()
+	for key, channel in pairs(C.store.db.channels) do
+		if
+			channel.kind == "whisper"
+			and channel.target
+			and ns.ChatHistory.SendName(channel.target):lower() == wanted
+		then
+			return key
+		end
+	end
+end
+
+local function IsCharacterName(name)
+	return WhisperChannelKey(name) ~= nil
+end
+
 -- Also remembered as last told target, so Blizzard's input box offers it too.
 -- Sent through C.Whisper, which reports a whisper that doesn't go out.
 local function Whisper(target, message, isBattleNet)
-	-- The whisper channel with a character, when there is one, gets the report.
-	local key
-	if not isBattleNet then
-		key = ns.ChatHistory.WhisperKey(ns.ChatHistory.FullName(target, GetNormalizedRealmName()))
-		key = C.store:Get(key) and key or nil
-	end
 	if isBattleNet then
 		local bnetID = BNet_GetBNetIDAccount(target)
 		local missing = not bnetID and ns.T("not in your friend list", "nicht in der Freundesliste")
-		C.Whisper(key, target, function()
+		C.Whisper(nil, target, function()
 			C_BattleNet.SendWhisper(bnetID, message)
 		end, missing)
 		if bnetID then
 			ChatFrameUtil.SetLastToldTarget(target, "BN_WHISPER")
 		end
 	else
-		C.Whisper(key, target, function()
-			C_ChatInfo.SendChatMessage(message, "WHISPER", nil, target)
+		-- The whisper channel with the character, when there is one, gets the report.
+		local name = ns.ChatHistory.SendName(target)
+		C.Whisper(WhisperChannelKey(name), name, function()
+			C_ChatInfo.SendChatMessage(message, "WHISPER", nil, name)
 		end)
-		ChatFrameUtil.SetLastToldTarget(target, "WHISPER")
+		ChatFrameUtil.SetLastToldTarget(name, "WHISPER")
 	end
 end
 
@@ -61,7 +76,8 @@ end
 local function RunChatType(chatType, message)
 	if chatType == "WHISPER" or chatType == "SMART_WHISPER" then
 		-- WHISPER (/tell to a character) never means a Battle.net friend.
-		local target, text, isBattleNet = Parse.WhisperTarget(message, chatType == "SMART_WHISPER" and IsBattleNetName)
+		local target, text, isBattleNet =
+			Parse.WhisperTarget(message, chatType == "SMART_WHISPER" and IsBattleNetName, IsCharacterName)
 		if not target then
 			return false
 		end
