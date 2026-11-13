@@ -30,22 +30,24 @@ local function Words(text)
 	end
 end
 
--- Splits "<target> <message>" for a whisper. Battle.net account names may
--- contain spaces, so the longest run of leading words that `isBattleNetName`
--- accepts wins; otherwise the target is the first word (character names have
--- no spaces). Returns target, message and whether the target is a Battle.net
--- name; nil when there is no message after the target.
-function Parse.WhisperTarget(text, isBattleNetName)
+-- Splits "<target> <message>" for a whisper. Battle.net account names and
+-- WoW Forever's character names ("First Last") may contain spaces, so the
+-- longest run of leading words that `isBattleNetName` or `isCharacterName`
+-- (e.g. someone with a whisper channel) accepts wins; otherwise the target is
+-- the first word. Returns target, message and whether the target is a
+-- Battle.net name; nil when there is no message after the target.
+function Parse.WhisperTarget(text, isBattleNetName, isCharacterName)
 	local words = Words(text)
 	if #words < 2 then
 		return nil
 	end
-	if isBattleNetName then
-		for count = #words - 1, 1, -1 do
-			local name = text:sub(words[1].from, words[count].to)
-			if isBattleNetName(name) then
-				return name, text:sub(words[count + 1].from), true
-			end
+	for count = #words - 1, 1, -1 do
+		local name = text:sub(words[1].from, words[count].to)
+		if isBattleNetName and isBattleNetName(name) then
+			return name, text:sub(words[count + 1].from), true
+		end
+		if isCharacterName and isCharacterName(name) then
+			return name, text:sub(words[count + 1].from), false
 		end
 	end
 	return text:sub(words[1].from, words[1].to), text:sub(words[2].from), false

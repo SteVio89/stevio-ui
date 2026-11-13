@@ -23,6 +23,13 @@ target, message, bnet = Parse.WhisperTarget("Bo yo", isFriend)
 check(target == "Bo" and message == "yo" and bnet, "one-word Battle.net name")
 target, message = Parse.WhisperTarget("Bob-Thrall hi", nil)
 check(target == "Bob-Thrall" and message == "hi", "realm name, no Battle.net check")
+local function isCharacter(name)
+	return name == "Jubylee Signatory"
+end
+target, message, bnet = Parse.WhisperTarget("Jubylee Signatory hi there", isFriend, isCharacter)
+check(target == "Jubylee Signatory" and message == "hi there" and not bnet, "First Last character name (#42)")
+target, message = Parse.WhisperTarget("Bob hi there", isFriend, isCharacter)
+check(target == "Bob" and message == "hi there", "unknown name: first word")
 check(Parse.WhisperTarget("Bob", isFriend) == nil, "no message")
 check(Parse.WhisperTarget("", isFriend) == nil, "nothing")
 
