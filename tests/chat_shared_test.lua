@@ -125,7 +125,7 @@ do
 		source = "LFG",
 		sourceType = "GUILD",
 	}, color)
-	check(line == grey .. "t5|r [|cff00ff00LFG|r] |cffffffffBob|r: lfg", "line in Other: " .. line)
+	check(line == grey .. "t5|r [|cff00ff00LFG|r] |cff00ff00Bob|r: lfg", "line in Other: " .. line)
 
 	line = C.FormatEntry({ kind = "main", chatType = "SAY" }, {
 		time = 5,
@@ -136,7 +136,7 @@ do
 		sourceKey = "party",
 	}, color)
 	check(
-		line == grey .. "t5|r [|Haddon:stevioui:channel:party|h|cffff0000Party|r|h] |cffffffffBob|r: hi",
+		line == grey .. "t5|r [|Haddon:stevioui:channel:party|h|cffff0000Party|r|h] |cffff0000Bob|r: hi",
 		"line in Main links its channel: " .. line
 	)
 end

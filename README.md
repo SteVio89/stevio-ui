@@ -76,7 +76,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
   - "Main" shows party, raid, instance, guild and whispers together, each
-    line tagged with its channel (`[Party] Bob: pull`), so there's no
+    line tagged with its channel (`[Party] Bob: pull`, the name in that
+    channel's colour like everywhere, the text white), so there's no
     switching back and forth; the single channels stay too. Its unread count
     is theirs and reading it reads them. Typing in Main answers in the channel
     of the latest line (named in the header, `Main > Party`), kept while

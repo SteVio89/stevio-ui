@@ -78,7 +78,8 @@ end
 -- A message line of `channel` as shown in the channel view:
 -- "time [channel] sender: text"; the channel only shows in "Other" and Main
 -- (where a click on it writes to that channel), the sender
--- is missing on system messages. Channel and sender take their channel's color;
+-- is missing on system messages. Channel and sender take the color of the
+-- channel the line came from, the text stays white;
 -- emotes ("time Bob waves.") are colored as a whole in the emote color.
 -- Returns the line and its base color: finished lines without a sender (loot,
 -- NPC, system, ...) take their kind's chat color, like in Blizzard's chat;
@@ -98,7 +99,10 @@ function C.FormatEntry(channel, entry, color)
 	if source and entry.sourceKey then
 		source = History.ChannelLink(entry.sourceKey, source)
 	end
-	local sender = entry.sender and Sender(entry, C.ColorCode(color(channel.chatType)) .. entry.sender .. "|r")
+	-- In Main and "Other" the sender takes the color of the channel the line
+	-- came from, so names stand out from the white text there too.
+	local senderType = entry.sourceType or channel.chatType
+	local sender = entry.sender and Sender(entry, C.ColorCode(color(senderType)) .. entry.sender .. "|r")
 	return History.Line(entry, stamp, source, sender)
 end
 
