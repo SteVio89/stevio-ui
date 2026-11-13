@@ -230,6 +230,9 @@ function Chat:OnEnable()
 	for event in pairs(config.events) do
 		ns.RegisterEvent(event, C.OnChatMessage)
 	end
+	-- Whispers the client refuses to send are named in their channel (see Send.lua).
+	ns.RegisterEvent("ADDON_ACTION_BLOCKED", C.OnActionBlocked)
+	ns.RegisterEvent("ADDON_ACTION_FORBIDDEN", C.OnActionBlocked)
 	ns.RegisterSlashCommand("chat", PrintChannels)
 	hooksecurefunc("print", C.OnPrint)
 

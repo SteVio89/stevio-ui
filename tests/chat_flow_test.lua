@@ -229,4 +229,89 @@ do
 end
 print("commands ok")
 
+-- Whispers that don't go out (#41): reported with what the client said,
+-- unless the server echoes them first.
+do
+	ns.T = function(english)
+		return english
+	end
+	ns.name = "stevio-ui"
+	local timers, printed, sent = {}, {}, {}
+	local lockdown = false
+	_G.C_Timer = {
+		After = function(_, callback)
+			timers[#timers + 1] = callback
+		end,
+	}
+	_G.C_ChatInfo = {
+		InChatMessagingLockdown = function()
+			return lockdown
+		end,
+	}
+	_G.time = function()
+		return 100
+	end
+	ns.Print = function(text)
+		printed[#printed + 1] = text
+	end
+	local channel = { key = "whisper:Bob-Realm", messages = {} }
+	C.state.selected = "other"
+	C.store = {
+		Get = function(_, key)
+			return key == channel.key and channel or nil
+		end,
+		Add = function(_, _, target, entry)
+			target.messages[#target.messages + 1] = entry
+		end,
+	}
+	local function runTimers()
+		local due = timers
+		timers = {}
+		for _, callback in ipairs(due) do
+			callback()
+		end
+	end
+
+	C.Whisper(channel.key, "Bob-Realm", function()
+		sent[#sent + 1] = "Bob-Realm"
+	end)
+	C.WhisperEchoed()
+	runTimers()
+	check(#sent == 1 and #channel.messages == 0, "echoed whisper reports nothing")
+
+	C.Whisper(channel.key, "Bob-Realm", function() end)
+	runTimers()
+	check(
+		channel.messages[1].text == "Whisper to Bob-Realm was not sent (no answer from the server)",
+		"silent whisper reported: " .. tostring(channel.messages[1].text)
+	)
+	check(channel.messages[1].colorType == "SYSTEM", "report is a system line")
+
+	lockdown = true
+	C.Whisper(channel.key, "Bob-Realm", function()
+		error("restricted", 0)
+	end)
+	C.OnActionBlocked("ADDON_ACTION_BLOCKED", "other-addon", "Foo()")
+	C.OnActionBlocked("ADDON_ACTION_FORBIDDEN", "stevio-ui", "SendChatMessage()")
+	runTimers()
+	check(
+		channel.messages[2].text
+			== "Whisper to Bob-Realm was not sent (error: restricted, blocked by the client: SendChatMessage(), chat lockdown)",
+		"reasons named: " .. tostring(channel.messages[2].text)
+	)
+	lockdown = false
+
+	C.Whisper(nil, "Anna", function() end, "not in your friend list")
+	check(printed[1] == "Whisper to Anna was not sent (not in your friend list)", "no channel: System")
+	check(#timers == 0, "nothing sent, nothing watched")
+
+	-- Two whispers, one echo: the second is reported.
+	C.Whisper(channel.key, "Bob-Realm", function() end)
+	C.Whisper(channel.key, "Bob-Realm", function() end)
+	C.WhisperEchoed()
+	runTimers()
+	check(#channel.messages == 3, "one of two reported")
+end
+print("whisper check ok")
+
 print("chat flow tests passed")
