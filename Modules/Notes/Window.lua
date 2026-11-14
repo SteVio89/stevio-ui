@@ -13,6 +13,8 @@ local config = ns.config.notes
 local colors = config.colors
 local T = ns.T
 
+local WARN_COLOR = "|cffff5050"
+
 local LIST_WIDTH = 270
 local SORTS = { "recent", "name", "rating" }
 local SORT_NAMES = {
@@ -52,6 +54,9 @@ local function PlayerInfo(player)
 	if class then
 		parts[#parts + 1] = class
 	end
+	if player.guild then
+		parts[#parts + 1] = ("<%s>"):format(player.guild)
+	end
 	parts[#parts + 1] = T("first seen %s", "zuerst %s"):format(W.Date(player.firstSeen))
 	parts[#parts + 1] = T("last seen %s", "zuletzt %s"):format(W.Date(player.lastSeen))
 	return table.concat(parts, " · ")
@@ -75,7 +80,17 @@ local function RefreshPlayerSummary()
 	local panel = panels.players
 	local player = state.selected and CurrentStore():Player(state.selected)
 	if player then
-		panel.summary:SetText(W.SummaryText(player) or T("Not rated yet", "Noch nicht bewertet"))
+		local text = W.SummaryText(player) or T("Not rated yet", "Noch nicht bewertet")
+		if player.blocked then
+			-- A second line: the note label below moves down with it.
+			text = text
+				.. "\n"
+				.. WARN_COLOR
+				.. T("Marked %s: %s", "Markiert %s: %s"):format(W.Date(player.blocked.time), W.BlockReason(player))
+				.. "|r"
+		end
+		panel.summary:SetText(text)
+		panel.unmark:SetShown(player.blocked ~= nil)
 	end
 end
 
@@ -143,6 +158,9 @@ local function CreatePlayersPanel(parent)
 	panel.info:SetTextColor(unpack(colors.dim))
 	panel.summary = ns.CreateFontString(content)
 	panel.summary:SetPoint("TOPLEFT", panel.info, "BOTTOMLEFT", 0, -6)
+	panel.summary:SetPoint("RIGHT")
+	panel.summary:SetJustifyH("LEFT")
+	panel.summary:SetWordWrap(true)
 
 	local forget = W.Button(content, T("Forget", "Vergessen"), 90)
 	forget:SetPoint("TOPRIGHT", 0, 0)
@@ -154,6 +172,23 @@ local function CreatePlayersPanel(parent)
 		else
 			ns.Print(
 				T("Shift-click Forget to delete this player.", "Umschalt-Klick auf Vergessen löscht diesen Spieler.")
+			)
+		end
+	end)
+
+	panel.unmark = W.Button(content, T("Unmark", "Entmarkieren"), 90)
+	panel.unmark:SetPoint("RIGHT", forget, "LEFT", -6, 0)
+	panel.unmark:SetScript("OnClick", function()
+		if IsShiftKeyDown() then
+			CurrentStore():Unblock(state.selected)
+			RefreshPlayerSummary()
+			Window.RefreshList()
+		else
+			ns.Print(
+				T(
+					"Shift-click Unmark to remove the blocked-guild mark.",
+					"Umschalt-Klick auf Entmarkieren entfernt die Gilden-Markierung."
+				)
 			)
 		end
 	end)
@@ -315,6 +350,9 @@ end
 
 local function RenderPlayerRow(row, player)
 	local name = W.ClassColored(player.name, player.class)
+	if player.blocked then
+		name = WARN_COLOR .. "!|r " .. name
+	end
 	if player.note then
 		name = name .. " |cff999999·|r"
 	end
