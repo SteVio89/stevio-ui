@@ -11,8 +11,11 @@ local sideGap = 16
 local buttonStep = 38
 -- Below the second debuff row (see buffs and debuffs further down).
 local rightBarsTop = -152
--- The two vertical bars, and the gap before what sits left of them.
-local rightBarsWidth = 2 * buttonStep + 4
+-- The two vertical bars keep clear of the tracker's toggle badge on the
+-- right screen edge (6 wide, style.badge.width in Core/Config.lua) plus a gap.
+local rightBarsEdge = 6 + 2
+-- From the screen edge to the left of the two bars, plus the gap before what sits left of them.
+local rightBarsWidth = rightBarsEdge + 2 * buttonStep + 4
 
 ns.layout = {
 
@@ -26,11 +29,11 @@ ns.layout = {
 		-- Two columns on the right screen edge for emotes and consumables,
 		-- hanging from below the debuffs so they end above the minimap (which
 		-- grows with the screen width); the same in every action set.
-		{ bar = "Bar4", point = "TOPRIGHT", x = -4, y = rightBarsTop, vertical = true },
+		{ bar = "Bar4", point = "TOPRIGHT", x = -rightBarsEdge, y = rightBarsTop, vertical = true },
 		{
 			bar = "Bar5",
 			point = "TOPRIGHT",
-			x = -(4 + buttonStep),
+			x = -(rightBarsEdge + buttonStep),
 			y = rightBarsTop,
 			vertical = true,
 		},
@@ -67,7 +70,7 @@ ns.layout = {
 	debuffs = { point = "TOPRIGHT", x = -12, y = -76 },
 
 	-- Left of the two vertical bars on the right edge, so it doesn't cover them.
-	tracker = { point = "TOPRIGHT", x = -(4 + rightBarsWidth), y = -160 },
+	tracker = { point = "TOPRIGHT", x = -rightBarsWidth, y = -160 },
 	trackerBadge = { point = "RIGHT", x = 0, y = 0 },
 
 	-- Top left, leaving room above for the tabs.
