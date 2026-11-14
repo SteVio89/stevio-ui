@@ -43,6 +43,16 @@ function Panels.ByStacking(a, b)
 	return a:GetFrameLevel() > b:GetFrameLevel()
 end
 
+-- UIPanelWindows and UISpecialFrames hold global names, and other addons
+-- register names whose global isn't a frame (a plain table, a string, ...).
+-- Only real frames can be asked whether they're forbidden or visible.
+function Panels.IsFrame(value)
+	return type(value) == "table"
+		and type(value.IsObjectType) == "function"
+		and type(value.IsForbidden) == "function"
+		and value:IsObjectType("Frame")
+end
+
 local activePanel
 local hookedPanels = {}
 
@@ -50,7 +60,7 @@ local function OpenPanels()
 	local seen, panels = {}, {}
 	local function Add(frame)
 		if
-			frame
+			Panels.IsFrame(frame)
 			and not seen[frame]
 			and not frame:IsForbidden()
 			and frame:IsVisible()
