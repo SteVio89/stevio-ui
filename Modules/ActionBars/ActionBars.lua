@@ -97,16 +97,18 @@ local function StripMainBarArt()
 	end)
 end
 
--- Blizzard's frame of each Edit Mode bar named in ns.layout.actionBars.
-local barFrames = {
-	MainBar = "MainActionBar",
-	Bar2 = "MultiBarBottomLeft",
-	Bar3 = "MultiBarBottomRight",
-	Bar4 = "MultiBarRight",
-	Bar5 = "MultiBarLeft",
-	Bar6 = "MultiBar5",
-	Bar7 = "MultiBar6",
-	Bar8 = "MultiBar7",
+-- Blizzard's frame and Edit Mode index name of each bar named in
+-- ns.layout.actionBars. The index names differ from the bar names from the
+-- fourth bar on (Enum.EditModeActionBarSystemIndices has no "Bar4").
+local barSystems = {
+	MainBar = { frame = "MainActionBar", index = "MainBar" },
+	Bar2 = { frame = "MultiBarBottomLeft", index = "Bar2" },
+	Bar3 = { frame = "MultiBarBottomRight", index = "Bar3" },
+	Bar4 = { frame = "MultiBarRight", index = "RightBar" },
+	Bar5 = { frame = "MultiBarLeft", index = "LeftBar" },
+	Bar6 = { frame = "MultiBar5", index = "ExtraBar1" },
+	Bar7 = { frame = "MultiBar6", index = "ExtraBar2" },
+	Bar8 = { frame = "MultiBar7", index = "ExtraBar3" },
 }
 
 -- The entries of ns.layout.actionBars naming a known bar (the options panel
@@ -114,8 +116,9 @@ local barFrames = {
 local function ConfiguredBars()
 	local bars = {}
 	for _, layout in ipairs(ns.layout.actionBars) do
-		local frame = barFrames[layout.bar] and _G[barFrames[layout.bar]]
-		local systemIndex = Enum.EditModeActionBarSystemIndices[layout.bar]
+		local system = barSystems[layout.bar]
+		local frame = system and _G[system.frame]
+		local systemIndex = system and Enum.EditModeActionBarSystemIndices[system.index]
 		if frame and systemIndex then
 			bars[#bars + 1] = { layout = layout, systemIndex = systemIndex, frame = frame }
 		end
