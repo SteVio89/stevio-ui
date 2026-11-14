@@ -68,7 +68,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   shortly after it leaves: level and XP bar with rested XP, the watched
   reputation, gold, free bag slots, lowest durability (yellow/red when low),
   zone with coordinates, time, FPS and latency, online friends and guild
-  members, and the other addons' minimap buttons.
+  members, the notes button and the other addons' minimap buttons.
 - **Tooltip** – Blizzard's default tooltip position is moved above the minimap.
 - **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
   or the badge at the right screen edge, placed below the auras.
@@ -138,6 +138,19 @@ until it is needed, and as much as possible can be done from the keyboard.
   something still listed adds to that line.
 - **Quest rewards** – on the turn-in page with at least two item choices,
   a gold coin marks the one with the highest vendor value (sell price × count).
+- **Notes** – a window (button in the notch island, or `/sui notes`) with three
+  tabs. *Players*: everyone you group with is recorded, one session per time
+  together with the date, the role and the place (the instances entered, or
+  else the open-world zone). Rate each session with 1–5 stars, change its role,
+  add a comment, and keep one note per player; the list and the player's
+  tooltip show the average of the rated sessions, overall and per role.
+  After leaving a group a small popup offers to rate its players ("Later"
+  closes it), and a rated or noted player joining your group gets a chat line.
+  "Note" in the chat's name menu opens a player. Players without a rating or
+  note are deleted after 90 days (`keepUnratedDays`); rated ones stay.
+  *Items*: free text per item type, shown in its tooltip; Alt+right-click an
+  item in your bags or bank (or drop it on the list) to write or remove it.
+  *Notes*: plain notes. All notes are account-wide.
 - **Auras** – Blizzard's own, compacted to two rows of buffs and two rows of debuffs in the top right corner, with the objective tracker below them. Blizzard's damage meter is turned
   off (`damageMeterEnabled` in the profile); the loot ticker uses its space at the bottom left.
 
@@ -182,6 +195,7 @@ first login.
 | `/sui bars [name\|number\|next]` | List the action sets or switch to one |
 | `/sui bars missing` | List the actions the active set could not place |
 | `/sui bars forget` | Drop those actions from the active set |
+| `/sui notes [item link]` | Toggle the notes window, or edit the note of that item |
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui qj` | List the current Quickjump targets |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |
