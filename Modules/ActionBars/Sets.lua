@@ -28,12 +28,40 @@ function Sets.Same(a, b)
 	return a.id == b.id
 end
 
+-- The first action slot of each Edit Mode bar but the main bar, which pages
+-- through several. Every bar has 12 slots.
+Sets.BAR_FIRST_SLOT = {
+	Bar2 = 61, -- bottom left
+	Bar3 = 49, -- bottom right
+	Bar4 = 25, -- right
+	Bar5 = 37, -- right 2
+	Bar6 = 145,
+	Bar7 = 157,
+	Bar8 = 169,
+}
+
+-- The slots of the named bars as a set ({ [slot] = true }); unknown names are skipped.
+function Sets.BarSlots(bars)
+	local slots = {}
+	for _, bar in ipairs(bars or {}) do
+		local first = Sets.BAR_FIRST_SLOT[bar]
+		if first then
+			for slot = first, first + 11 do
+				slots[slot] = true
+			end
+		end
+	end
+	return slots
+end
+
 -- The slots whose content differs between `current` and `wanted`, ascending.
--- A slot missing from `wanted` is to be emptied.
-function Sets.Changes(current, wanted)
+-- A slot missing from `wanted` is to be emptied. Slots in `keep` (a set as
+-- returned by Sets.BarSlots) are left as they are.
+function Sets.Changes(current, wanted, keep)
+	keep = keep or {}
 	local changes = {}
 	for slot = 1, Sets.MAX_SLOT do
-		if not Sets.Same(current[slot], wanted[slot]) then
+		if not keep[slot] and not Sets.Same(current[slot], wanted[slot]) then
 			changes[#changes + 1] = { slot = slot, action = wanted[slot] }
 		end
 	end

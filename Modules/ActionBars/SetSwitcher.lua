@@ -3,7 +3,8 @@ local _, ns = ...
 -- Switches between the action sets named in config.sets (e.g. levelling and
 -- healing), out of combat only. Leaving a set saves what its slots hold at
 -- that moment, entering one puts its actions back into the same slots, so
--- every bar and page changes and every keybinding stays where it was.
+-- every bar and page changes and every keybinding stays where it was. The bars
+-- in config.sharedBars (emotes, consumables) keep their actions in every set.
 -- Stored per character in StevioUIActionSets:
 --   { current = index, sets = { [index] = { [slot] = entry } }, missing = { [slot] = entry } }
 -- `missing` holds what the active set could not place (e.g. a talent spell
@@ -107,10 +108,11 @@ local pickup = {
 	end,
 }
 
--- Makes every slot hold what `wanted` says; returns what could not be placed.
+-- Makes every slot hold what `wanted` says, except the slots of the bars
+-- shared by all sets; returns what could not be placed.
 local function Apply(wanted)
 	local missing = {}
-	for _, change in ipairs(Sets.Changes(Snapshot(), wanted)) do
+	for _, change in ipairs(Sets.Changes(Snapshot(), wanted, Sets.BarSlots(config.sharedBars))) do
 		ClearCursor()
 		local placed = false
 		local action = change.action

@@ -33,6 +33,14 @@ check(changes[4].slot == 100, "bonus bar page")
 check(#Sets.Changes(wanted, wanted) == 0, "nothing to do")
 check(#Sets.Changes({ [181] = heal }, {}) == 0, "beyond the last slot")
 
+-- Slots of shared bars stay as they are in every set.
+local shared = Sets.BarSlots({ "Bar4", "Bar5", "NoSuchBar" })
+check(shared[25] and shared[36] and shared[37] and shared[48], "both bars' slots")
+check(not shared[24] and not shared[49], "only those slots")
+local kept = Sets.Changes({ [25] = potion, [30] = heal, [1] = fireball }, { [26] = fireball, [1] = heal }, shared)
+check(#kept == 1 and kept[1].slot == 1, "shared slots are neither cleared nor filled")
+check(next(Sets.BarSlots(nil)) == nil, "no shared bars")
+
 check(Sets.Next(1, 2) == 2 and Sets.Next(2, 2) == 1, "wraps")
 check(Sets.Next(nil, 3) == 1, "starts at one")
 check(Sets.Next(1, 0) == nil, "no sets")
