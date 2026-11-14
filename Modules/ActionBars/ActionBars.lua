@@ -125,15 +125,17 @@ end
 
 local function PlaceBars()
 	local Setting = Enum.EditModeActionBarSetting
-	local barSettings = {
-		[Setting.Orientation] = Enum.ActionBarOrientation.Horizontal,
-		[Setting.NumRows] = 1,
-		[Setting.NumIcons] = 12,
-		[Setting.IconSize] = ns.EditModeStep(config.iconSize, 50, 10),
-		[Setting.IconPadding] = config.iconPadding,
-		[Setting.HideBarArt] = 1,
-	}
 	for _, bar in ipairs(ConfiguredBars()) do
+		-- NumRows counts columns on a vertical bar: one either way.
+		local barSettings = {
+			[Setting.Orientation] = bar.layout.vertical and Enum.ActionBarOrientation.Vertical
+				or Enum.ActionBarOrientation.Horizontal,
+			[Setting.NumRows] = 1,
+			[Setting.NumIcons] = 12,
+			[Setting.IconSize] = ns.EditModeStep(config.iconSize, 50, 10),
+			[Setting.IconPadding] = config.iconPadding,
+			[Setting.HideBarArt] = 1,
+		}
 		ns.SetEditModeSystem(Enum.EditModeSystem.ActionBar, bar.systemIndex, bar.layout, barSettings)
 	end
 
