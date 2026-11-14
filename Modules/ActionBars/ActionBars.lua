@@ -99,17 +99,19 @@ end
 
 -- Blizzard's frame and Edit Mode index name of each bar named in
 -- ns.layout.actionBars. The index names differ from the bar names from the
--- fourth bar on (Enum.EditModeActionBarSystemIndices has no "Bar4").
+-- fourth bar on (Enum.EditModeActionBarSystemIndices has no "Bar4"; checked
+-- against Blizzard_APIDocumentationGenerated/EditModeManagerConstantsDocumentation.lua).
 local barSystems = {
 	MainBar = { frame = "MainActionBar", index = "MainBar" },
 	Bar2 = { frame = "MultiBarBottomLeft", index = "Bar2" },
 	Bar3 = { frame = "MultiBarBottomRight", index = "Bar3" },
-	Bar4 = { frame = "MultiBarRight", index = "RightBar" },
-	Bar5 = { frame = "MultiBarLeft", index = "LeftBar" },
+	Bar4 = { frame = "MultiBarRight", index = "RightBar1" },
+	Bar5 = { frame = "MultiBarLeft", index = "RightBar2" },
 	Bar6 = { frame = "MultiBar5", index = "ExtraBar1" },
 	Bar7 = { frame = "MultiBar6", index = "ExtraBar2" },
 	Bar8 = { frame = "MultiBar7", index = "ExtraBar3" },
 }
+ns.actionBarSystems = barSystems
 
 -- The entries of ns.layout.actionBars naming a known bar (the options panel
 -- may hold a mistyped one), each with its Edit Mode index and frame.
