@@ -191,6 +191,15 @@ local function Remember(event, now, lineID, ...)
 	return line
 end
 
+-- A whisper from a player the notes marked (#45): a warning with the reason
+-- under it, in the whisper's channel.
+local function WarnAfterWhisper(event, sender, def, key, opts, now)
+	local warning = event == "CHAT_MSG_WHISPER" and ns.BlockedWhisperWarning and ns.BlockedWhisperWarning(sender)
+	if warning then
+		C.Receive(def, key, opts, { time = now, text = warning, colorType = "SYSTEM" })
+	end
+end
+
 -- Message contents may be secret during the chat lockdown: those are stored as
 -- a placeholder and read once it ends (C.ReadPending); without a chat line id
 -- they only light up the channel as unread.
@@ -213,6 +222,9 @@ function C.OnChatMessage(event, text, sender, ...)
 		line.mainKey = C.IsMerged(opts.kind) and config.main.key
 	end
 	C.Receive(def, key, opts, entry)
+	if entry then
+		WarnAfterWhisper(event, sender, def, key, opts, now)
+	end
 end
 
 -- Puts `entry` (nil: the line isn't shown after all) in place of the
@@ -258,6 +270,7 @@ function C.ReadPending()
 			Fill(line, entry)
 		elseif entry then
 			C.Receive(def, key, opts, entry)
+			WarnAfterWhisper(line.event, sender, def, key, opts, line.time)
 		end
 	end
 	C.RenderMessages(C.Selected())

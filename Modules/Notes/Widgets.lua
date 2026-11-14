@@ -49,6 +49,23 @@ function W.SummaryText(player)
 	return table.concat(parts, " · ")
 end
 
+-- Why a player is marked: "guild <Name> (matches "pattern")", plus where
+-- they were seen since when that is another guild. Nil when not marked.
+function W.BlockReason(player)
+	local blocked = player.blocked
+	if not blocked then
+		return nil
+	end
+	local text = T('guild <%s> (matches "%s")', 'Gilde <%s> (passt zu "%s")'):format(
+		blocked.guild or "?",
+		blocked.pattern or "?"
+	)
+	if player.guild and player.guild ~= blocked.guild then
+		text = text .. T(", since seen in <%s>", ", seitdem gesehen in <%s>"):format(player.guild)
+	end
+	return text
+end
+
 function W.ClassColored(name, class)
 	local color = class and C_ClassColor.GetClassColor(class)
 	return color and color:WrapTextInColorCode(name) or name
