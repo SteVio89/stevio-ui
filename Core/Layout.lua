@@ -7,24 +7,38 @@ local _, ns = ...
 local barBlockWidth = 454 -- 12 buttons at Edit Mode icon size 80% plus padding
 local barBlockTop = 152 -- top edge of the third action bar row
 local sideGap = 16
--- One bar button at Edit Mode icon size 80% plus padding.
-local buttonStep = 38
--- The two vertical bars on the right screen edge, and the gap before what sits left of them.
-local rightBarsWidth = 2 * buttonStep + 4
+-- The two vertical bars on the right screen edge are smaller than the bottom
+-- bars so twelve buttons fit between the debuffs and the minimap: one button
+-- at Edit Mode icon size 60% (45 * 0.6) plus padding.
+local rightBarIconSize = 60
+local rightButtonStep = 29
+-- Below the second debuff row (see buffs and debuffs further down).
+local rightBarsTop = -152
+-- The two vertical bars, and the gap before what sits left of them.
+local rightBarsWidth = 2 * rightButtonStep + 4
 
 ns.layout = {
 
 	-- The action bars that are styled and placed: `bar` names Blizzard's
 	-- Edit Mode bar ("MainBar", "Bar2" to "Bar8"), the rest is its position;
-	-- `vertical` makes it one column instead of one row.
+	-- `vertical` makes it one column instead of one row; `iconSize` (Edit Mode
+	-- percent) overrides the one in Modules/ActionBars/Config.lua.
 	actionBars = {
 		{ bar = "MainBar", point = "BOTTOM", x = 0, y = 38 },
 		{ bar = "Bar2", point = "BOTTOM", x = 0, y = 76 }, -- bottom left
 		{ bar = "Bar3", point = "BOTTOM", x = 0, y = 114 }, -- bottom right
 		-- Two columns on the right screen edge for emotes and consumables,
-		-- between the debuffs and the minimap; the same in every action set.
-		{ bar = "Bar4", point = "RIGHT", x = -4, y = 40, vertical = true },
-		{ bar = "Bar5", point = "RIGHT", x = -(4 + buttonStep), y = 40, vertical = true },
+		-- hanging from below the debuffs so they end above the minimap (which
+		-- grows with the screen width); the same in every action set.
+		{ bar = "Bar4", point = "TOPRIGHT", x = -4, y = rightBarsTop, vertical = true, iconSize = rightBarIconSize },
+		{
+			bar = "Bar5",
+			point = "TOPRIGHT",
+			x = -(4 + rightButtonStep),
+			y = rightBarsTop,
+			vertical = true,
+			iconSize = rightBarIconSize,
+		},
 	},
 	-- Left of the main bar, the same height as one bar row.
 	actionSets = { point = "BOTTOMRIGHT", relativePoint = "BOTTOM", x = -(barBlockWidth / 2 + 4), y = 38 },
