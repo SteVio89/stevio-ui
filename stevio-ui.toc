@@ -5,7 +5,7 @@
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\stevio-ui\Media\Icon
 ## X-License: MIT
-## SavedVariables: StevioUIState, StevioUIConfig, StevioUIExport, StevioUIDebug, StevioUIErrors
+## SavedVariables: StevioUIState, StevioUIConfig, StevioUIExport, StevioUIDebug, StevioUIErrors, StevioUINotes
 ## SavedVariablesPerCharacter: StevioUIChatHistory, StevioUIActionSets
 ## X-Curse-Project-ID: 1739367
 
@@ -93,6 +93,14 @@ Modules\Accessibility\DialogSources.lua
 Modules\Accessibility\Taxi.lua
 Modules\Accessibility\Panels.lua
 Modules\Accessibility\Accessibility.lua
+
+Modules\Notes\Config.lua
+Modules\Notes\Store.lua
+Modules\Notes\Widgets.lua
+Modules\Notes\Window.lua
+Modules\Notes\Popup.lua
+Modules\Notes\ItemBox.lua
+Modules\Notes\Notes.lua
 
 Modules\Settings\Config.lua
 Modules\Settings\Profile.lua
