@@ -214,9 +214,9 @@ local function RowSpecs()
 		{ update = UpdateSystem },
 		{ update = UpdateOnline },
 	}
-	if config.minimapButtons then
-		rowSpecs[#rowSpecs + 1] = { update = UpdateButtons, buttons = true, groupStart = true }
-	end
+	-- Always there for stevio-ui's own buttons (notes); other addons' buttons
+	-- only join with minimapButtons. Without any buttons the row stays hidden.
+	rowSpecs[#rowSpecs + 1] = { update = UpdateButtons, buttons = true, groupStart = true }
 	return rowSpecs
 end
 
@@ -224,7 +224,7 @@ local function CreateRow(spec)
 	local row = CreateFrame("Frame", nil, island)
 	row.spec = spec
 	if spec.buttons then
-		Buttons.Setup(row)
+		Buttons.Setup(row, config.buttonSize)
 		return row
 	end
 

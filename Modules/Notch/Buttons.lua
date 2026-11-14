@@ -52,9 +52,11 @@ end
 
 -- In-game part.
 
-local container
+local container, containerButtonSize
 -- Adopted buttons in a stable order; each sits centred in its own slot frame.
 local adopted, slots = {}, {}
+-- stevio-ui's own buttons (notes), waiting for the island to exist.
+local own, pendingOwn = {}, {}
 local libDBIconHooked = false
 
 local function OwnerOf(name)
@@ -98,7 +100,12 @@ local function Adopt(button, size)
 	slot:SetSize(size, size)
 	slot.button = button
 	slots[#slots + 1] = slot
+	-- Our own buttons come first, then the others by name.
 	table.sort(slots, function(a, b)
+		local aOwn, bOwn = own[a.button] or false, own[b.button] or false
+		if aOwn ~= bOwn then
+			return aOwn
+		end
 		return a.button:GetName() < b.button:GetName()
 	end)
 
@@ -175,8 +182,23 @@ function Buttons.Scan(size)
 	end
 end
 
-function Buttons.Setup(parent)
-	container = parent
+function Buttons.Setup(parent, size)
+	container, containerButtonSize = parent, size
+	for _, button in ipairs(pendingOwn) do
+		Adopt(button, size)
+	end
+	pendingOwn = {}
+end
+
+-- Places one of stevio-ui's own buttons (it needs a global name) in the grid,
+-- whether or not other addons' buttons are moved there (minimapButtons).
+function Buttons.AddOwn(button)
+	own[button] = true
+	if container then
+		Adopt(button, containerButtonSize)
+	else
+		pendingOwn[#pendingOwn + 1] = button
+	end
 end
 
 -- Places the shown buttons in a grid of the given width; returns its height.
