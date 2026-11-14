@@ -35,6 +35,31 @@ for i, frame in ipairs(windows) do
 end
 check(table.concat(order, " ") == "dialog merchant bags odd", "stacking order")
 
+-- Only real frames from the window registries are walked; other addons put
+-- names there whose global is a plain table or a string.
+local frame = {
+	IsObjectType = function(_, kind)
+		return kind == "Frame"
+	end,
+	IsForbidden = function()
+		return false
+	end,
+}
+check(Panels.IsFrame(frame), "a frame")
+check(not Panels.IsFrame(nil), "no global")
+check(not Panels.IsFrame("SomeFrame"), "a string")
+check(not Panels.IsFrame({}), "a plain table")
+check(not Panels.IsFrame({ IsForbidden = true }), "a table with a field of that name")
+local texture = {
+	IsObjectType = function()
+		return false
+	end,
+	IsForbidden = function()
+		return false
+	end,
+}
+check(not Panels.IsFrame(texture), "not a frame")
+
 -- Cycling: the first window, then the next, and none past the last or when
 -- the active window isn't open anymore.
 local a, b = window("a"), window("b")
