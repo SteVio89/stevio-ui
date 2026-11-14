@@ -132,7 +132,7 @@ local function PlaceBars()
 				or Enum.ActionBarOrientation.Horizontal,
 			[Setting.NumRows] = 1,
 			[Setting.NumIcons] = 12,
-			[Setting.IconSize] = ns.EditModeStep(config.iconSize, 50, 10),
+			[Setting.IconSize] = ns.EditModeStep(bar.layout.iconSize or config.iconSize, 50, 10),
 			[Setting.IconPadding] = config.iconPadding,
 			[Setting.HideBarArt] = 1,
 		}
