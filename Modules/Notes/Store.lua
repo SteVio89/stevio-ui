@@ -229,13 +229,73 @@ function Store.Summary(player)
 	return summary
 end
 
+-- Blocked guilds (#45) ------------------------------------------------------
+
+-- The first of `patterns` (Lua patterns, case-insensitive) that `guild`
+-- matches, or nil. A pattern that isn't valid Lua is matched as plain text.
+function Store.MatchGuild(guild, patterns)
+	if not guild or guild == "" or not patterns then
+		return nil
+	end
+	local lower = guild:lower()
+	for _, pattern in ipairs(patterns) do
+		if type(pattern) == "string" and pattern ~= "" then
+			local needle = pattern:lower()
+			local ok, found = pcall(string.find, lower, needle)
+			if not ok then
+				found = lower:find(needle, 1, true)
+			end
+			if found then
+				return pattern
+			end
+		end
+	end
+	return nil
+end
+
+-- The player `name` was seen in `guild` (nil: in none, as far as the game
+-- says). Players already in the notes get their guild updated; one whose
+-- guild matches `patterns` is added and marked as blocked. The mark stays
+-- when they leave the guild later. Returns the player (nil when not in the
+-- notes) and whether they were marked just now.
+function Store:SeeGuild(name, guild, class, patterns, now)
+	if guild == "" then
+		guild = nil
+	end
+	local player = self.db.players[name]
+	local pattern = Store.MatchGuild(guild, patterns)
+	if pattern and not (player and player.blocked) then
+		player = self:Ensure(name, class, now)
+		player.guild = guild
+		player.blocked = { guild = guild, pattern = pattern, time = now }
+		return player, true
+	end
+	if player then
+		player.guild = guild
+	end
+	return player, false
+end
+
+-- Removes the blocked mark of `name` (e.g. a false match).
+function Store:Unblock(name)
+	local player = self.db.players[name]
+	if player then
+		player.blocked = nil
+	end
+end
+
 -- Deletes the players last seen more than `days` ago that have neither a
--- rated session nor a note (nor an open session). Returns how many.
+-- rated session, a note nor a blocked mark (nor an open session). Returns
+-- how many.
 function Store:Prune(now, days)
 	local cutoff = now - days * DAY
 	local removed = 0
 	for name, player in pairs(self.db.players) do
-		local keep = player.note or Store.HasRating(player) or OpenSession(player) or (player.lastSeen or 0) >= cutoff
+		local keep = player.note
+			or player.blocked
+			or Store.HasRating(player)
+			or OpenSession(player)
+			or (player.lastSeen or 0) >= cutoff
 		if not keep then
 			self.db.players[name] = nil
 			removed = removed + 1
@@ -249,10 +309,13 @@ local function Matches(player, filter)
 		return true
 	end
 	filter = filter:lower()
-	return player.name:lower():find(filter, 1, true) or (player.note and player.note:lower():find(filter, 1, true))
+	return player.name:lower():find(filter, 1, true)
+		or (player.note and player.note:lower():find(filter, 1, true))
+		or (player.guild and player.guild:lower():find(filter, 1, true))
+		or (player.blocked and player.blocked.guild and player.blocked.guild:lower():find(filter, 1, true))
 end
 
--- Players matching `filter` (part of the name or note), sorted by `sortBy`:
+-- Players matching `filter` (part of the name, note or guild), sorted by `sortBy`:
 -- "name", "rating" (best first, unrated last) or "recent" (the default).
 function Store:Players(filter, sortBy)
 	local list, ratings = {}, {}
