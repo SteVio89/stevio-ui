@@ -73,8 +73,9 @@ ns.layout = {
 	tracker = { point = "TOPRIGHT", x = -rightBarsWidth, y = -160 },
 	trackerBadge = { point = "RIGHT", x = 0, y = 0 },
 
-	-- Top left, leaving room above for the tabs.
-	chat = { point = "TOPLEFT", x = 12, y = -36 },
+	-- Top left, as close to the top edge as the buffs on the right (Blizzard's
+	-- chat tabs, which this once left room for, are hidden).
+	chat = { point = "TOPLEFT", x = 12, y = -10 },
 	chatBadge = { point = "LEFT", x = 0, y = 0 },
 }
 
