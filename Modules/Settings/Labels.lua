@@ -322,6 +322,12 @@ local labels = {
 		"Names of the switchable action sets (same slots and keys, different actions). Fewer than two hide the button.",
 		"Namen der umschaltbaren Aktionsleisten-Sets (gleiche Plätze und Tasten, andere Aktionen). Weniger als zwei blenden den Knopf aus.",
 	},
+	sharedBars = {
+		"Shared bars",
+		"Gemeinsame Leisten",
+		"Bars (Bar2 to Bar8) whose actions stay the same in every action set, e.g. emotes and consumables.",
+		"Leisten (Bar2 bis Bar8), deren Aktionen in jedem Aktionsleisten-Set gleich bleiben, z. B. Emotes und Verbrauchsgüter.",
+	},
 	settings = { "Profile", "Profil" },
 	showBlizzardChat = {
 		"Show Blizzard chat",
@@ -378,6 +384,7 @@ local labels = {
 	updateInterval = { "Update interval (s)", "Aktualisierung (s)" },
 	value = { "Value", "Wert" },
 	vehicleLeaveGap = { "Vehicle exit gap", "Abstand Fahrzeug verlassen" },
+	vertical = { "Vertical", "Senkrecht", "One column instead of one row.", "Eine Spalte statt einer Zeile." },
 	warn = { "Warning", "Warnung" },
 	whisper = { "Whisper", "Flüstern" },
 	width = { "Width", "Breite" },

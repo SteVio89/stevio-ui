@@ -19,6 +19,9 @@ ns.config.actionBars = {
 	sets = { "Leveling", "Healing" },
 	setButtonWidth = 64,
 	setButtonHeight = 36,
+	-- Bars whose actions are the same in every set (emotes, consumables):
+	-- switching sets leaves them alone. Edit Mode names, "Bar2" to "Bar8".
+	sharedBars = { "Bar4", "Bar5" },
 
 	-- Edit Mode percentage for the micro menu (70-200); bags are matched to it.
 	menubarSize = 75,

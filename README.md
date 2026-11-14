@@ -45,6 +45,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   for the targets after the first 81, whose labels stay the same.
 - **Action bars, menu and bags** – Blizzard's secure buttons, stripped down and
   placed via a dedicated Edit Mode layout named `stevio-ui`.
+  Two columns of 12 buttons on the right screen edge (bars 4 and 5, no
+  keybindings) hold emotes, consumables and the like.
 - **Action sets** – switchable sets of actions for the same bars, e.g.
   "Leveling" and "Healing" (`sets` in the action bar options). The button left
   of the bars (left click: next set, right click: previous set; or
@@ -56,7 +58,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   stored per character; actions that can't be placed right now (e.g. a talent
   that isn't learned) stay in the set for later. Each switch names them with
   their slot; `/sui bars forget` drops them from the active set (so does putting
-  something else in their slot).
+  something else in their slot). The two columns on the right edge are left
+  alone by every switch (`sharedBars` in the action bar options).
 - **Minimap** – square, borderless, mouse-wheel zoom, the looking-for-group
   button in its lower left corner, size derived from the screen. Other
   addons' minimap buttons move into the notch island (the black panel that
