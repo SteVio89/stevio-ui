@@ -148,6 +148,10 @@ until it is needed, and as much as possible can be done from the keyboard.
   closes it), and a rated or noted player joining your group gets a chat line.
   "Note" in the chat's name menu opens a player. Players without a rating or
   note are deleted after 90 days (`keepUnratedDays`); rated ones stay.
+  *Blocked guilds* (`blockedGuilds`, Lua patterns in the Notes options):
+  players seen in such a guild are marked in the players list for good, also
+  after they leave it, with a red warning when first seen, when they join your
+  group and under each of their whispers, naming the guild and the pattern.
   *Items*: free text per item type, shown in its tooltip; Alt+right-click an
   item in your bags or bank (or drop it on the list) to write or remove it.
   *Notes*: plain notes. All notes are account-wide.

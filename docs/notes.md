@@ -32,6 +32,30 @@ Every group is recorded, guild members and friends included.
   the note), a chat line when a rated or noted player joins your group, and
   "Note" in the chat name menu.
 
+## Blocked guilds (#45)
+
+Players from guilds you never want to play with get a lasting mark in the
+players list. Nothing goes on Blizzard's ignore list: its entries vanish, and
+the mark should stay when the player leaves the guild.
+
+- **Patterns:** `blockedGuilds` in the Notes options, a list of Lua patterns
+  matched case-insensitively against the guild name, e.g. `alternative f`.
+  Empty by default. A pattern that isn't valid Lua is matched as plain text.
+- **Checked:** group members (on every roster change), your target, the unit
+  under the mouse (and its tooltip) and nameplates. The game only tells the
+  guild of units it can see; a whisper doesn't say it, and addons can't run
+  `/who` on their own. So a whisperer is recognised only after being seen once.
+- **Mark:** `player.blocked = { guild, pattern, time }`, added once and kept
+  for good (no clean-up). `player.guild` is the guild they were last seen in,
+  for every player in the notes, so the reason reads "guild <X> (matches "x"),
+  since seen in <Y>" when they moved on.
+- **Warnings** (`blockWarnings`, red): a chat line when a player is marked, when
+  a marked player joins your group, and a line under each of their whispers in
+  the whisper channel (also for whispers read after a chat lockdown). The
+  tooltip shows "Marked: ..." and the list shows a red "!".
+- **Unmark:** shift-click Unmark on the player's page removes a false match;
+  being seen in a matching guild again marks them again.
+
 ## Items
 
 Free text per item type (item ID), nothing automatic. Alt+right-click an item
@@ -50,3 +74,7 @@ A plain list of free texts; the first line is the title.
 - `GetInstanceInfo()` names dungeons and raids, so sessions show them as place.
 - Tooltip lines appear on player and item tooltips.
 - The popup after leaving a group, and the notch button.
+- Blocked guilds: `GetGuildInfo()` gives the guild for group members, target,
+  mouseover and nameplates (and isn't secret outside instances); the red lines
+  appear on marking, on joining, under whispers and in the tooltip; Unmark and
+  the `blockedGuilds` list in the options panel work.

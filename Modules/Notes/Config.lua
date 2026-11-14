@@ -19,6 +19,15 @@ ns.config.notes = {
 	-- Ratings and notes in player and item tooltips.
 	showInTooltip = true,
 
+	-- Guilds whose members are marked in the notes (#45): Lua patterns,
+	-- matched case-insensitively against the guild name, e.g. "alternative f".
+	-- The mark stays when they leave the guild. Players are checked when they
+	-- are in your group, targeted, under the mouse or show a nameplate.
+	blockedGuilds = {},
+	-- Red chat lines when a marked player is first seen, joins your group or
+	-- whispers you, and a red line in their tooltip.
+	blockWarnings = true,
+
 	window = { width = 780, height = 500 },
 
 	colors = {

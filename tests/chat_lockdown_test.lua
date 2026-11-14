@@ -106,6 +106,11 @@ local function Messages(key)
 	return C.store:Get(key).messages
 end
 
+-- Whispers from players the notes marked get a warning line under them (#45).
+ns.BlockedWhisperWarning = function(sender)
+	return sender:match("^Ann") and "Careful, Ann is marked: guild <X>" or nil
+end
+
 -- During the lockdown: a party line becomes a placeholder, a whisper can't be placed yet.
 Event("CHAT_MSG_PARTY", SECRET, SECRET, 11)
 lines[11] = { text = "need heal", sender = "Bob-Realm" }
@@ -137,7 +142,9 @@ check(Messages("party")[2].text == "(could not be read)", "unreadable line says 
 check(C.store:Get("party").unread == 2, "filling doesn't count unread again")
 local whisper = C.store:Get("whisper:Ann-Other")
 check(whisper and whisper.messages[1].text == "psst", "whisper arrives after the lockdown")
-check(whisper.messages[1].time == 100 and whisper.unread == 1, "with the time it was sent, unread")
+check(whisper.messages[1].time == 100, "with the time it was sent")
+check(whisper.messages[2].text:find("Ann is marked", 1, true) and whisper.messages[2].time == 100, "warned after")
+check(whisper.unread == 2, "unread, with the warning")
 check(rendered == 1, "the open channel is drawn again")
 check(#C.store:Sorted({}) == 4, "no channel for the Battle.net whisper") -- main, party, guild, Ann
 
@@ -147,4 +154,13 @@ check(rendered == 1, "nothing left to read")
 -- Readable lines (outside the lockdown) are stored right away.
 Event("CHAT_MSG_PARTY", "hi", "Bob-Realm", 14)
 check(Messages("party")[3].text == "hi", "readable line stored as it comes")
+-- A character whisper: no Battle.net account id.
+local function Whisper(text, sender, lineID)
+	C.OnChatMessage("CHAT_MSG_WHISPER", text, sender, "", "", "", "", 0, 0, "", 0, lineID, 0, "")
+end
+Whisper("hello", "Ann-Other", 16)
+local annLines = C.store:Get("whisper:Ann-Other").messages
+check(annLines[3].text == "hello" and annLines[4].text:find("marked", 1, true), "readable whisper warned right away")
+Whisper("yo", "Bob-Realm", 17)
+check(#C.store:Get("whisper:Bob-Realm").messages == 1, "unmarked whisperer: no warning")
 print("chat lockdown tests passed")

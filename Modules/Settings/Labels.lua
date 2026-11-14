@@ -46,6 +46,13 @@ local labels = {
 	barGap = { "Bar gap", "Balkenabstand" },
 	barHeight = { "Bar height", "Balkenhöhe" },
 	blizzardChatGap = { "Gap to Blizzard chat", "Abstand zum Blizzard-Chat" },
+	blockWarnings = { "Warn about marked players", "Vor markierten Spielern warnen" },
+	blockedGuilds = {
+		"Blocked guilds",
+		"Gesperrte Gilden",
+		"Lua patterns (any case) of guild names; their members are marked in the notes for good.",
+		"Lua-Muster (Groß/klein egal) von Gildennamen; deren Mitglieder werden dauerhaft in den Notizen markiert.",
+	},
 	bnet = { "Battle.net", "Battle.net" },
 	borderColor = { "Border", "Rahmen" },
 	buffs = { "Buffs", "Buffs" },

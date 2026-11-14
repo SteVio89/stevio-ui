@@ -14,6 +14,7 @@ local config = ns.config.notes
 local T = ns.T
 
 local NOTE_COLOR = "|cffd9d999"
+local WARN_COLOR = "|cffff5050"
 
 -- Sessions that ended while in the current group, for the popup on leaving it.
 local ended = {}
@@ -60,7 +61,93 @@ local function GroupUnits()
 	return units
 end
 
+-- Blocked guilds (#45) ----------------------------------------------------------
+
+local function Warn(text, ...)
+	if config.blockWarnings then
+		ns.Print(WARN_COLOR .. text:format(...) .. "|r")
+	end
+end
+
+-- Records the guild of `unit` when it is a player whose guild the game knows,
+-- marking them when the guild is blocked. Returns the player's entry (nil
+-- when not in the notes) and whether they were marked just now.
+local function CheckGuild(unit)
+	local isPlayer = UnitIsPlayer(unit)
+	if issecretvalue(isPlayer) or not isPlayer then
+		return nil, false
+	end
+	local name = UnitKey(unit)
+	if not name or name == UnitKey("player") then
+		return nil, false
+	end
+	local guild = GetGuildInfo(unit)
+	-- Nil both for no guild and not known yet: only a name is recorded.
+	if not guild or issecretvalue(guild) or guild == "" then
+		return Notes.store:Player(name), false
+	end
+	local _, class = UnitClass(unit)
+	if issecretvalue(class) then
+		class = nil
+	end
+	return Notes.store:SeeGuild(name, guild, class, config.blockedGuilds, time())
+end
+
+-- A target, mouseover, nameplate or tooltip: warns when it is marked just
+-- now. Returns the player's entry (nil when not in the notes).
+local function CheckSeen(unit)
+	if not UnitExists(unit) then
+		return nil
+	end
+	local player, marked = CheckGuild(unit)
+	if marked then
+		Warn(
+			T("Marked %s: %s", "Markiert %s: %s"),
+			W.ClassColored(player.name, player.class) .. WARN_COLOR,
+			W.BlockReason(player)
+		)
+	end
+	return player
+end
+
+-- The warning for a whisper from `fullName` ("Name-Realm" or "Name"), nil
+-- when they aren't marked; the chat shows it under the whisper.
+function ns.BlockedWhisperWarning(fullName)
+	if not Notes.active or not config.blockWarnings or not fullName or issecretvalue(fullName) then
+		return nil
+	end
+	local player = Notes.store:Player(Ambiguate(fullName, "none"))
+	if not player or not player.blocked then
+		return nil
+	end
+	return WARN_COLOR
+		.. T("Careful, %s is marked: %s", "Vorsicht, %s ist markiert: %s"):format(player.name, W.BlockReason(player))
+		.. "|r"
+end
+
+-- Whispers when the chat module is off (it shows the warning itself).
+local function OnWhisper(_, _, sender)
+	if ns.ChatInternal and ns.ChatInternal.store then
+		return
+	end
+	local warning = not issecretvalue(sender) and ns.BlockedWhisperWarning(sender)
+	if warning then
+		ns.Print(warning)
+	end
+end
+
+local function WarnInGroup(player)
+	if player.blocked then
+		Warn(
+			T("In your group: %s, marked: %s", "In deiner Gruppe: %s, markiert: %s"),
+			W.ClassColored(player.name, player.class) .. WARN_COLOR,
+			W.BlockReason(player)
+		)
+	end
+end
+
 local function Remind(player)
+	WarnInGroup(player)
 	if not config.joinReminder or not (player.note or Store.HasRating(player)) then
 		return
 	end
@@ -132,6 +219,7 @@ local function Sync()
 				complete = false
 			elseif name ~= own and UnitIsPlayer(unit) then
 				present[name] = true
+				local _, marked = CheckGuild(unit)
 				local _, class = UnitClass(unit)
 				local _, isNew = store:Open(name, {
 					class = class,
@@ -141,6 +229,9 @@ local function Sync()
 				}, now)
 				if isNew then
 					Remind(store:Player(name))
+				elseif marked then
+					-- Already grouped, the guild only became known now.
+					WarnInGroup(store:Player(name))
 				end
 			end
 		end
@@ -174,10 +265,12 @@ local function AddUnitLines(tooltip)
 	if issecretvalue(isPlayer) or not isPlayer then
 		return
 	end
-	local name = UnitKey(unit)
-	local player = name and Notes.store:Player(name)
+	local player = CheckSeen(unit)
 	if not player then
 		return
+	end
+	if player.blocked then
+		tooltip:AddLine(WARN_COLOR .. T("Marked: ", "Markiert: ") .. W.BlockReason(player) .. "|r", 1, 1, 1, true)
 	end
 	local summary = W.SummaryText(player)
 	if summary then
@@ -252,6 +345,16 @@ function Notes:OnEnable()
 	ns.RegisterEvent("PLAYER_ROLES_ASSIGNED", Sync)
 	ns.RegisterEvent("PLAYER_ENTERING_WORLD", OnZoneChanged)
 	ns.RegisterEvent("ZONE_CHANGED_NEW_AREA", OnZoneChanged)
+	ns.RegisterEvent("PLAYER_TARGET_CHANGED", function()
+		CheckSeen("target")
+	end)
+	ns.RegisterEvent("UPDATE_MOUSEOVER_UNIT", function()
+		CheckSeen("mouseover")
+	end)
+	ns.RegisterEvent("NAME_PLATE_UNIT_ADDED", function(_, unit)
+		CheckSeen(unit)
+	end)
+	ns.RegisterEvent("CHAT_MSG_WHISPER", OnWhisper)
 	OnZoneChanged()
 
 	if TooltipDataProcessor then
