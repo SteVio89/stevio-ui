@@ -224,6 +224,8 @@ end
 function Chat:OnEnable()
 	StevioUIChatHistory = StevioUIChatHistory or {}
 	C.store = ns.ChatHistory.New(StevioUIChatHistory, config.historyLimit, config.main.enabled)
+	-- Say and Yell before they became Nearby (#50).
+	C.store:MergeInto({ "say", "yell" }, "nearby", { kind = "nearby", chatType = "SAY" })
 	-- Battle.net account ids from an earlier session may belong to someone else
 	-- now; channels without a BattleTag can't look theirs up again, so they lose it.
 	for _, channel in pairs(StevioUIChatHistory.channels) do

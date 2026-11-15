@@ -14,12 +14,15 @@ local function With(base, fields)
 end
 
 -- Their names come translated from C.Label (Shared.lua), so they carry no label.
-local party = { kind = "group", key = "party", chatType = "PARTY" }
-local raid = { kind = "group", key = "raid", chatType = "RAID" }
-local instance = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT" }
-local guild = { kind = "guild", key = "guild", chatType = "GUILD" }
-local say = { kind = "public", key = "say", chatType = "SAY", quiet = true }
-local yell = { kind = "public", key = "yell", chatType = "YELL", quiet = true }
+-- `merge` names the switch in `main.channels` that shows the line in Main too.
+local party = { kind = "group", key = "party", chatType = "PARTY", merge = "party" }
+local raid = { kind = "group", key = "raid", chatType = "RAID", merge = "raid" }
+local instance = { kind = "group", key = "instance", chatType = "INSTANCE_CHAT", merge = "instance" }
+local guild = { kind = "guild", key = "guild", chatType = "GUILD", merge = "guild" }
+-- Say, yell and emotes: everything said around the player, in one channel so
+-- a role-play scene reads in one place (#50). Yelled lines take the yell
+-- color as a whole (`tint`).
+local nearby = { kind = "nearby", key = "nearby", chatType = "SAY", quiet = true }
 
 -- Read-only channels of finished lines without a sender; `format` names how a
 -- line is worded (see Format.lua).
@@ -107,9 +110,10 @@ ns.config.chat = {
 	-- Lines scrolled per mouse wheel notch.
 	scrollStep = 3,
 
-	-- "Main" shows the channels of these kinds together, each line tagged with
+	-- "Main" shows the lines switched on in `channels` together, each tagged with
 	-- its channel ("[Party] Bob: ..."), so group and guild chat can be followed
-	-- without switching; the channels stay as well. Its unread count is theirs.
+	-- without switching; the channels stay as well. Its unread count is that of
+	-- its lines, and reading it reads them in their channels too.
 	-- Writing in Main answers in the channel of the latest line, which is kept
 	-- while typing; clicking a line's tag writes to that channel instead.
 	main = {
@@ -117,7 +121,18 @@ ns.config.chat = {
 		key = "main",
 		kind = "main",
 		chatType = "SAY",
-		kinds = { group = true, guild = true, whisper = true },
+		-- The `merge` names of config.events; emotes, say and yell all come
+		-- from the Nearby channel.
+		channels = {
+			party = true,
+			instance = true,
+			raid = true,
+			guild = true,
+			whisper = true,
+			emote = true,
+			say = false,
+			yell = false,
+		},
 	},
 
 	-- Sidebar order of the channel kinds.
@@ -127,23 +142,27 @@ ns.config.chat = {
 		guild = 2,
 		community = 3,
 		whisper = 4,
-		public = 5,
-		other = 6,
-		npc = 7,
-		progress = 8,
-		system = 9,
-		notices = 10,
+		nearby = 5,
+		public = 6,
+		-- Chat channels shared "Other" before #50; kept until deleted.
+		other = 7,
+		npc = 8,
+		progress = 9,
+		system = 10,
+		notices = 11,
 	},
 
-	-- Numbered chat channels (base name, case-insensitive) that get their own
-	-- sidebar channel; messages from all other channels end up in "Other".
-	-- Community streams added to the chat always get their own channel.
-	publicChannels = { "General", "Trade", "Allgemein", "Handel" },
+	-- Every chat channel gets a sidebar channel of its own, by its full name:
+	-- zone channels one per zone ("General - Elwynn Forest"). Those named here
+	-- (the part before " - ", case-insensitive) are one channel wherever they
+	-- are joined, e.g. Trade in every capital.
+	-- Community streams added to the chat get their own channel too.
+	cityChannels = { "Trade", "GuildRecruitment", "Handel", "Gildenrekrutierung" },
 
 	-- Chat events that feed the channels. Group channels (party, raid, instance)
 	-- are one channel each, whispers get one channel per partner.
 	-- Each message also briefly shows the hidden chat and lights its badge segment,
-	-- except `quiet` ones (say, yell, chat channels, NPC, loot, system): they only
+	-- except `quiet` ones (nearby, chat channels, NPC, loot, system): they only
 	-- count as unread. Events not listed here (other players joining or leaving
 	-- channels, channel member lists, pet battle combat log, voice-to-text) are ignored.
 	events = {
@@ -157,18 +176,24 @@ ns.config.chat = {
 		CHAT_MSG_GUILD = With(guild),
 		CHAT_MSG_OFFICER = With(guild, { prefix = "[O] " }),
 		CHAT_MSG_GUILD_DISCORD = With(guild),
-		CHAT_MSG_SAY = With(say),
-		CHAT_MSG_YELL = With(yell),
-		-- Emotes are local like say, so they share its channel: /e (`emote`) gives the
-		-- action without the name, /dance etc. (`textEmote`) the whole sentence.
-		CHAT_MSG_EMOTE = With(say, { emote = true }),
-		CHAT_MSG_TEXT_EMOTE = With(say, { emote = true, textEmote = true }),
+		CHAT_MSG_SAY = With(nearby, { merge = "say" }),
+		CHAT_MSG_YELL = With(nearby, { merge = "yell", tint = "YELL" }),
+		-- /e (`emote`) gives the action without the name, /dance etc.
+		-- (`textEmote`) the whole sentence.
+		CHAT_MSG_EMOTE = With(nearby, { merge = "emote", emote = true }),
+		CHAT_MSG_TEXT_EMOTE = With(nearby, { merge = "emote", emote = true, textEmote = true }),
 		CHAT_MSG_CHANNEL = { kind = "public", chatType = "CHANNEL", channel = true, quiet = true },
 		CHAT_MSG_COMMUNITIES_CHANNEL = { kind = "public", chatType = "CHANNEL", channel = true, quiet = true },
-		CHAT_MSG_WHISPER = { kind = "whisper", chatType = "WHISPER" },
-		CHAT_MSG_WHISPER_INFORM = { kind = "whisper", chatType = "WHISPER", outgoing = true },
-		CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", bnet = true },
-		CHAT_MSG_BN_WHISPER_INFORM = { kind = "whisper", chatType = "BN_WHISPER", bnet = true, outgoing = true },
+		CHAT_MSG_WHISPER = { kind = "whisper", chatType = "WHISPER", merge = "whisper" },
+		CHAT_MSG_WHISPER_INFORM = { kind = "whisper", chatType = "WHISPER", merge = "whisper", outgoing = true },
+		CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", merge = "whisper", bnet = true },
+		CHAT_MSG_BN_WHISPER_INFORM = {
+			kind = "whisper",
+			chatType = "BN_WHISPER",
+			merge = "whisper",
+			bnet = true,
+			outgoing = true,
+		},
 
 		CHAT_MSG_MONSTER_SAY = With(npc),
 		CHAT_MSG_MONSTER_YELL = With(npc),

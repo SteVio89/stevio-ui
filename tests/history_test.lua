@@ -74,11 +74,13 @@ local transcript = History.Transcript(
 )
 check(transcript == "[t5] A: x\n[--:--] B: y", "transcript format")
 
-local explicit = { "Trade", "General" }
-local key, label, own = History.PublicChannel("trade", explicit)
-check(key == "channel:trade" and label == "trade" and own, "explicit channel gets its own channel")
-key, label, own = History.PublicChannel("LookingForGroup", explicit)
-check(key == "other" and label == "Other" and not own, "other channels share Other")
+local cities = { "trade" }
+local key, label = History.PublicChannel("2. Trade - Stormwind", "Trade", cities)
+check(key == "channel:trade" and label == "Trade", "city channels are one channel: " .. key)
+key, label = History.PublicChannel("1. General - Dun Morogh", "General", cities)
+check(key == "channel:general - dun morogh" and label == "General - Dun Morogh", "zone channels per zone")
+key, label = History.PublicChannel(nil, "LookingForGroup", cities)
+check(key == "channel:lookingforgroup" and label == "LookingForGroup", "base name without a full name")
 
 local publicStore = History.New({}, 3)
 publicStore:Add(
@@ -279,11 +281,10 @@ end
 -- The merged channel: mirrored lines, unread of its members, reply target.
 do
 	local s = History.New({}, 10, true)
-	local kinds = { group = true, guild = true, whisper = true }
 	local main = { kind = "main", chatType = "SAY", label = "Main" }
 	local partyOpts = { kind = "group", chatType = "PARTY", label = "Party" }
 	local entry = { time = 1, sender = "Bob", text = "pull" }
-	s:Add("party", partyOpts, entry, true)
+	s:Add("party", partyOpts, entry, true, true)
 	local copy = History.Mirror(entry, "party", "Party", "PARTY")
 	check(copy ~= entry and entry.source == nil, "mirror copies the entry")
 	check(
@@ -292,19 +293,26 @@ do
 	)
 	check(History.Line(copy, "12:00") == "12:00 [Party] Bob: pull", "mirrored line names its channel")
 	s:Add("main", main, copy, false)
-	s:Add("guild", { kind = "guild", chatType = "GUILD", label = "Guild" }, { time = 2, text = "hi" }, true)
+	s:Add("guild", { kind = "guild", chatType = "GUILD", label = "Guild" }, { time = 2, text = "hi" }, true, true)
 	s:Add("main", main, History.Mirror({ time = 2, text = "hi" }, "guild", "Guild", "GUILD"), false)
-	s:AddUnreadOnly("say", { kind = "public", chatType = "SAY", label = "Say" }, 3)
+	-- Nearby: only its emotes show in Main.
+	local nearby = { kind = "nearby", chatType = "SAY" }
+	s:AddUnreadOnly("nearby", nearby, 3)
+	s:AddUnreadOnly("nearby", nearby, 4, true)
 	check(s:Get("main").unread == 0, "merged channel has no unread of its own")
-	check(s:MergedUnread(kinds) == 2, "merged unread sums its members")
+	check(s:MergedUnread() == 3, "merged unread counts the lines it shows")
 	check(s:ReplyChannel("main").key == "guild", "reply goes to the latest line's channel")
 	s:Get("guild").readOnly = true
 	check(s:ReplyChannel("main").key == "party", "reply skips read-only channels")
 	s:Delete("party")
 	check(s:ReplyChannel("main") == nil, "reply skips deleted channels")
 	check(not s:Delete("main"), "merged channel can't be deleted")
-	s:MarkKindsRead(kinds)
-	check(s:MergedUnread(kinds) == 0 and s:Get("say").unread == 1, "reading the merged channel reads only its members")
+	s:MarkMergedRead()
+	check(s:MergedUnread() == 0 and s:Get("guild").unread == 0, "reading the merged channel reads its lines")
+	check(s:Get("nearby").unread == 1, "lines not in Main stay unread")
+	s:AddUnreadOnly("nearby", nearby, 5, true)
+	s:MarkRead("nearby")
+	check(s:MergedUnread() == 0, "reading a channel reads its lines in Main too")
 
 	local channelLink = History.ChannelLink("whisper:Bob-Realm", "[Bob]")
 	check(History.LinkedChannel(channelLink:match("^|H(.-)|h")) == "whisper:Bob-Realm", "channel link round trip")
@@ -312,6 +320,31 @@ do
 	check(History.StripMarkup(channelLink) == "[Bob]", "channel links strip for copying")
 end
 print("merged channel ok")
+
+-- Say and Yell move into Nearby (#50), in the order the lines arrived.
+do
+	local s = History.New({}, 3)
+	s:Add("say", { kind = "public", chatType = "SAY", label = "Say" }, { time = 1, text = "a" }, true)
+	s:Add("say", { kind = "public", chatType = "SAY", label = "Say" }, { time = 4, text = "d" }, true)
+	s:Add("yell", { kind = "public", chatType = "YELL", label = "Yell" }, { time = 2, text = "b" }, false)
+	s:Add("yell", { kind = "public", chatType = "YELL", label = "Yell" }, { time = 3, text = "c" }, true)
+	local nearby = { kind = "nearby", chatType = "SAY" }
+	s:MergeInto({ "say", "yell" }, "nearby", nearby)
+	local merged = s:Get("nearby")
+	check(s:Get("say") == nil and s:Get("yell") == nil, "old channels are gone")
+	check(merged.kind == "nearby" and merged.unread == 3 and merged.last == 4, "unread and activity add up")
+	local texts = {}
+	for i, entry in ipairs(merged.messages) do
+		texts[i] = entry.text
+	end
+	check(table.concat(texts) == "bcd", "merged by time, oldest dropped at the limit: " .. table.concat(texts))
+	s:MergeInto({ "say", "yell" }, "nearby", nearby)
+	check(#s:Get("nearby").messages == 3, "merging again changes nothing")
+	local empty = History.New({}, 3)
+	empty:MergeInto({ "say" }, "nearby", nearby)
+	check(empty:Get("nearby") == nil, "nothing to merge creates no channel")
+end
+print("merge into ok")
 
 do
 	local off = History.New({}, 10, false)

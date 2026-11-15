@@ -59,13 +59,13 @@ end
 -- Stores a message (`entry`, nil when its contents are secret) in channel `key`
 -- and shows it according to `def` (see config.events).
 function C.Receive(def, key, opts, entry)
-	local main = C.IsMerged(opts.kind) and config.main
+	local main = C.IsMerged(def) and config.main
 	local markUnread, show, open, popUp =
 		C.Delivery(def, key, main and main.key, state.selected, C.Attended(), C.hidden, InputHasFocus)
 	if not entry then
-		C.store:AddUnreadOnly(key, opts, time())
+		C.store:AddUnreadOnly(key, opts, time(), main ~= false)
 	else
-		local channel = C.store:Add(key, opts, entry, markUnread)
+		local channel = C.store:Add(key, opts, entry, markUnread, main ~= false)
 		Append(channel, entry)
 		if main then
 			local copy = History.Mirror(entry, key, C.Label(channel), channel.chatType)
@@ -122,7 +122,7 @@ local function Read(event, now, text, sender, ...)
 		and sender ~= ""
 		and full
 	local key, opts, source, sourceType, displayName =
-		History.Route(def, sender, bnetID, channelIndex, baseName, full, config.publicChannels, lookups)
+		History.Route(def, sender, bnetID, channelIndex, baseName, channelName, full, config.cityChannels, lookups)
 	-- Lines show whisper partners with the realm when it isn't the own one, everyone else by name only.
 	if not def.format and not def.textEmote and not def.bnet and not issecretvalue(sender) then
 		sender = Ambiguate(sender, def.kind == "whisper" and "none" or "short")
@@ -219,7 +219,7 @@ function C.OnChatMessage(event, text, sender, ...)
 	if line and not entry then
 		entry = History.Placeholder(now, lineID, PendingText())
 		line.key = key
-		line.mainKey = C.IsMerged(opts.kind) and config.main.key
+		line.mainKey = C.IsMerged(def) and config.main.key
 	end
 	C.Receive(def, key, opts, entry)
 	if entry then

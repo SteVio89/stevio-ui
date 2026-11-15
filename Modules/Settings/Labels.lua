@@ -67,10 +67,22 @@ local labels = {
 	castBar = { "Cast bar", "Zauberleiste" },
 	category = { "Category", "Kategorie" },
 	channel = { "Chat channel", "Chatkanal" },
+	channels = {
+		"Shown in Main",
+		"In Haupt",
+		"Lines that show in Main as well as in their own channel.",
+		"Zeilen, die außer im eigenen Kanal auch in Haupt erscheinen.",
+	},
 	chat = { "Chat", "Chat" },
 	chatBadge = { "Chat badge", "Chat-Randmarke" },
 	chatType = { "Chat type (colour)", "Chattyp (Farbe)" },
 	checkedColor = { "Active highlight", "Aktiv-Markierung" },
+	cityChannels = {
+		"One channel everywhere",
+		"Ein Kanal überall",
+		"Chat channels that stay one channel wherever they are joined (e.g. Trade in every capital); others get one per zone.",
+		"Chatkanäle, die überall ein Kanal bleiben (z. B. Handel in jeder Hauptstadt); andere einen pro Zone.",
+	},
 	classPower = { "Combo points", "Combopunkte" },
 	coinSize = { "Coin size", "Münzgröße" },
 	color = { "Colour", "Farbe" },
@@ -184,6 +196,7 @@ local labels = {
 	inputBorderColor = { "Input line border", "Rahmen Eingabezeile" },
 	inputHintColor = { "Input line placeholder", "Platzhalter Eingabezeile" },
 	inset = { "Inset", "Einzug" },
+	instance = { "Instance", "Instanz" },
 	islandMargin = { "Island margin", "Inselrand" },
 	joinReminder = { "Reminder on join", "Hinweis beim Beitritt" },
 	keepUnratedDays = {
@@ -197,12 +210,6 @@ local labels = {
 	keys = { "Keys", "Tasten" },
 	kind = { "Kind", "Art" },
 	kindOrder = { "Sidebar order", "Reihenfolge Seitenleiste" },
-	kinds = {
-		"Merged kinds",
-		"Zusammengeführt",
-		"Channel kinds shown together in Main.",
-		"Kanalarten, die gemeinsam in Haupt erscheinen.",
-	},
 	label = { "Label", "Bezeichnung" },
 	left = { "Left", "Links" },
 	leftKeys = { "First letters", "Erste Buchstaben" },
@@ -211,13 +218,19 @@ local labels = {
 	main = {
 		"Main channel",
 		"Hauptkanal",
-		"Group, guild and whispers together in one channel.",
-		"Gruppe, Gilde und Flüstern gemeinsam in einem Kanal.",
+		"Group, guild, whispers and emotes together in one channel.",
+		"Gruppe, Gilde, Flüstern und Emotes gemeinsam in einem Kanal.",
 	},
 	max = { "Maximum", "Maximum" },
 	maxRows = { "Rows", "Zeilen" },
 	menubar = { "Menu bar", "Menüleiste" },
 	menubarSize = { "Menu size (%)", "Menügröße (%)" },
+	merge = {
+		"Main switch",
+		"Schalter Haupt",
+		"Which switch under Main shows these lines there too.",
+		"Welcher Schalter unter Haupt diese Zeilen auch dort zeigt.",
+	},
 	mergeRepeats = { "Merge repeats", "Wiederholungen zusammenfassen" },
 	minQuality = {
 		"Min. quality",
@@ -235,6 +248,7 @@ local labels = {
 	myHealColor = { "Own incoming heals", "Eigene eingehende Heilung" },
 	nameColor = { "Name colour", "Namensfarbe" },
 	nameFontSize = { "Name font size", "Namens-Schriftgröße" },
+	nearby = { "Nearby", "In der Nähe" },
 	note = { "Note", "Notiz" },
 	notes = { "Notes", "Notizen" },
 	notInterruptibleColor = { "Not interruptible", "Nicht unterbrechbar" },
@@ -251,6 +265,7 @@ local labels = {
 	ownAuraSize = { "Own aura size", "Größe eigene Auren" },
 	ownAurasMax = { "Own auras max", "Max. eigene Auren" },
 	padding = { "Padding", "Innenabstand" },
+	party = { "Party", "Gruppe" },
 	petBar = { "Pet bar", "Begleiterleiste" },
 	player = { "Player", "Spieler" },
 	point = {
@@ -272,12 +287,6 @@ local labels = {
 	print = { "Addon output", "Addon-Ausgabe" },
 	progress = { "Loot & Progress", "Beute & Fortschritt" },
 	public = { "Public", "Öffentlich" },
-	publicChannels = {
-		"Own channels",
-		"Eigene Kanäle",
-		"Numbered chat channels with their own sidebar entry; all others go to Other.",
-		"Nummerierte Chatkanäle mit eigenem Eintrag; alle anderen landen in Andere.",
-	},
 	pushedAlpha = { "Pressed opacity", "Deckkraft gedrückt" },
 	questRewards = { "Quest rewards", "Questbelohnungen" },
 	quiet = {
@@ -286,6 +295,7 @@ local labels = {
 		"Doesn't pop up the hidden chat.",
 		"Blendet den versteckten Chat nicht ein.",
 	},
+	raid = { "Raid", "Schlachtzug" },
 	readOnly = { "Read-only", "Nur lesen" },
 	rejoinGrace = {
 		"Rejoin grace (s)",
@@ -306,6 +316,7 @@ local labels = {
 		"Groups up to this one are rows; with higher groups the grid switches to columns.",
 		"Gruppen bis zu dieser sind Reihen; mit höheren Gruppen wird das Raster zu Spalten.",
 	},
+	say = { "Say", "Sagen" },
 	scrollDownKey = { "Scroll down key", "Taste runter scrollen" },
 	scrollStep = { "Scroll step", "Scrollschritt" },
 	scrollThumbColor = { "Scroll position", "Scrollposition" },
@@ -373,6 +384,7 @@ local labels = {
 	textColor = { "Text colour", "Textfarbe" },
 	textEmote = { "Text emote", "Text-Emote" },
 	texture = { "Texture", "Textur" },
+	tint = { "Line color (chat type)", "Zeilenfarbe (Chattyp)" },
 	toast = { "Battle.net notices", "Battle.net-Hinweise" },
 	tooltip = { "Tooltip", "Tooltip" },
 	tracker = { "Objective tracker", "Questverfolgung" },
@@ -399,6 +411,7 @@ local labels = {
 	xp = { "XP", "EP" },
 	xpRested = { "XP rested", "EP erholt" },
 	y = { "Y offset", "Y-Versatz" },
+	yell = { "Yell", "Schreien" },
 }
 
 -- "fadeInTime" -> "Fade in time"

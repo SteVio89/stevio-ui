@@ -89,17 +89,27 @@ function History.Transcript(channel, stamp, day)
 	return table.concat(lines, "\n")
 end
 
--- Where a message in a numbered chat channel (General, Trade, ...) goes: channels
--- listed in `explicit` (base names, case-insensitive) get their own channel, all
--- others share "Other". Returns key, label and whether the channel is explicit.
-function History.PublicChannel(baseName, explicit)
-	local lower = baseName:lower()
-	for _, name in ipairs(explicit) do
-		if name:lower() == lower then
-			return "channel:" .. lower, baseName, true
+-- Where a message in a numbered chat channel (General, Trade, ...) goes: each
+-- has a channel of its own by its full name without the number
+-- (`channelName`, "1. General - Elwynn Forest"), so zone channels get one per
+-- zone. Channels named in `cities` (the part before " - ", case-insensitive)
+-- are one channel wherever they are joined. `baseName` stands in when there
+-- is no full name. Returns key and label.
+function History.PublicChannel(channelName, baseName, cities)
+	local name = channelName and channelName:gsub("^%d+%.%s*", "") or ""
+	if name == "" then
+		name = baseName
+	end
+	local base = name:match("^(.-)%s+%-%s+.+$")
+	if base then
+		for _, city in ipairs(cities) do
+			if city:lower() == base:lower() then
+				name = base
+				break
+			end
 		end
 	end
-	return "other", "Other", false
+	return "channel:" .. name:lower(), name
 end
 
 -- Full "Name-Realm" of a player: chat events name players of the own realm
@@ -192,15 +202,14 @@ end
 
 -- Which channel a chat message of `def` (see config.events) goes to.
 -- Whisper partners are keyed by full name (`fullName`, "Name-Realm") or
--- BattleTag, group chats by type, chat channels by name (see
--- History.PublicChannel; `publicChannels` are those with their own channel).
+-- BattleTag, group chats by type, chat channels by name (`baseName` and
+-- `channelName`, see History.PublicChannel with `cities`).
 -- `lookups` reaches the game: isSecret(value), accountInfo(bnetID) (Battle.net
 -- account info), channelLabel(baseName) (a community's name) and
 -- ambiguate(name, context).
--- Returns key, channel options, and for "Other" the line's source channel and
--- its chat type; for Battle.net whispers the fifth value is the name to show
--- as sender. Returns nil when the channel can't be told (secret values).
-function History.Route(def, sender, bnetID, channelIndex, baseName, fullName, publicChannels, lookups)
+-- Returns key and channel options; for Battle.net whispers the fifth value is
+-- the name to show as sender. Returns nil when the channel can't be told (secret values).
+function History.Route(def, sender, bnetID, channelIndex, baseName, channelName, fullName, cities, lookups)
 	if def.key then
 		return def.key,
 			{
@@ -212,7 +221,12 @@ function History.Route(def, sender, bnetID, channelIndex, baseName, fullName, pu
 			}
 	end
 	if def.channel then
-		if lookups.isSecret(baseName) or lookups.isSecret(channelIndex) or not baseName then
+		if
+			lookups.isSecret(baseName)
+			or lookups.isSecret(channelName)
+			or lookups.isSecret(channelIndex)
+			or not baseName
+		then
 			return nil
 		end
 		local chatType = "CHANNEL" .. channelIndex
@@ -228,12 +242,8 @@ function History.Route(def, sender, bnetID, channelIndex, baseName, fullName, pu
 					streamId = streamId,
 				}
 		end
-		local key, label, own = History.PublicChannel(baseName, publicChannels)
-		if own then
-			return key, { kind = def.kind, chatType = chatType, label = label, channelIndex = channelIndex }
-		end
-		local opts = { kind = "other", chatType = def.chatType, label = label, readOnly = true }
-		return key, opts, baseName, chatType
+		local key, label = History.PublicChannel(channelName, baseName, cities)
+		return key, { kind = def.kind, chatType = chatType, label = label, channelIndex = channelIndex }
 	end
 	if lookups.isSecret(sender) or lookups.isSecret(bnetID) then
 		return nil
@@ -270,6 +280,7 @@ function History.BuildEntry(def, chatType, text, sender, player, source, sourceT
 		text = (def.prefix or "") .. text,
 		outgoing = def.outgoing,
 		emote = def.emote,
+		tint = def.tint,
 		-- Finished lines take the color of their own kind (loot, boss emote, ...).
 		colorType = def.format and chatType,
 		-- "Other" mixes channels, so each line names its own.
@@ -367,17 +378,30 @@ end
 -- `emote` marks emotes, `source` names the chat channel of a message in "Other"
 -- (or Main) and `sourceType` its chat type (for its color); `sourceKey` is the
 -- channel a line in Main came from (see History.Mirror); `colorType` is the chat
--- type whose color a finished line takes. Returns the channel.
-function Store:Add(key, opts, entry, markUnread)
+-- type whose color a finished line takes; `tint` a chat type whose color the
+-- whole line takes (yelling). `inMain`: the line shows in Main too, which
+-- counts it among its unread (see Store:MergedUnread). Returns the channel.
+function Store:Add(key, opts, entry, markUnread, inMain)
 	local channel = self:Ensure(key, opts)
 	local messages = channel.messages
 	messages[#messages + 1] = entry
 	Trim(messages, self.limit)
 	channel.last = entry.time or channel.last
-	if markUnread and not channel.silent then
-		channel.unread = channel.unread + 1
+	if markUnread then
+		self:CountUnread(channel, inMain)
 	end
 	return channel
+end
+
+-- One more unread line in `channel`, `inMain` when it shows in Main too.
+function Store:CountUnread(channel, inMain)
+	if channel.silent then
+		return
+	end
+	channel.unread = channel.unread + 1
+	if inMain then
+		channel.mainUnread = (channel.mainUnread or 0) + 1
+	end
 end
 
 -- Messages arriving secret during the chat lockdown (encounters, Mythic+,
@@ -422,11 +446,9 @@ function Store:ForgetPending(text)
 end
 
 -- Messages that couldn't be read (secret) still count as unread.
-function Store:AddUnreadOnly(key, opts, time)
+function Store:AddUnreadOnly(key, opts, time, inMain)
 	local channel = self:Ensure(key, opts)
-	if not channel.silent then
-		channel.unread = channel.unread + 1
-	end
+	self:CountUnread(channel, inMain)
 	channel.last = time or channel.last
 	return channel
 end
@@ -435,6 +457,7 @@ function Store:MarkRead(key)
 	local channel = self.db.channels[key]
 	if channel then
 		channel.unread = 0
+		channel.mainUnread = nil
 	end
 end
 
@@ -463,23 +486,62 @@ function Store:HasUnread(kind)
 end
 
 -- The merged channel counts no unread of its own: its count is that of the
--- channels it merges (`kinds`, a set of channel kinds), and reading it reads them.
-function Store:MergedUnread(kinds)
+-- unread lines it shows from other channels (`mainUnread`), and reading it
+-- reads them there, leaving the lines that aren't in Main (say lines next to
+-- emotes in Nearby) unread.
+function Store:MergedUnread()
 	local count = 0
 	for _, channel in pairs(self.db.channels) do
-		if kinds[channel.kind] then
-			count = count + channel.unread
-		end
+		count = count + (channel.mainUnread or 0)
 	end
 	return count
 end
 
-function Store:MarkKindsRead(kinds)
+function Store:MarkMergedRead()
 	for _, channel in pairs(self.db.channels) do
-		if kinds[channel.kind] then
-			channel.unread = 0
+		if channel.mainUnread then
+			channel.unread = math.max(0, channel.unread - channel.mainUnread)
+			channel.mainUnread = nil
 		end
 	end
+end
+
+-- Moves the history of the channels `keys` into channel `key` (created from
+-- `opts`), in the order the lines arrived, and deletes them: Say and Yell
+-- became Nearby (#50). Unread counts add up.
+function Store:MergeInto(keys, key, opts)
+	local lines, unread = {}, 0
+	for _, from in ipairs(keys) do
+		local channel = from ~= key and self.db.channels[from]
+		if channel then
+			for _, entry in ipairs(channel.messages) do
+				lines[#lines + 1] = { entry = entry, order = #lines }
+			end
+			unread = unread + channel.unread
+			self.db.channels[from] = nil
+		end
+	end
+	if #lines == 0 and unread == 0 then
+		return
+	end
+	local target = self:Ensure(key, opts)
+	for _, entry in ipairs(target.messages) do
+		lines[#lines + 1] = { entry = entry, order = #lines }
+	end
+	table.sort(lines, function(a, b)
+		local ta, tb = a.entry.time or 0, b.entry.time or 0
+		if ta ~= tb then
+			return ta < tb
+		end
+		return a.order < b.order
+	end)
+	target.messages = {}
+	for i, line in ipairs(lines) do
+		target.messages[i] = line.entry
+		target.last = math.max(target.last, line.entry.time or 0)
+	end
+	Trim(target.messages, self.limit)
+	target.unread = target.unread + unread
 end
 
 -- Where the merged channel `key` answers: the channel of its latest line whose
