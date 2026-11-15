@@ -147,6 +147,11 @@ function ns.HideBlizzard(frame, keepEvents)
 	frame:SetParent(hiddenParent)
 end
 
+local function SecretClassColor(classFile)
+	local color = C_ClassColor.GetClassColor(classFile)
+	return color.r, color.g, color.b
+end
+
 -- Only values used as table keys need an issecretvalue guard; colors themselves
 -- may be secret because widget color setters accept secrets.
 function ns.UnitHealthColor(unit)
@@ -158,7 +163,19 @@ function ns.UnitHealthColor(unit)
 	end
 	if UnitIsPlayer(unit) then
 		local _, classFile = UnitClass(unit)
-		local color = classFile and not issecretvalue(classFile) and C_ClassColor.GetClassColor(classFile)
+		if issecretvalue(classFile) then
+			-- The class is secret for players outside the group, and for compound
+			-- units like "targettarget" whenever any unit in the chain is (e.g.
+			-- the player an enemy NPC is targeting). C_ClassColor.GetClassColor
+			-- accepts a secret class from addon code, but its result can't be
+			-- tested, so a failure falls back to the plain color via pcall.
+			local ok, r, g, b = pcall(SecretClassColor, classFile)
+			if ok then
+				return r, g, b
+			end
+			return unpack(style.fallbackHealthColor)
+		end
+		local color = classFile and C_ClassColor.GetClassColor(classFile)
 		if color then
 			return color.r, color.g, color.b
 		end
