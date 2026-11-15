@@ -8,9 +8,6 @@ local Marks = ns.RegisterModule("marks", {})
 
 local bar
 local buttons = {}
--- Whether this game version has ground markers at all (Blizzard hides its own
--- ground marker menu otherwise).
-local groundMarkers = false
 
 local function CanMark()
 	return UnitExists("target") and CanBeRaidTarget("target")
@@ -32,8 +29,7 @@ local function UpdateTargetMarks()
 		local index = button.symbol and button.symbol.index
 		local active = index ~= nil and index == current
 		button.active:SetShown(active)
-		-- The clear button is dimmed while the target has no symbol to clear
-		-- (its right click, all ground markers, still works).
+		-- The clear button is dimmed while the target has no symbol to clear.
 		local dimmed
 		if index then
 			dimmed = not usable
@@ -44,37 +40,11 @@ local function UpdateTargetMarks()
 	end
 end
 
-local function UpdateGroundMarks()
-	for _, button in ipairs(buttons) do
-		if button.ground then
-			local placed = IsRaidMarkerActive(button.symbol.world)
-			if issecretvalue(placed) then
-				button.ground:Show()
-				button.ground:SetAlphaFromBoolean(placed, 1, 0)
-			else
-				button.ground:SetAlpha(1)
-				button.ground:SetShown(placed)
-			end
-		end
-	end
-end
-
 local function ShowTooltip(button)
 	GameTooltip:SetOwner(button, "ANCHOR_BOTTOMRIGHT")
 	if button.symbol then
 		GameTooltip:SetText(ns.T(button.symbol.name[1], button.symbol.name[2]))
 		GameTooltip:AddLine(ns.T("Left click: mark the target", "Linksklick: Ziel markieren"), 1, 1, 1)
-		if groundMarkers then
-			GameTooltip:AddLine(
-				ns.T(
-					"Right click: place or remove the ground marker",
-					"Rechtsklick: Bodenmarkierung setzen oder entfernen"
-				),
-				1,
-				1,
-				1
-			)
-		end
 	else
 		GameTooltip:SetText(ns.T("Clear", "Entfernen"))
 		GameTooltip:AddLine(
@@ -83,21 +53,12 @@ local function ShowTooltip(button)
 			1,
 			1
 		)
-		if groundMarkers then
-			GameTooltip:AddLine(
-				ns.T("Right click: remove all ground markers", "Rechtsklick: alle Bodenmarkierungen entfernen"),
-				1,
-				1,
-				1
-			)
-		end
 	end
 	GameTooltip:Show()
 end
 
--- Marking a unit and placing ground markers are protected, so the buttons
--- are secure, set up by Symbols.Attributes. A ground marker placed by right
--- click then waits for a click on the ground.
+-- Marking a unit is protected, so the buttons are secure, set up by
+-- Symbols.Attributes.
 local function CreateButton(position, symbol)
 	local button = CreateFrame("Button", "StevioUI_Mark" .. position, bar, "SecureActionButtonTemplate")
 	button:SetSize(config.buttonSize, config.buttonSize)
@@ -114,27 +75,19 @@ local function CreateButton(position, symbol)
 	button:SetHighlightTexture(style.texture)
 	button:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.15)
 
-	button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-	for name, value in pairs(Symbols.Attributes(symbol, groundMarkers)) do
+	button:RegisterForClicks("LeftButtonUp")
+	for name, value in pairs(Symbols.Attributes(symbol)) do
 		button:SetAttribute(name, value)
 	end
 	if symbol then
 		button.symbol = symbol
 		button.icon:SetTexture(Symbols.Texture(symbol.index))
-		if groundMarkers then
-			button.ground = button:CreateTexture(nil, "OVERLAY", nil, 2)
-			button.ground:SetSize(5, 5)
-			button.ground:SetPoint("BOTTOMRIGHT", -1, 1)
-			button.ground:SetColorTexture(unpack(config.groundColor))
-			button.ground:Hide()
-		end
 	else
 		-- No symbol: a cross that clears.
 		button.icon:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
 	end
 
-	-- After Blizzard's click handler: the target's mark changes with
-	-- RAID_TARGET_UPDATE, ground markers show up with the next refresh.
+	-- The target's mark changes with RAID_TARGET_UPDATE.
 	button:HookScript("OnEnter", ShowTooltip)
 	button:HookScript("OnLeave", GameTooltip_Hide)
 	buttons[#buttons + 1] = button
@@ -142,8 +95,6 @@ local function CreateButton(position, symbol)
 end
 
 function Marks:OnEnable()
-	groundMarkers = IsRaidMarkerSystemEnabled ~= nil and IsRaidMarkerSystemEnabled() == true
-
 	bar = CreateFrame("Frame", "StevioUI_MarkBar", UIParent)
 	local count = #Symbols.LIST + 1
 	bar:SetSize(count * config.buttonSize + (count - 1) * config.buttonGap, config.buttonSize)
@@ -157,9 +108,4 @@ function Marks:OnEnable()
 	ns.RegisterEvent("PLAYER_TARGET_CHANGED", UpdateTargetMarks)
 	ns.RegisterEvent("RAID_TARGET_UPDATE", UpdateTargetMarks)
 	UpdateTargetMarks()
-
-	if groundMarkers then
-		C_Timer.NewTicker(config.groundRefresh, UpdateGroundMarks)
-		UpdateGroundMarks()
-	end
 end

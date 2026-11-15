@@ -79,11 +79,5 @@ need a check in game.
 - Left click on a symbol marks the target, again takes the mark off; it also
   works in combat. The target's symbol is outlined, also when another player
   sets it. Clear unmarks the target.
-- Ground markers: right click only does something if
-  `/dump IsRaidMarkerSystemEnabled()` is `true` in WoW Forever (otherwise the
-  tooltips don't mention it). Check that each symbol places the ground marker
-  of the same symbol (the mapping comes from Blizzard's
-  `WORLD_RAID_MARKER_ORDER`), that the dot appears and that right click on
-  clear removes all of them.
 - A chat position saved in the options panel before this change keeps its old
   y and then covers the toolbar; reset it there.
