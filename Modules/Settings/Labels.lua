@@ -150,18 +150,6 @@ local labels = {
 	},
 	frames = { "Frames", "Fenster" },
 	gap = { "Gap", "Abstand" },
-	groundColor = {
-		"Ground marker dot",
-		"Punkt Bodenmarkierung",
-		"Dot on a symbol whose ground marker is placed.",
-		"Punkt auf einem Symbol, dessen Bodenmarkierung gesetzt ist.",
-	},
-	groundRefresh = {
-		"Ground marker check (s)",
-		"Prüfung Bodenmarkierungen (s)",
-		"Seconds between checks which ground markers are placed.",
-		"Sekunden zwischen den Prüfungen, welche Bodenmarkierungen gesetzt sind.",
-	},
 	gapAboveMinimap = { "Gap above minimap", "Abstand über Minikarte" },
 	gapToTarget = { "Gap to target frame", "Abstand zum Ziel" },
 	group = { "Group", "Gruppe" },

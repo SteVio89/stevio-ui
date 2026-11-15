@@ -10,8 +10,4 @@ ns.config.marks = {
 	unusableAlpha = 0.35,
 	-- Border of the symbol the target carries.
 	activeColor = { 1, 1, 1, 1 },
-	-- Dot in the corner of a symbol whose ground marker is placed.
-	groundColor = { 0.3, 0.8, 1, 1 },
-	-- Seconds between checks of the placed ground markers (the game sends no event for them).
-	groundRefresh = 0.5,
 }
