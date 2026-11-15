@@ -73,3 +73,17 @@ need a check in game.
 - Spells a talent replaces (e.g. a healing spell whose slot shows the upgraded
   version) are placed via the spell they replace instead of being reported as
   missing. Check that such a slot shows and casts the upgraded spell.
+
+### Mark toolbar (#52)
+- The toolbar sits at the top left, the chat opens right below it.
+- Left click on a symbol marks the target, again takes the mark off; it also
+  works in combat. The target's symbol is outlined, also when another player
+  sets it. Clear unmarks the target.
+- Ground markers: right click only does something if
+  `/dump IsRaidMarkerSystemEnabled()` is `true` in WoW Forever (otherwise the
+  tooltips don't mention it). Check that each symbol places the ground marker
+  of the same symbol (the mapping comes from Blizzard's
+  `WORLD_RAID_MARKER_ORDER`), that the dot appears and that right click on
+  clear removes all of them.
+- A chat position saved in the options panel before this change keeps its old
+  y and then covers the toolbar; reset it there.

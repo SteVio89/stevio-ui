@@ -75,6 +75,10 @@ Modules\Chat\Receive.lua
 Modules\Chat\Send.lua
 Modules\Chat\Chat.lua
 
+Modules\Marks\Config.lua
+Modules\Marks\Symbols.lua
+Modules\Marks\Marks.lua
+
 Modules\Auras\Config.lua
 Modules\Auras\Auras.lua
 
