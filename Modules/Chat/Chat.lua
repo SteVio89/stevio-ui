@@ -170,12 +170,18 @@ function C.CycleChannel(step)
 	end
 end
 
+-- Hides the chat whenever it is shown, also when it only popped up for a
+-- message (#50: that press used to pin it open instead); opens it otherwise.
 function ns.ToggleChat()
-	if state.manual then
-		state.manual = false
-		C.ui.input:ClearFocus()
-	else
+	if C.hidden then
 		C.Pin()
+	else
+		state.manual = false
+		if state.autoTimer then
+			state.autoTimer:Cancel()
+			state.autoTimer = nil
+		end
+		C.ui.input:ClearFocus()
 	end
 	C.Update()
 end
@@ -183,7 +189,8 @@ end
 -- Opens the chat and starts typing into the selected channel.
 function ns.FocusChatInput()
 	if not state.manual then
-		ns.ToggleChat()
+		C.Pin()
+		C.Update()
 	end
 	C.ui.input:SetFocus()
 end
