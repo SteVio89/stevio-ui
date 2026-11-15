@@ -31,3 +31,29 @@ end
 function Symbols.Texture(index)
 	return "Interface\\TargetingFrame\\UI-RaidTargetingIcon_" .. index
 end
+
+-- The secure action attributes of a toolbar button (symbol nil: the clear
+-- button). Left click runs Blizzard's "raidtarget" action on the target,
+-- right click (only with ground markers) its "worldmarker" action.
+function Symbols.Attributes(symbol, groundMarkers)
+	local attributes = {
+		-- Act on the mouse release. The template otherwise follows the
+		-- ActionButtonUseKeyDown setting (on by default) and then ignores the
+		-- release, the only click these buttons register for.
+		useOnKeyDown = false,
+		unit = "target",
+		type1 = "raidtarget",
+		action1 = symbol and "toggle" or "clear",
+		marker1 = symbol and symbol.index,
+	}
+	if groundMarkers then
+		-- Ground markers need no target. "none" keeps Blizzard's handler from
+		-- dropping the click when there is no target.
+		attributes.unit2 = "none"
+		attributes.type2 = "worldmarker"
+		-- Without a marker index, "clear" removes all ground markers.
+		attributes.action2 = symbol and "toggle" or "clear"
+		attributes.marker2 = symbol and symbol.world
+	end
+	return attributes
+end
