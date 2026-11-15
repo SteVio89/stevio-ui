@@ -78,19 +78,23 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Channel chat** – chat is organised in channels like
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
-  - "Main" shows party, raid, instance, guild and whispers together, each
+  - "Main" shows party, instance, raid, guild, whispers and emotes together
+    (each switchable in `main.channels`, say and yell too), each
     line tagged with its channel (`[Party] Bob: pull`, the name in that
     channel's colour like everywhere, the text white), so there's no
     switching back and forth; the single channels stay too. Its unread count
-    is theirs and reading it reads them. Typing in Main answers in the channel
+    is that of its lines and reading it reads them. Typing in Main answers in the channel
     of the latest line (named in the header, `Main > Party`), kept while
     typing; clicking a line's tag writes to that channel instead (`main`);
   - party, raid and instance; guild (with officer chat, Guild Discord and the
     message of the day); one channel per community stream; one per whisper
-    partner; say (including emotes such as `/e` and `/dance`), yell and the chat
-    channels listed in `publicChannels`, e.g. General and Trade;
-  - "Other" collects every other chat channel read-only, each line naming its
-    channel before the sender;
+    partner; "Nearby" with say, yell (in the yell colour) and emotes such as
+    `/e` and `/dance`, so a role-play scene reads in one place; writing there
+    says, `/y` and `/e` work too;
+  - one channel per chat channel, by its full name: zone channels such as
+    General and LocalDefense one per zone ("General - Elwynn Forest"),
+    Trade and the other channels in `cityChannels` one wherever they are
+    joined, and every custom channel its own;
   - "NPC" collects NPC and boss speech, "Loot & Progress" loot (also other
     players'), money, currencies, XP, honor, reputation, skill-ups,
     achievements and level-ups, and "System" everything else Blizzard's chat
@@ -107,10 +111,10 @@ until it is needed, and as much as possible can be done from the keyboard.
   Clicking a player's name in a message opens the whisper channel with them
   and starts typing into it; right click opens a menu to whisper or invite
   them.
-  `x` deletes any channel but guild and Main with its history. Say, emotes, yell, chat
+  `x` deletes any channel but guild and Main with its history. Nearby, chat
   and community channels, NPC, Loot & Progress and System only count as unread and don't pop
   up the chat. Hidden by default, toggled by key or by the badge at the left
-  screen edge, whose three segments light up on new whispers, group (party,
+  screen edge (also hiding a chat that just popped up), whose three segments light up on new whispers, group (party,
   raid, instance) or guild messages. A new message that pops up the chat
   switches to its channel (or Main); otherwise the chat reopens on the
   channel last shown. Raid warnings and officer chat are marked `[RW]` and

@@ -80,7 +80,8 @@ end
 -- (where a click on it writes to that channel), the sender
 -- is missing on system messages. Channel and sender take the color of the
 -- channel the line came from, the text stays white;
--- emotes ("time Bob waves.") are colored as a whole in the emote color.
+-- emotes ("time Bob waves.") are colored as a whole in the emote color, yelled
+-- lines (`tint`) in the yell color.
 -- Returns the line and its base color: finished lines without a sender (loot,
 -- NPC, system, ...) take their kind's chat color, like in Blizzard's chat;
 -- System lines stored before they carried a kind count as SYSTEM.
@@ -91,13 +92,15 @@ function C.FormatEntry(channel, entry, color)
 	if colorType then
 		return History.Line(entry, stamp), color(colorType)
 	end
-	if entry.emote then
-		local body = entry.sender and (Sender(entry, entry.sender) .. " " .. entry.text) or entry.text
-		return stamp .. " " .. C.ColorCode(color("EMOTE")) .. body .. "|r"
-	end
 	local source = entry.source and (C.ColorCode(color(entry.sourceType or channel.chatType)) .. entry.source .. "|r")
 	if source and entry.sourceKey then
 		source = History.ChannelLink(entry.sourceKey, source)
+	end
+	if entry.emote or entry.tint then
+		local body = entry.sender and (Sender(entry, entry.sender) .. (entry.emote and " " or ": ") .. entry.text)
+			or entry.text
+		local tag = source and (" [" .. source .. "]") or ""
+		return stamp .. tag .. " " .. C.ColorCode(color(entry.tint or "EMOTE")) .. body .. "|r"
 	end
 	-- In Main and "Other" the sender takes the color of the channel the line
 	-- came from, so names stand out from the white text there too.
@@ -114,8 +117,7 @@ local LABELS = {
 	raid = { "Raid", "Schlachtzug" },
 	instance = { "Instance", "Instanz" },
 	guild = { "Guild", "Gilde" },
-	say = { "Say", "Sagen" },
-	yell = { "Yell", "Schreien" },
+	nearby = { "Nearby", "In der Nähe" },
 	other = { "Other", "Andere" },
 	npc = { "NPC", "NPC" },
 	progress = { "Loot & Progress", "Beute & Fortschritt" },
@@ -135,9 +137,9 @@ function C.Selected()
 	return C.state.selected and C.store:Get(C.state.selected)
 end
 
--- Whether channel `kind` shows in Main as well.
-function C.IsMerged(kind)
-	return config.main.enabled and config.main.kinds[kind] == true
+-- Whether lines of `def` (see config.events) show in Main as well.
+function C.IsMerged(def)
+	return config.main.enabled and def.merge ~= nil and config.main.channels[def.merge] == true
 end
 
 function C.IsMain(key)
@@ -146,14 +148,14 @@ end
 
 function C.Unread(channel)
 	if C.IsMain(channel.key) then
-		return C.store:MergedUnread(config.main.kinds)
+		return C.store:MergedUnread()
 	end
 	return channel.unread
 end
 
 function C.MarkRead(key)
 	if C.IsMain(key) then
-		C.store:MarkKindsRead(config.main.kinds)
+		C.store:MarkMergedRead()
 	else
 		C.store:MarkRead(key)
 	end

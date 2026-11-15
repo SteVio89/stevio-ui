@@ -81,6 +81,23 @@ check(not C.hidden, "chat opened by hand stays open")
 ns.ToggleChat()
 check(C.hidden, "toggled closed")
 
+-- Popped up for a message: the toggle key hides it right away (#50).
+Reset()
+C.StartAutoTimer(8)
+C.Update()
+ns.ToggleChat()
+check(C.hidden and not state.autoTimer, "toggle hides a popped-up chat")
+ns.ToggleChat()
+check(not C.hidden and state.manual, "and opens it again by hand")
+
+-- The chat input key on a popped-up chat keeps it open.
+Reset()
+C.StartAutoTimer(8)
+C.Update()
+ns.FocusChatInput()
+FireTimers()
+check(not C.hidden and state.manual, "focusing the input pins a popped-up chat")
+
 -- Popped up, then the player picks a channel or starts typing: stays open.
 Reset()
 C.StartAutoTimer(8)

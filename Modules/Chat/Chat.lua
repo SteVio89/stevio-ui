@@ -170,12 +170,18 @@ function C.CycleChannel(step)
 	end
 end
 
+-- Hides the chat whenever it is shown, also when it only popped up for a
+-- message (#50: that press used to pin it open instead); opens it otherwise.
 function ns.ToggleChat()
-	if state.manual then
-		state.manual = false
-		C.ui.input:ClearFocus()
-	else
+	if C.hidden then
 		C.Pin()
+	else
+		state.manual = false
+		if state.autoTimer then
+			state.autoTimer:Cancel()
+			state.autoTimer = nil
+		end
+		C.ui.input:ClearFocus()
 	end
 	C.Update()
 end
@@ -183,7 +189,8 @@ end
 -- Opens the chat and starts typing into the selected channel.
 function ns.FocusChatInput()
 	if not state.manual then
-		ns.ToggleChat()
+		C.Pin()
+		C.Update()
 	end
 	C.ui.input:SetFocus()
 end
@@ -217,6 +224,8 @@ end
 function Chat:OnEnable()
 	StevioUIChatHistory = StevioUIChatHistory or {}
 	C.store = ns.ChatHistory.New(StevioUIChatHistory, config.historyLimit, config.main.enabled)
+	-- Say and Yell before they became Nearby (#50).
+	C.store:MergeInto({ "say", "yell" }, "nearby", { kind = "nearby", chatType = "SAY" })
 	-- Battle.net account ids from an earlier session may belong to someone else
 	-- now; channels without a BattleTag can't look theirs up again, so they lose it.
 	for _, channel in pairs(StevioUIChatHistory.channels) do

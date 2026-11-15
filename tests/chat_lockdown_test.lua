@@ -45,20 +45,20 @@ _G.C_ChatInfo = {
 	end,
 }
 
-local party = { kind = "group", key = "party", chatType = "PARTY" }
+local party = { kind = "group", key = "party", chatType = "PARTY", merge = "party" }
 local ns = {
 	T = function(en)
 		return en
 	end,
 	config = {
 		chat = {
-			main = { enabled = true, key = "main", kind = "main", kinds = { group = true, whisper = true } },
+			main = { enabled = true, key = "main", kind = "main", channels = { party = true, whisper = true } },
 			events = {
 				CHAT_MSG_PARTY = party,
-				CHAT_MSG_WHISPER = { kind = "whisper", chatType = "WHISPER" },
-				CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", bnet = true },
+				CHAT_MSG_WHISPER = { kind = "whisper", chatType = "WHISPER", merge = "whisper" },
+				CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", merge = "whisper", bnet = true },
 			},
-			publicChannels = {},
+			cityChannels = {},
 			autoShowDuration = 10,
 		},
 	},
@@ -79,8 +79,8 @@ C.ui = {
 	},
 }
 local rendered = 0
-C.IsMerged = function(kind)
-	return config.main.kinds[kind] == true
+C.IsMerged = function(def)
+	return def.merge ~= nil and config.main.channels[def.merge] == true
 end
 C.Attended = function()
 	return false

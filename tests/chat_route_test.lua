@@ -20,10 +20,11 @@ local lookups = {
 		return context .. ":" .. name
 	end,
 }
-local publicChannels = { "General", "Trade" }
+local cities = { "Trade" }
 
-local function Route(def, sender, bnetID, channelIndex, baseName, fullName)
-	return History.Route(def, sender, bnetID, channelIndex, baseName, fullName, publicChannels, lookups)
+-- `channelName` is the chat channel's full name ("2. Trade - City").
+local function Route(def, sender, bnetID, channelIndex, baseName, fullName, channelName)
+	return History.Route(def, sender, bnetID, channelIndex, baseName, channelName, fullName, cities, lookups)
 end
 
 -- Fixed channels: the definition names the key.
@@ -49,17 +50,27 @@ do
 	check(opts.clubId == 12 and opts.streamId == 3, "community ids")
 	check(source == nil and sourceType == nil, "community has no source")
 
-	key, opts, source, sourceType = Route(def, "Bob", 0, 2, "trade")
-	check(key == "channel:trade" and opts.kind == "public", "public channel of its own")
-	check(opts.chatType == "CHANNEL2" and opts.channelIndex == 2 and opts.label == "trade", "public channel options")
+	key, opts, source, sourceType = Route(def, "Bob", 0, 2, "Trade", nil, "2. Trade - City")
+	check(key == "channel:trade" and opts.kind == "public", "public channel of its own: " .. key)
+	check(opts.chatType == "CHANNEL2" and opts.channelIndex == 2 and opts.label == "Trade", "public channel options")
 	check(source == nil and sourceType == nil, "public channel has no source")
 
-	key, opts, source, sourceType = Route(def, "Bob", 0, 5, "LookingForGroup")
-	check(key == "other" and opts.kind == "other" and opts.readOnly, "other channels share Other")
-	check(opts.chatType == "CHANNEL" and opts.label == "Other", "Other options")
-	check(source == "LookingForGroup" and sourceType == "CHANNEL5", "Other names the line's channel")
+	-- Zone channels: one per zone (#50); cities (Trade) one wherever they are.
+	key, opts = Route(def, "Bob", 0, 1, "General", nil, "1. General - Elwynn Forest")
+	check(key == "channel:general - elwynn forest" and opts.label == "General - Elwynn Forest", "General per zone")
+	check(Route(def, "Bob", 0, 1, "General", nil, "1. General - Westfall") ~= key, "other zone, other channel")
+	check(
+		Route(def, "Bob", 0, 3, "LocalDefense", nil, "3. LocalDefense - Westfall") == "channel:localdefense - westfall",
+		"LocalDefense per zone"
+	)
+	check(Route(def, "Bob", 0, 2, "Trade", nil, "2. Trade - Ironforge") == "channel:trade", "Trade in any capital")
+	key, opts = Route(def, "Bob", 0, 5, "LookingForGroup", nil, "5. LookingForGroup")
+	check(key == "channel:lookingforgroup" and not opts.readOnly, "every channel gets its own: " .. key)
+	check(Route(def, "Bob", 0, 6, "MyRP", nil, "6. MyRP") == "channel:myrp", "custom channels too")
+	check(Route(def, "Bob", 0, 6, "MyRP", nil, "") == "channel:myrp", "base name without a full name")
 
 	check(Route(def, "Bob", 0, 5, SECRET) == nil, "secret channel name")
+	check(Route(def, "Bob", 0, 5, "Trade", nil, SECRET) == nil, "secret full channel name")
 	check(Route(def, "Bob", 0, SECRET, "Trade") == nil, "secret channel number")
 	check(Route(def, "Bob", 0, 5, nil) == nil, "no channel name")
 	check(Route(def, SECRET, SECRET, 2, "Trade") == "channel:trade", "channels don't need the sender")

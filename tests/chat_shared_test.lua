@@ -43,14 +43,15 @@ do
 	local party = { kind = "group", chatType = "PARTY", label = "Party" }
 	local guild = { kind = "guild", chatType = "GUILD", label = "Guild" }
 	local say = { kind = "public", chatType = "SAY", label = "Say" }
-	C.store:Add("party", party, { time = 1, text = "a" }, true)
+	C.store:Add("party", party, { time = 1, text = "a" }, true, true)
 	C.store:Add(main.key, main, History.Mirror({ time = 1, text = "a" }, "party", "Party", "PARTY"), false)
-	C.store:Add("guild", guild, { time = 2, text = "b" }, true)
+	C.store:Add("guild", guild, { time = 2, text = "b" }, true, true)
 	C.store:Add(main.key, main, History.Mirror({ time = 2, text = "b" }, "guild", "Guild", "GUILD"), false)
 	C.store:Add("say", say, { time = 3, text = "c" }, true)
 
 	check(C.IsMain("main") and not C.IsMain("party"), "is main")
-	check(C.IsMerged("group") and not C.IsMerged("public"), "merged kinds")
+	check(C.IsMerged({ merge = "party" }) and C.IsMerged({ merge = "emote" }), "merged lines")
+	check(not C.IsMerged({ merge = "say" }) and not C.IsMerged({ kind = "public" }), "lines not merged")
 	check(C.Unread(C.store:Get("main")) == 2, "Main counts the unread of its members")
 	check(C.Unread(C.store:Get("say")) == 1, "other channels count their own")
 
@@ -85,6 +86,25 @@ do
 end
 print("main ok")
 
+-- Main's switches (#50): every `merge` of the events has one, and by default
+-- Main shows group, guild, whispers and emotes but not say and yell.
+do
+	local channels = config.main.channels
+	for event, def in pairs(config.events) do
+		check(def.merge == nil or channels[def.merge] ~= nil, "switch for " .. event)
+	end
+	for _, name in ipairs({ "party", "instance", "raid", "guild", "whisper", "emote" }) do
+		check(channels[name] == true, name .. " in Main by default")
+	end
+	check(channels.say == false and channels.yell == false, "say and yell not in Main by default")
+	local nearby = { "CHAT_MSG_SAY", "CHAT_MSG_YELL", "CHAT_MSG_EMOTE", "CHAT_MSG_TEXT_EMOTE" }
+	for _, event in ipairs(nearby) do
+		check(config.events[event].key == "nearby", event .. " in Nearby")
+	end
+	check(config.events.CHAT_MSG_YELL.tint == "YELL", "yelled lines take the yell color")
+end
+print("main switches ok")
+
 -- Message lines in the channel view.
 do
 	local function color(chatType)
@@ -117,6 +137,29 @@ do
 	check(line == grey .. "t5|r |cff0000ffBob waves.|r", "emote: " .. line)
 	line = C.FormatEntry(party, { time = 5, text = "Bob dances.", emote = true }, color)
 	check(line == grey .. "t5|r |cff0000ffBob dances.|r", "text emote")
+
+	-- Nearby (#50): yelled lines take the yell color, emotes in Main name Nearby.
+	local nearby = { kind = "nearby", chatType = "SAY" }
+	line = C.FormatEntry(nearby, { time = 5, sender = "Bob", text = "Run!", tint = "YELL" }, function(chatType)
+		if chatType == "YELL" then
+			return 1, 0, 1
+		end
+		return color(chatType)
+	end)
+	check(line == grey .. "t5|r |cffff00ffBob: Run!|r", "yelled line: " .. line)
+	line = C.FormatEntry({ kind = "main", chatType = "SAY" }, {
+		time = 5,
+		sender = "Bob",
+		text = "waves.",
+		emote = true,
+		source = "Nearby",
+		sourceType = "PARTY",
+		sourceKey = "nearby",
+	}, color)
+	check(
+		line == grey .. "t5|r [|Haddon:stevioui:channel:nearby|h|cffff0000Nearby|r|h] |cff0000ffBob waves.|r",
+		"emote in Main: " .. line
+	)
 
 	line = C.FormatEntry({ kind = "other", chatType = "CHANNEL" }, {
 		time = 5,
