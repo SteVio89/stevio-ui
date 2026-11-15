@@ -96,8 +96,8 @@ local function ShowTooltip(button)
 end
 
 -- Marking a unit and placing ground markers are protected, so the buttons
--- are secure: left click runs Blizzard's "raidtarget" action on the target,
--- right click its "worldmarker" action (which then waits for a click on the ground).
+-- are secure, set up by Symbols.Attributes. A ground marker placed by right
+-- click then waits for a click on the ground.
 local function CreateButton(position, symbol)
 	local button = CreateFrame("Button", "StevioUI_Mark" .. position, bar, "SecureActionButtonTemplate")
 	button:SetSize(config.buttonSize, config.buttonSize)
@@ -115,33 +115,22 @@ local function CreateButton(position, symbol)
 	button:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.15)
 
 	button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-	button:SetAttribute("unit", "target")
-	button:SetAttribute("type1", "raidtarget")
+	for name, value in pairs(Symbols.Attributes(symbol, groundMarkers)) do
+		button:SetAttribute(name, value)
+	end
 	if symbol then
 		button.symbol = symbol
 		button.icon:SetTexture(Symbols.Texture(symbol.index))
-		button:SetAttribute("action1", "toggle")
-		button:SetAttribute("marker1", symbol.index)
-	else
-		-- No symbol: a cross that clears.
-		button.icon:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
-		button:SetAttribute("action1", "clear")
-	end
-
-	if groundMarkers then
-		button:SetAttribute("type2", "worldmarker")
-		if symbol then
-			button:SetAttribute("action2", "toggle")
-			button:SetAttribute("marker2", symbol.world)
+		if groundMarkers then
 			button.ground = button:CreateTexture(nil, "OVERLAY", nil, 2)
 			button.ground:SetSize(5, 5)
 			button.ground:SetPoint("BOTTOMRIGHT", -1, 1)
 			button.ground:SetColorTexture(unpack(config.groundColor))
 			button.ground:Hide()
-		else
-			-- Without a marker index, "clear" removes all ground markers.
-			button:SetAttribute("action2", "clear")
 		end
+	else
+		-- No symbol: a cross that clears.
+		button.icon:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
 	end
 
 	-- After Blizzard's click handler: the target's mark changes with

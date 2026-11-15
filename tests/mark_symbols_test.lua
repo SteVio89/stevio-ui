@@ -38,3 +38,25 @@ check(World(2) == 6, "circle")
 check(World(1) == 5, "star")
 check(Symbols.Texture(8) == "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8", "texture path")
 print("ground markers ok")
+
+-- Secure attributes. Blizzard's SecureActionButton_OnClick ignores a mouse
+-- release unless useOnKeyDown is false (ActionButtonUseKeyDown is on by default),
+-- and these buttons only register releases.
+local skull = Symbols.LIST[1]
+local mark = Symbols.Attributes(skull, true)
+check(mark.useOnKeyDown == false, "acts on the mouse release")
+check(mark.unit == "target" and mark.type1 == "raidtarget", "left click marks the target")
+check(mark.action1 == "toggle" and mark.marker1 == 8, "left click toggles the skull")
+check(mark.type2 == "worldmarker", "right click places a ground marker")
+check(mark.unit2 == "none", "ground markers need no target")
+check(mark.action2 == "toggle" and mark.marker2 == 8, "right click toggles the skull ground marker")
+
+local clear = Symbols.Attributes(nil, true)
+check(clear.useOnKeyDown == false, "clear acts on the mouse release")
+check(clear.action1 == "clear" and clear.marker1 == nil, "left click unmarks the target")
+check(clear.action2 == "clear" and clear.marker2 == nil, "right click removes all ground markers")
+check(clear.unit2 == "none", "clearing ground markers needs no target")
+
+local noGround = Symbols.Attributes(skull, false)
+check(noGround.type2 == nil and noGround.unit2 == nil, "no right click without ground markers")
+print("attributes ok")
