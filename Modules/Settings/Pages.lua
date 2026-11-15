@@ -20,6 +20,7 @@ Pages.MODULES = {
 	{ "auras", layout = { "buffs", "debuffs" } },
 	{ "tracker", layout = { "tracker", "trackerBadge" } },
 	{ "chat", layout = { "chat", "chatBadge" } },
+	{ "marks", layout = { "marks" } },
 	{ "lootTicker", layout = { "lootTicker" } },
 	{ "notch" },
 	{ "questRewards" },

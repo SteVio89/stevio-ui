@@ -16,6 +16,10 @@ local rightBarsTop = -152
 local rightBarsEdge = 6 + 2
 -- From the screen edge to the left of the two bars, plus the gap before what sits left of them.
 local rightBarsWidth = rightBarsEdge + 2 * buttonStep + 4
+-- The mark toolbar's row at the top left (buttonSize in Modules/Marks/Config.lua),
+-- with the chat opening below it.
+local topLeftTop = -10
+local marksHeight = 24
 
 ns.layout = {
 
@@ -74,8 +78,10 @@ ns.layout = {
 	trackerBadge = { point = "RIGHT", x = 0, y = 0 },
 
 	-- Top left, as close to the top edge as the buffs on the right (Blizzard's
-	-- chat tabs, which this once left room for, are hidden).
-	chat = { point = "TOPLEFT", x = 12, y = -10 },
+	-- chat tabs, which this once left room for, are hidden): the always shown
+	-- mark toolbar, and below it the chat.
+	marks = { point = "TOPLEFT", x = 12, y = topLeftTop },
+	chat = { point = "TOPLEFT", x = 12, y = topLeftTop - marksHeight - 6 },
 	chatBadge = { point = "LEFT", x = 0, y = 0 },
 }
 

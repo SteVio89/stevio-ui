@@ -75,6 +75,14 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Tooltip** – Blizzard's default tooltip position is moved above the minimap.
 - **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
   or the badge at the right screen edge, placed below the auras.
+- **Mark toolbar** – always shown at the top left, with the chat opening
+  below it: the eight raid symbols (skull first) and a clear button. Left
+  click puts the symbol on the target or takes it off again (the target's
+  symbol is outlined; symbols are dimmed while there is nothing to mark),
+  left click on clear unmarks the target. Where the game has ground markers,
+  right click places or removes the ground marker in that symbol (click on
+  the ground after it; a dot shows the placed ones) and right click on clear
+  removes them all.
 - **Channel chat** – chat is organised in channels like
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
