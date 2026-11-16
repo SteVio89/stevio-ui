@@ -41,7 +41,8 @@ local function UpdateTargetMarks()
 end
 
 local function ShowTooltip(button)
-	GameTooltip:SetOwner(button, "ANCHOR_BOTTOMRIGHT")
+	-- The default position, above the toolbar (Modules/Tooltip).
+	GameTooltip_SetDefaultAnchor(GameTooltip, button)
 	if button.symbol then
 		GameTooltip:SetText(ns.T(button.symbol.name[1], button.symbol.name[2]))
 		GameTooltip:AddLine(ns.T("Left click: mark the target", "Linksklick: Ziel markieren"), 1, 1, 1)
@@ -98,7 +99,7 @@ function Marks:OnEnable()
 	bar = CreateFrame("Frame", "StevioUI_MarkBar", UIParent)
 	local count = #Symbols.LIST + 1
 	bar:SetSize(count * config.buttonSize + (count - 1) * config.buttonGap, config.buttonSize)
-	ns.SetPoint(bar, ns.layout.marks)
+	ns.SetPoint(bar, ns.layout.marks, Minimap)
 
 	for position, symbol in ipairs(Symbols.LIST) do
 		CreateButton(position, symbol)
