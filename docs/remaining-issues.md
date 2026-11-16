@@ -75,9 +75,12 @@ need a check in game.
   missing. Check that such a slot shows and casts the upgraded spell.
 
 ### Mark toolbar (#52)
-- The toolbar sits at the top left, the chat opens right below it.
+- The toolbar sits on top of the minimap, right aligned (#56); on narrow
+  screens, where the map is less wide than the toolbar, it reaches past the
+  map's left edge. Check it doesn't touch the right edge bars or the target
+  auras. Tooltips, including the toolbar's own, open above it.
+- The chat is back at the top edge. A chat position saved in the options
+  panel keeps its old y (30 units lower); reset it there.
 - Left click on a symbol marks the target, again takes the mark off; it also
   works in combat. The target's symbol is outlined, also when another player
   sets it. Clear unmarks the target.
-- A chat position saved in the options panel before this change keeps its old
-  y and then covers the toolbar; reset it there.
