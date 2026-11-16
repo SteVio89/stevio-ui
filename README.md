@@ -78,9 +78,9 @@ until it is needed, and as much as possible can be done from the keyboard.
   or the badge at the right screen edge, placed below the auras.
 - **Mark toolbar** – always shown on top of the minimap, right aligned,
   with the default tooltip position above it: the eight raid symbols (skull
-  first) and a clear button. Left click puts the symbol on the target or takes it off again (the target's
-  symbol is outlined; symbols are dimmed while there is nothing to mark),
-  left click on clear unmarks the target.
+  first) and a clear button. Left click puts the symbol on the target or
+  takes it off again (the target's symbol is outlined; symbols are dimmed
+  while there is nothing to mark), left click on clear unmarks the target.
 - **Channel chat** – chat is organised in channels like
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
