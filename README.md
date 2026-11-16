@@ -72,14 +72,15 @@ until it is needed, and as much as possible can be done from the keyboard.
   reputation, gold, free bag slots, lowest durability (yellow/red when low),
   zone with coordinates, time, FPS and latency, online friends and guild
   members, the notes button and the other addons' minimap buttons.
-- **Tooltip** – Blizzard's default tooltip position is moved above the minimap.
+- **Tooltip** – Blizzard's default tooltip position is moved above the minimap
+  and the mark toolbar.
 - **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
   or the badge at the right screen edge, placed below the auras.
-- **Mark toolbar** – always shown at the top left, with the chat opening
-  below it: the eight raid symbols (skull first) and a clear button. Left
-  click puts the symbol on the target or takes it off again (the target's
-  symbol is outlined; symbols are dimmed while there is nothing to mark),
-  left click on clear unmarks the target.
+- **Mark toolbar** – always shown on top of the minimap, right aligned,
+  with the default tooltip position above it: the eight raid symbols (skull
+  first) and a clear button. Left click puts the symbol on the target or
+  takes it off again (the target's symbol is outlined; symbols are dimmed
+  while there is nothing to mark), left click on clear unmarks the target.
 - **Channel chat** – chat is organised in channels like
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
