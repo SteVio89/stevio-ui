@@ -4,6 +4,7 @@ local ns = loadAddonFile("Modules/Accessibility/Labels.lua", {
 	QuickJump = {},
 	config = { accessibility = { taxi = {} } },
 })
+loadAddonFile("Modules/Accessibility/DialogSources.lua", ns)
 loadAddonFile("Modules/Accessibility/Taxi.lua", ns)
 loadAddonFile("Modules/Accessibility/Panels.lua", ns)
 local Internal = ns.AccessibilityInternal
@@ -99,5 +100,39 @@ local nodes = Internal.ReachableSorted({
 })
 check(#nodes == 3, "reachable only")
 check(nodes[1].index == 3 and nodes[2].index == 5 and nodes[3].index == 1, "sorted ignoring case")
+
+-- Dialog labels only come with the leader key: the first press in a dialog
+-- turns them on, a press while they show moves on to the windows, and a
+-- press after the windows started cycling never takes the dialog back.
+local labelsActive, refreshes = false, 0
+function ns.QuickJump.IsActive()
+	return labelsActive
+end
+function ns.QuickJump.RequestRefresh()
+	refreshes = refreshes + 1
+end
+local function frameShown(shown)
+	return {
+		IsShown = function()
+			return shown
+		end,
+	}
+end
+_G.GossipFrame, _G.QuestFrame = frameShown(false), frameShown(false)
+check(not Internal.RequestDialogLabels(false), "no dialog open")
+check(not Internal.IsDialogRequested(), "nothing requested without a dialog")
+_G.GossipFrame = frameShown(true)
+check(not Internal.IsDialogRequested(), "an opened dialog has no labels yet")
+check(Internal.RequestDialogLabels(false) and Internal.IsDialogRequested(), "first press labels the dialog")
+check(refreshes == 1, "first press refreshes")
+labelsActive = true
+check(not Internal.RequestDialogLabels(false), "a press while labelled moves on")
+check(not Internal.IsDialogRequested(), "moving on ends the dialog labels")
+check(not Internal.RequestDialogLabels(true), "no dialog while windows cycle")
+labelsActive = false
+check(Internal.RequestDialogLabels(false), "after the last window the dialog comes back")
+check(Internal.RequestDialogLabels(false), "used up labels come back")
+_G.GossipFrame = frameShown(false)
+check(not Internal.RequestDialogLabels(false) and not Internal.IsDialogRequested(), "closed dialog forgets")
 
 print("accessibility sources tests passed")

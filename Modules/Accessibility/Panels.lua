@@ -203,6 +203,11 @@ function Panels.NextPanel(panels, active)
 	return nextPanel
 end
 
+-- Whether a leader press already moved the labels to an open window.
+function Internal.IsCyclingPanels()
+	return activePanel ~= nil and activePanel:IsVisible()
+end
+
 -- Each leader press moves to the next open window; past the last one, labels end.
 function Internal.CyclePanelLabels()
 	activePanel = Panels.NextPanel(OpenPanels(), activePanel)
