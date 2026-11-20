@@ -1,6 +1,6 @@
 # Compass (issue 57) – spec
 
-Status: **agreed with the author, not implemented yet.** API names are checked
+Status: **implemented** in `Modules/Compass/` (issue 57). API names are checked
 against Blizzard's live UI source (`Blizzard_APIDocumentationGenerated`); that
 they exist in the WoW Forever client (interface 16001) still needs a check in
 game.
@@ -54,7 +54,7 @@ and pin icons of the world map), so they look the same as on the minimap.
   Only that marker gets a label under the band: name and distance. No other
   marker shows a distance.
 - **Distance:** in yards, the game's unit, labelled "m" (`124 m`), as most
-  addons do. It is computed with `C_Map.GetWorldPosFromMapPos()`.
+  addons do; from 1000 on as km (`1.2 km`). It is computed with `C_Map.GetWorldPosFromMapPos()`.
 - **Look:**
   - N is highlighted in colour; E, S, W, NE, ... are white.
   - Small ticks every 15° between the letters.
@@ -67,8 +67,8 @@ and pin icons of the world map), so they look the same as on the minimap.
 - **Instances:** inside dungeons, raids, battlegrounds and arenas the game
   returns no facing or positions to addons. The compass hides there, and the
   notch looks like a plain notch.
-- **No notch** (external display, windowed): the band hangs from the top edge
-  at the same place, using the notch module's `fallback` size.
+- **No notch** (external display, windowed): the band hangs from the top edge,
+  centred.
 - **Updates:** the facing is read every frame, which is cheap. The marker list
   is rebuilt on events (zone change, quest, super-track, vignette, waypoint and
   group changes, death and resurrection) and every 0.5 s for moving things
@@ -91,8 +91,9 @@ and pin icons of the world map), so they look the same as on the minimap.
 - `Compass.lua`: the frame below the notch, drawing, events, and hiding while
   the island is open (a small hook into the notch module) and in instances.
 
-Its position comes from the notch (anchored below it), so `Core/Layout.lua`
-only needs an optional offset (`compass`).
+Its position comes from the notch (anchored below it), so it has no entry in
+`Core/Layout.lua`. The notch module shares its rect (`ns.GetNotchRect`) and
+island (`ns.notchIsland`) for this.
 
-Tests: `tests/compass_geometry_test.lua`. A test also pins the API and
-atlas names the module uses (see the check-the-source rule).
+Tests: `tests/compass_geometry_test.lua` and `tests/compass_markers_test.lua`
+(the marker collection against a fake game API, and the pinned atlas names).
