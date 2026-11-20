@@ -86,11 +86,34 @@ function Internal.RequestPopupLabels()
 	return false
 end
 
+-- Quest, gossip and flight master dialogs only get labels after the leader
+-- key too. One press covers the whole conversation: every next page gets
+-- labels by itself until no dialog is open anymore.
+local dialogRequested = false
+
+-- Gossip may hand over to the quest window (or back) with a short gap, which
+-- must not end the conversation.
+local CLOSE_GRACE = 0.5
+
+function Internal.IsDialogRequested()
+	return dialogRequested
+end
+
+-- Hooked to every dialog's OnHide.
+function Internal.DialogHidden()
+	RequestRefresh()
+	C_Timer.After(CLOSE_GRACE, function()
+		if not Internal.IsDialogOpen() then
+			dialogRequested = false
+		end
+	end)
+end
+
 local questSource = {
 	name = "quest",
 	priority = 20,
 	IsOpen = function()
-		return QuestFrame:IsShown()
+		return dialogRequested and QuestFrame:IsShown()
 	end,
 	Collect = function()
 		if QuestFrameGreetingPanel:IsShown() then
@@ -133,7 +156,7 @@ local gossipSource = {
 	name = "gossip",
 	priority = 10,
 	IsOpen = function()
-		return GossipFrame:IsShown()
+		return dialogRequested and GossipFrame:IsShown()
 	end,
 	Collect = function()
 		local targets = {}
@@ -153,7 +176,26 @@ local gossipSource = {
 }
 
 function Internal.IsDialogOpen()
-	return questSource.IsOpen() or gossipSource.IsOpen() or Internal.IsTaxiListOpen()
+	return QuestFrame:IsShown() or GossipFrame:IsShown() or Internal.IsTaxiListOpen()
+end
+
+-- Returns whether the dialog took the leader press: the first press in a
+-- dialog turns its labels on, and a later one brings them back when a page
+-- had none left. Otherwise the press belongs to the window cycle, which
+-- ends the dialog's labels; the cycle comes back to the dialog after the
+-- last window.
+function Internal.RequestDialogLabels(cycling)
+	if not Internal.IsDialogOpen() then
+		dialogRequested = false
+		return false
+	end
+	if not cycling and (not dialogRequested or not QuickJump:IsActive()) then
+		dialogRequested = true
+		RequestRefresh()
+		return true
+	end
+	dialogRequested = false
+	return false
 end
 
 function Internal.SetupDialogSources()
@@ -165,7 +207,7 @@ function Internal.SetupDialogSources()
 		dialog:HookScript("OnHide", RequestRefresh)
 	end)
 
-	QuestFrame:HookScript("OnHide", RequestRefresh)
+	QuestFrame:HookScript("OnHide", Internal.DialogHidden)
 	for _, panel in ipairs({
 		QuestFrameGreetingPanel,
 		QuestFrameDetailPanel,
@@ -183,6 +225,6 @@ function Internal.SetupDialogSources()
 		end
 	end)
 
-	GossipFrame:HookScript("OnHide", RequestRefresh)
+	GossipFrame:HookScript("OnHide", Internal.DialogHidden)
 	hooksecurefunc(GossipFrame, "Update", RequestRefresh)
 end

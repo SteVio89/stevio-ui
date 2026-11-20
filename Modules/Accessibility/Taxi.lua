@@ -96,7 +96,7 @@ local taxiSource = {
 	name = "taxi",
 	priority = 15,
 	IsOpen = function()
-		return panel:IsShown()
+		return Internal.IsDialogRequested() and panel:IsShown()
 	end,
 	Collect = function()
 		local targets = {}
@@ -120,6 +120,7 @@ function Internal.SetupTaxiList()
 	ns.CreateBackground(panel, ns.PANEL_COLOR)
 	ns.CreateBorder(panel)
 	panel:Hide()
+	panel:HookScript("OnHide", Internal.DialogHidden)
 
 	ns.QuickJump:RegisterSource(taxiSource)
 
@@ -129,6 +130,5 @@ function Internal.SetupTaxiList()
 	end)
 	ns.RegisterEvent("TAXIMAP_CLOSED", function()
 		panel:Hide()
-		ns.QuickJump:RequestRefresh()
 	end)
 end
