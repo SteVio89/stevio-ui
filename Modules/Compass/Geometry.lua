@@ -97,15 +97,17 @@ end
 
 -- "124 m" (game yards, labelled m), "1.2 km" from 1000 on.
 function Geometry.FormatDistance(yards)
-	if yards >= 1000 then
+	local rounded = math.floor(yards + 0.5)
+	if rounded >= 1000 then
 		return ("%.1f km"):format(yards / 1000)
 	end
-	return ("%d m"):format(math.floor(yards + 0.5))
+	return ("%d m"):format(rounded)
 end
 
 -- Label of a compass direction in degrees: "N", "NE", ... for multiples of
 -- 45, nil for the ticks between them.
-local DIRECTIONS = { [0] = "N", [45] = "NE", [90] = "E", [135] = "SE", [180] = "S", [225] = "SW", [270] = "W", [315] = "NW" }
+local DIRECTIONS =
+	{ [0] = "N", [45] = "NE", [90] = "E", [135] = "SE", [180] = "S", [225] = "SW", [270] = "W", [315] = "NW" }
 
 function Geometry.DirectionLabel(degrees, names)
 	local key = DIRECTIONS[degrees % 360]

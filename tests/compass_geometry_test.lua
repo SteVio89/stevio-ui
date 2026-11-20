@@ -54,6 +54,7 @@ check(Geometry.PickFocus({ outside }, focusAngle) == nil, "nothing in focus")
 
 check(Geometry.FormatDistance(123.6) == "124 m", "rounded yards labelled m")
 check(Geometry.FormatDistance(1234) == "1.2 km", "km from 1000 on")
+check(Geometry.FormatDistance(999.7) == "1.0 km", "no 1000 m")
 
 check(Geometry.DirectionLabel(0) == "N" and Geometry.DirectionLabel(360) == "N", "north")
 check(Geometry.DirectionLabel(315) == "NW", "north west")
