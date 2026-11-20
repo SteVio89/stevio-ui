@@ -46,7 +46,8 @@ end
 -- real screen top lies above UIParent's top. The ears are the notch safe
 -- regions in physical pixels (the left one's right edge and bottom, the right
 -- one's left edge); without a notch between them, `fallback` ({ width,
--- height }) is centred instead.
+-- height }) is centred instead. The last value tells whether there is a real
+-- notch.
 function Layout.NotchRect(
 	uiWidth,
 	uiTop,
@@ -60,8 +61,8 @@ function Layout.NotchRect(
 	local scale = uiWidth / physicalWidth
 	local topOffset = physicalHeight * scale - uiTop
 	if leftEarBottom > 0 and rightEarLeft > leftEarRight then
-		return leftEarRight * scale, rightEarLeft * scale, leftEarBottom * scale, topOffset
+		return leftEarRight * scale, rightEarLeft * scale, leftEarBottom * scale, topOffset, true
 	end
 	local left = (uiWidth - fallback.width) / 2
-	return left, left + fallback.width, fallback.height, topOffset
+	return left, left + fallback.width, fallback.height, topOffset, false
 end

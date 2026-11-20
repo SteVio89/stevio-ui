@@ -33,12 +33,12 @@ check(Layout.ZoneLabel("Stormwind", "Stormwind") == "Stormwind", "subzone same a
 
 -- Notch: physical pixels scaled to UIParent units (here 0.5).
 local fallback = { width = 200, height = 32 }
-local left, right, height, topOffset = Layout.NotchRect(1512, 960, 3024, 1964, 1300, 74, 1724, fallback)
-check(left == 650 and right == 862 and height == 37, "notch from the ears")
+local left, right, height, topOffset, real = Layout.NotchRect(1512, 960, 3024, 1964, 1300, 74, 1724, fallback)
+check(left == 650 and right == 862 and height == 37 and real == true, "notch from the ears")
 check(topOffset == 22, "screen top above UIParent")
 -- No notch (zero height, or no gap between the ears): the centred fallback.
-left, right, height, topOffset = Layout.NotchRect(1000, 600, 2000, 1200, 0, 0, 0, fallback)
-check(left == 400 and right == 600 and height == 32 and topOffset == 0, "fallback")
+left, right, height, topOffset, real = Layout.NotchRect(1000, 600, 2000, 1200, 0, 0, 0, fallback)
+check(left == 400 and right == 600 and height == 32 and topOffset == 0 and real == false, "fallback")
 left = Layout.NotchRect(1000, 600, 2000, 1200, 900, 60, 900, fallback)
 check(left == 400, "fallback when the ears touch")
 
