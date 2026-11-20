@@ -1,6 +1,7 @@
 # Compass (issue 57) – spec
 
-Status: **implemented** in `Modules/Compass/` (issue 57). API names are checked
+Status: **implemented** in `Modules/Compass/` (issue 57, quests and labels
+changed in issue 58). API names are checked
 against Blizzard's live UI source (`Blizzard_APIDocumentationGenerated`); that
 they exist in the WoW Forever client (interface 16001) still needs a check in
 game.
@@ -8,8 +9,8 @@ game.
 ## Idea
 
 A horizontal compass like the one in Elder Scrolls Online. It shows the
-directions and the markers that lie ahead of you. The marker in the centre
-also shows its name and distance.
+directions and the markers that lie ahead of you. The markers in the centre
+also show their names and distances.
 
 The compass is a black band hanging right below the notch, as if the notch
 grew downward. Its centre line is under the middle of the notch.
@@ -25,11 +26,17 @@ grew downward. Its centre line is under the middle of the notch.
 | Marker | Source (API) |
 | --- | --- |
 | Your map pin (Ctrl+click on the world map) | `C_Map.GetUserWaypoint()` |
-| Tracked quest: objective area or next step (portal, flight path, ...) | `C_SuperTrack.GetSuperTrackedQuestID()`, `C_QuestLog.GetNextWaypoint()` |
-| Other quests in the zone | `C_QuestLog.GetQuestsOnMap(mapID)` |
+| Quests in the zone | `C_QuestLog.GetQuestsOnMap(mapID)` |
+| The super-tracked quest's next step (portal, flight path, ...) when its objective lies elsewhere | `C_SuperTrack.GetSuperTrackedQuestID()`, `C_QuestLog.GetNextWaypoint()` |
+| World quests and bonus objectives in the zone | `C_TaskQuest.GetQuestsOnMap(mapID)` |
 | Rares, treasures, events (the minimap's star and chest icons) | `C_VignetteInfo.GetVignettes()`, `C_VignetteInfo.GetVignettePosition()` |
 | Group members, in class colour | `UnitPosition()` |
 | Your corpse while you're a ghost | `C_DeathInfo.GetCorpseMapPosition()` |
+
+All quests look and behave alike; the super-tracked one is not preferred
+(issue 58). `GetQuestsOnMap` only returns the quests in the objective tracker,
+and no other API gives positions for the rest of the quest log, so quests
+that aren't tracked can't be shown.
 
 Not shown: herb and ore nodes, NPC dots, quest givers' "!" and tracked
 vendors/trainers. The minimap draws them itself and no API gives addons their
@@ -49,18 +56,18 @@ and pin icons of the world map), so they look the same as on the minimap.
   or right. Markers outside the arc are hidden (ESO style).
 - **Range:** no limit. Everything in the current zone is shown
   (`maxDistance = nil`).
-- **Focus:** among the markers within ±5° (`focusAngle`) of the centre, the
-  tracked quest and the map pin win, then the one closest to the centre line.
-  Only that marker gets a label under the band: name and distance. No other
-  marker shows a distance.
+- **Focus:** every marker within ±5° (`focusAngle`) of the centre gets a line
+  under the band with its name and distance, nearest first (closest to the
+  centre line first when the map has no size). No marker kind is preferred.
+  Markers outside the focus show no distance.
 - **Distance:** in yards, the game's unit, labelled "m" (`124 m`), as most
   addons do; from 1000 on as km (`1.2 km`). It is computed with `C_Map.GetWorldPosFromMapPos()`.
 - **Look:**
   - N is highlighted in colour; E, S, W, NE, ... are white.
   - Small ticks every 15° between the letters.
   - Letters, ticks and markers fade towards the ends of the band.
-  - Markers further away are drawn smaller and dimmer than close ones. Tracked
-    quest and pin are always full size.
+  - Markers further away are drawn smaller and dimmer than close ones. The map
+    pin, the corpse and a tracked vignette are always full size.
 - **Mouse:** none. The band lets clicks and camera dragging pass through.
 - **Notch island:** when the island opens, it covers the compass. The compass
   comes back when the island closes.
