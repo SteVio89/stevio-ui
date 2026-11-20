@@ -60,6 +60,11 @@ Modules\Notch\Buttons.lua
 Modules\Notch\Layout.lua
 Modules\Notch\Notch.lua
 
+Modules\Compass\Config.lua
+Modules\Compass\Geometry.lua
+Modules\Compass\Markers.lua
+Modules\Compass\Compass.lua
+
 Modules\Chat\Config.lua
 Modules\Chat\History.lua
 Modules\Chat\Shared.lua
