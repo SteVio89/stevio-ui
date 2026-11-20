@@ -10,17 +10,19 @@ ns.CompassMarkers = Markers
 local config = ns.config.compass
 local enabled = config.markers
 
--- Tracked things win the focus and keep their full size.
+-- Pins, corpses and tracked vignettes keep their full size and show beyond
+-- maxDistance. Quests are all alike, tracked or not.
 local TRACKED, NORMAL = 1, 0
 
--- Atlases Blizzard uses for the same things (SuperTrackedFrame.lua,
--- WaypointLocationDataProvider.lua and the quest POI pins).
+-- Atlases Blizzard uses for the same things (WaypointLocationDataProvider.lua,
+-- SuperTrackedFrame.lua, the quest POI pins, QuestUtils.lua and MapLegendFrame.lua).
 Markers.ATLAS = {
-	trackedQuest = "Navigation-Tracked-Icon",
 	mapPin = "Waypoint-MapPin-Tracked",
 	corpse = "Navigation-Tombstone-Icon",
 	quest = "QuestNormal",
 	questTurnIn = "QuestTurnin",
+	worldQuest = "Worldquest-icon",
+	bonusObjective = "Bonus-Objective-Star",
 }
 
 local L = {
@@ -53,31 +55,51 @@ local function Add(list, kind, name, x, y, priority, atlas, color)
 	list[#list + 1] = { kind = kind, name = name, x = x, y = y, priority = priority, atlas = atlas, color = color }
 end
 
-local function AddQuests(list, mapID)
-	local tracked = C_SuperTrack.GetSuperTrackedQuestID()
-	if enabled.trackedQuest and tracked and tracked > 0 then
-		local name = C_QuestLog.GetTitleForQuestID(tracked)
-		-- The next step (portal, flight path, ...) when the objective lies elsewhere.
-		local wayMap, wayX, wayY = C_QuestLog.GetNextWaypoint(tracked)
-		if wayMap then
-			local x, y = ToMap(wayMap, wayX, wayY, mapID)
-			Add(list, "trackedQuest", name, x, y, TRACKED, Markers.ATLAS.trackedQuest)
-		else
-			for _, quest in ipairs(C_QuestLog.GetQuestsOnMap(mapID) or {}) do
-				if quest.questID == tracked then
-					Add(list, "trackedQuest", name, quest.x, quest.y, TRACKED, Markers.ATLAS.trackedQuest)
-					break
-				end
-			end
-		end
-	end
+local function QuestAtlas(questID)
+	return C_QuestLog.ReadyForTurnIn(questID) and Markers.ATLAS.questTurnIn or Markers.ATLAS.quest
+end
+
+-- The quests the game puts on the map: the ones in the objective tracker.
+-- There is no API for where the other quests in the log are.
+local function AddQuests(list, mapID, seen)
 	if not enabled.quests then
 		return
 	end
+	-- The super-tracked quest's next step (portal, flight path, ...) when its
+	-- objective lies elsewhere, so it doesn't drop off the compass.
+	local tracked = C_SuperTrack.GetSuperTrackedQuestID()
+	if tracked and tracked > 0 then
+		local wayMap, wayX, wayY = C_QuestLog.GetNextWaypoint(tracked)
+		if wayMap then
+			local x, y = ToMap(wayMap, wayX, wayY, mapID)
+			if x then
+				seen[tracked] = true
+				Add(list, "quest", C_QuestLog.GetTitleForQuestID(tracked), x, y, NORMAL, QuestAtlas(tracked))
+			end
+		end
+	end
 	for _, quest in ipairs(C_QuestLog.GetQuestsOnMap(mapID) or {}) do
-		if quest.questID ~= tracked then
-			local atlas = C_QuestLog.ReadyForTurnIn(quest.questID) and Markers.ATLAS.questTurnIn or Markers.ATLAS.quest
-			Add(list, "quest", C_QuestLog.GetTitleForQuestID(quest.questID), quest.x, quest.y, NORMAL, atlas)
+		local id = quest.questID
+		if not seen[id] and not quest.isMapIndicatorQuest then
+			seen[id] = true
+			Add(list, "quest", C_QuestLog.GetTitleForQuestID(id), quest.x, quest.y, NORMAL, QuestAtlas(id))
+		end
+	end
+end
+
+-- World quests and bonus objectives in the zone (not those of its sub-maps,
+-- as on the world map).
+local function AddWorldQuests(list, mapID, seen)
+	if not enabled.worldQuests then
+		return
+	end
+	for _, task in ipairs(C_TaskQuest.GetQuestsOnMap(mapID) or {}) do
+		local id = task.questID
+		local name = C_QuestLog.GetTitleForQuestID(id)
+		if not seen[id] and name and task.mapID == mapID then
+			seen[id] = true
+			local atlas = C_QuestLog.IsWorldQuest(id) and Markers.ATLAS.worldQuest or Markers.ATLAS.bonusObjective
+			Add(list, "worldQuest", name, task.x, task.y, NORMAL, atlas)
 		end
 	end
 end
@@ -140,12 +162,13 @@ local function AddCorpse(list, mapID)
 end
 
 -- Each source runs protected, so one failing API doesn't empty the compass.
-local SOURCES = { AddQuests, AddMapPin, AddVignettes, AddGroup, AddCorpse }
+-- Quests run before world quests, so a quest is listed only once.
+local SOURCES = { AddQuests, AddWorldQuests, AddMapPin, AddVignettes, AddGroup, AddCorpse }
 
 function Markers.Collect(mapID)
-	local list = {}
+	local list, seen = {}, {}
 	for _, source in ipairs(SOURCES) do
-		ns.SafeCall(source, list, mapID)
+		ns.SafeCall(source, list, mapID, seen)
 	end
 	return list
 end

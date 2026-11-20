@@ -6,14 +6,15 @@ ns.config.compass = {
 	-- The black band below the notch (or the top edge without one).
 	width = 480,
 	height = 22,
-	-- Line below the band for the focused marker's name and distance.
+	-- Height of each label line below the band (name and distance).
 	labelHeight = 16,
 
 	-- Degrees the band covers; a marker at its end is half of this to the side.
 	fov = 180,
-	-- A marker within this many degrees of the centre gets the label.
+	-- Markers within this many degrees of the centre get a label line each.
 	focusAngle = 5,
-	-- Markers further away (in yards) are hidden, except the tracked ones.
+	-- Markers further away (in yards) are hidden, except the map pin, the
+	-- corpse and a tracked vignette.
 	-- 0 shows the whole zone.
 	maxDistance = 0,
 
@@ -38,9 +39,9 @@ ns.config.compass = {
 	refreshInterval = 0.5,
 
 	markers = {
-		trackedQuest = true,
 		mapPin = true,
 		quests = true,
+		worldQuests = true,
 		vignettes = true,
 		group = true,
 		corpse = true,

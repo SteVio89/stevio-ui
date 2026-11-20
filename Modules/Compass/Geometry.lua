@@ -75,24 +75,23 @@ function Geometry.DistanceFactor(distance, near, far, min)
 	return 1 - t * (1 - min)
 end
 
--- The marker that gets the label: among the markers ({ angle, priority })
--- within `focusAngle` of the centre, the highest priority wins, then the one
--- closest to the centre line. Returns nil when none is close enough.
-function Geometry.PickFocus(markers, focusAngle)
-	local best
+-- The markers that get a label line: those ({ angle, distance }) within
+-- `focusAngle` of the centre, nearest first. Without distances (no map size)
+-- the one closest to the centre line comes first.
+function Geometry.FocusMarkers(markers, focusAngle)
+	local focus = {}
 	for _, marker in ipairs(markers) do
-		local offCentre = math.abs(marker.angle)
-		if offCentre <= focusAngle then
-			if
-				not best
-				or marker.priority > best.priority
-				or (marker.priority == best.priority and offCentre < math.abs(best.angle))
-			then
-				best = marker
-			end
+		if math.abs(marker.angle) <= focusAngle then
+			focus[#focus + 1] = marker
 		end
 	end
-	return best
+	table.sort(focus, function(a, b)
+		if a.distance and b.distance and a.distance ~= b.distance then
+			return a.distance < b.distance
+		end
+		return math.abs(a.angle) < math.abs(b.angle)
+	end)
+	return focus
 end
 
 -- "124 m" (game yards, labelled m), "1.2 km" from 1000 on.

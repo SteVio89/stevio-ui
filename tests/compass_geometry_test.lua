@@ -43,14 +43,17 @@ check(near(Geometry.DistanceFactor(5000, 100, 1000, 0.5), 0.5), "far markers at 
 check(Geometry.DistanceFactor(nil, 100, 1000, 0.5) == 1, "no distance known")
 
 local focusAngle = math.rad(5)
-local rare = { angle = 0.01, priority = 0 }
-local quest = { angle = -0.05, priority = 1 }
-local other = { angle = 0.02, priority = 0 }
-local outside = { angle = 0.2, priority = 1 }
-check(Geometry.PickFocus({ rare, other }, focusAngle) == rare, "closest to the centre line")
-check(Geometry.PickFocus({ rare, quest, other }, focusAngle) == quest, "tracked quest wins within the focus")
-check(Geometry.PickFocus({ outside, other }, focusAngle) == other, "priority only counts within the focus")
-check(Geometry.PickFocus({ outside }, focusAngle) == nil, "nothing in focus")
+local rare = { angle = 0.01, distance = 300 }
+local quest = { angle = -0.05, distance = 100 }
+local other = { angle = 0.02, distance = 200 }
+local outside = { angle = 0.2, distance = 10 }
+local focus = Geometry.FocusMarkers({ rare, outside, quest, other }, focusAngle)
+check(#focus == 3, "only markers within the focus")
+check(focus[1] == quest and focus[2] == other and focus[3] == rare, "nearest first")
+check(#Geometry.FocusMarkers({ outside }, focusAngle) == 0, "nothing in focus")
+local left, right = { angle = -0.03 }, { angle = 0.01 }
+focus = Geometry.FocusMarkers({ left, right }, focusAngle)
+check(focus[1] == right and focus[2] == left, "without distances closest to the centre line first")
 
 check(Geometry.FormatDistance(123.6) == "124 m", "rounded yards labelled m")
 check(Geometry.FormatDistance(1234) == "1.2 km", "km from 1000 on")

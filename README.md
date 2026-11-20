@@ -74,10 +74,13 @@ until it is needed, and as much as possible can be done from the keyboard.
   members, the notes button and the other addons' minimap buttons.
 - **Compass** – a black band hanging below the notch, like the compass in
   Elder Scrolls Online: directions with ticks every 15° (N highlighted) over
-  the 180° ahead of your character, with markers for the tracked quest, your
-  map pin, other quests in the zone, rares, treasures and events, group
-  members in class colour and your corpse. The marker in the centre shows its
-  name and distance ("124 m", game yards) in a tab below the band. Markers
+  the 180° ahead of your character, with markers for your map pin, the quests
+  in your objective tracker (all alike, the super-tracked one included), world
+  quests and bonus objectives, rares, treasures and events, group members in
+  class colour and your corpse. The markers in the centre show their names and
+  distances ("124 m", game yards) in a tab below the band, one line each,
+  nearest first. Quests not in the objective tracker can't be shown: the game
+  gives addons no position for them. Markers
   shrink and dim with distance, and everything fades towards the ends. It
   follows the character's facing (the game has no camera direction for
   addons), lets clicks through, hides while the notch island is open, and is
