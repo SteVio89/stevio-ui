@@ -37,9 +37,12 @@ until it is needed, and as much as possible can be done from the keyboard.
   on its cell with a thinner, dimmer border.
 - **Quickjump** – two-letter labels on dialogs, gossip, quest windows, flight
   maps and other panels; type the letters to click. Shift on the first letter
-  right-clicks. Pressing `,` again moves the labels to the next open window,
-  topmost first, and after the last one hides them; popups get their labels
-  first. Flight masters get a sorted list of destinations next to the map.
+  right-clicks. Labels only appear when you press `,`; nothing is labelled on
+  its own. Popups get their labels first, then an open gossip, quest or flight
+  master dialog, which keeps labelling each next page until it closes.
+  Pressing `,` again moves the labels to the next open window, topmost first,
+  and after the last one hides them. Flight masters get a sorted list of
+  destinations next to the map.
   `J`/`K` scroll the labelled window if it has a scroll bar. Windows with more
   targets than the usual letters can label also use D S A E W Q as first letters
   for the targets after the first 81, whose labels stay the same.
