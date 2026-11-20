@@ -14,7 +14,8 @@ local Compass = ns.RegisterModule("compass", {})
 
 local DIRECTION_NAMES = ns.isGerman and { NE = "NO", E = "O", SE = "SO" } or nil
 
-local band, labelBox, label
+local band, labelBox
+local labelLines = {}
 local directions = {}
 local markerPool = {}
 local markers = {}
@@ -120,18 +121,41 @@ local function DrawMarker(texture, marker, angle, x)
 	texture:Show()
 end
 
+local function GetLabelLine(index)
+	local line = labelLines[index]
+	if not line then
+		line = ns.CreateFontString(labelBox, nil, "CENTER")
+		line:SetPoint("TOP", labelBox, "TOP", 0, -(index - 1) * config.labelHeight)
+		line:SetHeight(config.labelHeight)
+		line:SetTextColor(unpack(colors.label))
+		labelLines[index] = line
+	end
+	return line
+end
+
+-- One line per marker in focus, nearest first, in a black tab as wide as the
+-- widest line.
 local function UpdateLabel(focus)
-	if not focus then
+	local width = 0
+	for index, marker in ipairs(focus) do
+		local text = marker.name or ""
+		if marker.distance then
+			local distance = Geometry.FormatDistance(marker.distance)
+			text = text ~= "" and ("%s  |cff%s%s|r"):format(text, distanceHex, distance) or distance
+		end
+		local line = GetLabelLine(index)
+		line:SetText(text)
+		line:Show()
+		width = math.max(width, line:GetStringWidth())
+	end
+	for index = #focus + 1, #labelLines do
+		labelLines[index]:Hide()
+	end
+	if #focus == 0 then
 		labelBox:Hide()
 		return
 	end
-	local text = focus.name or ""
-	if focus.distance then
-		local distance = Geometry.FormatDistance(focus.distance)
-		text = text ~= "" and ("%s  |cff%s%s|r"):format(text, distanceHex, distance) or distance
-	end
-	label:SetText(text)
-	labelBox:SetWidth(label:GetStringWidth() + 2 * config.letterSize)
+	labelBox:SetSize(width + 2 * config.letterSize, #focus * config.labelHeight)
 	labelBox:Show()
 end
 
@@ -170,7 +194,7 @@ local function UpdateMarkers(facing)
 	for index = used + 1, #markerPool do
 		markerPool[index]:Hide()
 	end
-	UpdateLabel(Geometry.PickFocus(visible, focusAngle))
+	UpdateLabel(Geometry.FocusMarkers(visible, focusAngle))
 end
 
 local sinceRefresh = 0
@@ -212,14 +236,10 @@ local function CreateBand()
 	-- A black tab below the band, only as wide as its text.
 	labelBox = CreateFrame("Frame", nil, band)
 	labelBox:SetPoint("TOP", band, "BOTTOM")
-	labelBox:SetHeight(config.labelHeight)
 	labelBox:Hide()
 	local labelBackground = labelBox:CreateTexture(nil, "BACKGROUND")
 	labelBackground:SetAllPoints()
 	labelBackground:SetColorTexture(unpack(colors.background))
-	label = ns.CreateFontString(labelBox, nil, "CENTER")
-	label:SetPoint("CENTER")
-	label:SetTextColor(unpack(colors.label))
 
 	CreateDirections()
 end
