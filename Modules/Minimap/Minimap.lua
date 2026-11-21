@@ -4,6 +4,8 @@ local MinimapModule = ns.RegisterModule("minimap", {})
 local config = ns.config.minimap
 
 local SQUARE_MASK = "Interface\\Buttons\\WHITE8X8"
+-- Another plain square, set first: setting the mask already set does nothing.
+local OTHER_SQUARE_MASK = "Interface\\ChatFrame\\ChatFrameBackground"
 
 -- Read by other addons (e.g. LibDBIcon) to place their minimap buttons
 -- correctly. Defined at load, as they may place buttons before the module is
@@ -77,11 +79,28 @@ local function PlaceVehicleLeaveButton(size)
 	})
 end
 
+local function ApplySquareMask()
+	Minimap:SetMaskTexture(OTHER_SQUARE_MASK)
+	Minimap:SetMaskTexture(SQUARE_MASK)
+end
+
+-- The map stays north up. A rotating map turns its mask into a circle, and
+-- the circle stays after the rotation is switched off, so the square mask
+-- is set again a moment after every change of the rotation CVar. The CVar
+-- is saved, so a rotation left on from an earlier session (or set by Edit
+-- Mode or another addon) would otherwise keep the map round.
+local function KeepNorthUp()
+	if GetCVar("rotateMinimap") ~= "0" then
+		SetCVar("rotateMinimap", "0")
+	end
+	ApplySquareMask()
+	C_Timer.After(0.2, ApplySquareMask)
+end
+
 function MinimapModule:OnEnable()
 	local size = GetMapSize()
 	Minimap:SetParent(UIParent)
 	Minimap:SetSize(size, size)
-	Minimap:SetMaskTexture(SQUARE_MASK)
 	ns.PinFrame(Minimap, function(frame)
 		ns.SetPoint(frame, ns.layout.minimap)
 	end)
@@ -104,4 +123,12 @@ function MinimapModule:OnEnable()
 	-- The size change needs a forced redraw, otherwise the map keeps rendering at the old size.
 	Minimap:SetZoom(Minimap:GetZoom() > 0 and 0 or 1)
 	Minimap:SetZoom(0)
+
+	KeepNorthUp()
+	ns.RegisterEvent("CVAR_UPDATE", function(_, name)
+		-- Compared without case: the payload's spelling is unverified.
+		if name and name:lower() == "rotateminimap" then
+			KeepNorthUp()
+		end
+	end)
 end

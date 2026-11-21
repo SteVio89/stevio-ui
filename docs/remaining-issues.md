@@ -71,6 +71,13 @@ need a check in game.
   version) are placed via the spell they replace instead of being reported as
   missing. Check that such a slot shows and casts the upgraded spell.
 
+### Minimap shape (#62)
+- The map is square and north up again after a login and after a `/reload`,
+  even though the strip experiment (#60) left the saved `rotateMinimap` CVar
+  on. Turning "Rotate Minimap" on in Edit Mode is undone and the map stays
+  square. Unverified: the exact name `CVAR_UPDATE` passes for the CVar, and
+  whether 0.2 s after the change is late enough for the mask.
+
 ### Mark toolbar (#52)
 - The toolbar sits on top of the minimap, right aligned (#56); on narrow
   screens, where the map is less wide than the toolbar, it reaches past the
