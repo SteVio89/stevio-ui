@@ -65,8 +65,9 @@ key switches between this strip and the usual square map in the corner.
   the end of combat.
 - **Corner view:** exactly today's minimap (bottom right, north up, its own
   zoom, icons, mouse wheel). The mark toolbar and vehicle leave button stay
-  where they are in both views: they and the tooltip anchor to
-  `StevioUI_MinimapCorner`, a stand-in at the corner map's position and size.
+  where they are in both views: the toolbar and the tooltip anchor to
+  `StevioUI_MinimapCorner`, a stand-in at the corner map's position and size;
+  the leave button is placed from the layout via Edit Mode.
 
 ## Removed
 
