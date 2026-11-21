@@ -79,6 +79,8 @@ Modules\Marks\Config.lua
 Modules\Marks\Symbols.lua
 Modules\Marks\Marks.lua
 
+Modules\Corner\Corner.lua
+
 Modules\Auras\Config.lua
 Modules\Auras\Auras.lua
 
