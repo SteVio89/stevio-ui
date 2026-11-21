@@ -79,7 +79,16 @@ check(Model.IsIgnoredCVar("showTutorials", patterns), "tutorial")
 check(Model.IsIgnoredCVar("enableMultiActionBars", patterns), "action bars")
 check(not Model.IsIgnoredCVar("graphicsQuality", patterns), "a preference")
 check(not Model.IsIgnoredCVar("anything", {}), "no patterns")
+check(Model.IsIgnoredCVar("rotateMinimap", patterns), "set by the minimap module")
 print("ignored cvars ok")
+
+-- RemoveIgnoredCVars: overrides saved before their CVar became ignored go.
+local saved = { rotateMinimap = "1", farclip = "1000", lastCharacterIndex = "2" }
+local removed = Model.RemoveIgnoredCVars(saved, patterns)
+check(table.concat(removed, ",") == "lastCharacterIndex,rotateMinimap", "removed names: " .. table.concat(removed, ","))
+check(saved.farclip == "1000" and saved.rotateMinimap == nil and saved.lastCharacterIndex == nil, "preferences stay")
+check(#Model.RemoveIgnoredCVars({}, patterns) == 0, "nothing saved")
+print("remove ignored cvars ok")
 
 -- LuaKey: identifiers as they are, everything else quoted.
 check(Model.LuaKey("graphicsQuality") == "graphicsQuality", "identifier")

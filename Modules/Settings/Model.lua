@@ -93,6 +93,22 @@ function Model.IsIgnoredCVar(name, patterns)
 	return false
 end
 
+-- Removes the entries of `cvars` (name -> value) that `patterns` ignore, such
+-- as an override saved before the CVar became ignored. Returns their names.
+function Model.RemoveIgnoredCVars(cvars, patterns)
+	local removed = {}
+	for name in pairs(cvars) do
+		if Model.IsIgnoredCVar(name, patterns) then
+			removed[#removed + 1] = name
+		end
+	end
+	for _, name in ipairs(removed) do
+		cvars[name] = nil
+	end
+	table.sort(removed)
+	return removed
+end
+
 function Model.LuaKey(name)
 	if name:match("^[%a_][%w_]*$") then
 		return name

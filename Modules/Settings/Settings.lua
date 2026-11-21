@@ -201,6 +201,9 @@ end
 ns.RegisterEvent("PLAYER_ENTERING_WORLD", OnEnteringWorld)
 
 function SettingsModule:OnEnable()
+	-- An override of a CVar that is ignored now (one a module sets itself)
+	-- would otherwise be applied, and reported, on every login.
+	Model.RemoveIgnoredCVars(StevioUIConfig.cvars, config.ignoredCVars)
 	enabled = true
 	TryApply()
 
