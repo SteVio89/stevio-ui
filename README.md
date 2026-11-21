@@ -37,10 +37,11 @@ until it is needed, and as much as possible can be done from the keyboard.
   on its cell with a thinner, dimmer border.
 - **Quickjump** – two-letter labels on dialogs, gossip, quest windows, flight
   maps and other panels; type the letters to click. Shift on the first letter
-  right-clicks. Labels only appear when you press `,`; nothing is labelled on
+  right-clicks. Labels only appear when you press the Quickjump key (unbound
+  by default); nothing is labelled on
   its own. Popups get their labels first, then an open gossip, quest or flight
   master dialog, which keeps labelling each next page until it closes.
-  Pressing `,` again moves the labels to the next open window, topmost first,
+  Pressing it again moves the labels to the next open window, topmost first,
   and after the last one hides them. Flight masters get a sorted list of
   destinations next to the map.
   `J`/`K` scroll the labelled window if it has a scroll bar. Windows with more
@@ -63,8 +64,19 @@ until it is needed, and as much as possible can be done from the keyboard.
   their slot; `/sui bars forget` drops them from the active set (so does putting
   something else in their slot). The two columns on the right edge are left
   alone by every switch (`sharedBars` in the action bar options).
-- **Minimap** – square, borderless, mouse-wheel zoom, the looking-for-group
-  button in its lower left corner, size derived from the screen. Other
+- **Minimap** – two views, switched with `,` (the choice is kept):
+  - *Strip* – a 640 × 88 band hanging below the notch, black like the notch,
+    showing the minimap ahead of your character. The map rotates with the
+    character (the game has no camera direction for addons), your arrow sits
+    at the bottom centre, and the map fades into the band at both ends.
+    Direction letters (N highlighted) and ticks every 15° run along the top
+    edge, each where its direction leaves the strip; they're gone in
+    instances, where the game gives addons no facing. Widest zoom, no mouse
+    (clicks pass through), hidden while the notch island is open; mail,
+    tracking and the looking-for-group button only show in the corner view.
+  - *Corner* – square, north up, borderless, mouse-wheel zoom, the
+    looking-for-group button in its lower left corner, size derived from the
+    screen. Other
   addons' minimap buttons move into the notch island (the black panel that
   opens when the cursor reaches the top of the screen), in a clickable grid
   below its other rows (`minimapButtons` in the notch options). The mail and
@@ -75,20 +87,6 @@ until it is needed, and as much as possible can be done from the keyboard.
   reputation, gold, free bag slots, lowest durability (yellow/red when low),
   zone with coordinates, time, FPS and latency, online friends and guild
   members, the notes button and the other addons' minimap buttons.
-- **Compass** – a black band hanging below the notch, like the compass in
-  Elder Scrolls Online: directions with ticks every 15° (N highlighted) over
-  the 180° ahead of your character, with markers for your map pin, the quests
-  in your objective tracker (all alike, the super-tracked one included), world
-  quests and bonus objectives, rares, treasures and events, group members in
-  class colour and your corpse. The markers in the centre show their names and
-  distances ("124 m", game yards) in a tab below the band, one line each,
-  nearest first. Quests not in the objective tracker can't be shown: the game
-  gives addons no position for them. Markers
-  shrink and dim with distance, and everything fades towards the ends. It
-  follows the character's facing (the game has no camera direction for
-  addons), lets clicks through, hides while the notch island is open, and is
-  gone in dungeons, raids and PvP instances, where the game gives addons no
-  positions. Herb and ore nodes can't be shown: the minimap draws them itself.
 - **Tooltip** – Blizzard's default tooltip position is moved above the minimap
   and the mark toolbar.
 - **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
@@ -212,7 +210,8 @@ first login.
 | Key | Action |
 | --- | --- |
 | Arrow keys | Move the group grid cursor (sets your target) |
-| `,` | Quickjump: show labels / next window |
+| `,` | Switch the minimap: strip below the notch / corner |
+| *(unbound)* | Quickjump: show labels / next window |
 | `J` / `K` | Quickjump: scroll |
 | `.` | Toggle chat |
 | *(unbound)* | Chat: write message, next / previous channel (`Tab` / `Shift-Tab` in the input) |
