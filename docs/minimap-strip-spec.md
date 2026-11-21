@@ -25,16 +25,28 @@ key switches between this strip and the usual square map in the corner.
 - Rotation comes from Blizzard's `rotateMinimap` CVar (set by
   `MinimapClusterMixin:SetRotateMinimap` in the live UI source). With it on,
   "up" on the map is the character's facing.
-- The strip's shape comes from `Minimap:SetMaskTexture()` with a mask texture
-  shipped in `Media/`: a square map, with only an 88 px band right above its
-  centre visible, fading out towards the left and right ends. A mask is a
-  file, made by `tools/strip_mask.py` for the default sizes; other `width`,
-  `height`, `behind` or `maskFade` values need a new one. The band also clips
-  its children (`SetClipsChildren`), so frames on the map (other addons' pins)
-  are cut to the strip, and the map too if the game clips it.
-- Unverified until tested in game: whether blips at the map's edge (quest
-  arrows, group members) are cut by the mask or stick out at the square's
-  edge, and whether rotation works inside instances.
+- The strip's shape comes from `Minimap:SetMaskTexture()`. Tested in game
+  (2026-11-21):
+  - A rotating minimap turns **its mask along** with the map: a square mask
+    visibly turns with the facing. A fixed band mask can't make a level strip.
+  - A mask set before the rotation is switched on, or while it is still
+    rotating before it is switched off, ends up round. Setting the mask that
+    is already set does nothing.
+  - Neither `SetClipsChildren` nor a scroll frame cuts the minimap's map.
+- So there is one mask per `maskStep` (3°) of facing, 120 in
+  `Media/StripMasks/`, each with the band turned back by that facing. The
+  strip swaps them as the character turns (`MinimapGeometry.MaskIndex`). The
+  band tilts by up to half a step between swaps. The masks are run-length
+  encoded TGAs (256², about 16 KB each) made by `tools/strip_mask.py` for the
+  default `width`, `height`, `behind`, `maskFade` and `maskStep`; other values
+  need new ones. The map is a square of `StripMapSize` (664 px), so the
+  band's corners stay inside it at any angle.
+- If the band turns the wrong way (twice as fast as you), `maskDirection = -1`
+  picks the masks the other way round. It can be tried live:
+  `/run StevioUI.config.minimap.strip.maskDirection = -1`.
+- Unverified until tested in game: whether WoW reads run-length encoded TGAs
+  as masks, how smooth the swapping looks, whether blips at the map's edge
+  are cut by the mask, and whether rotation works inside instances.
 
 ## Behaviour
 
@@ -80,7 +92,7 @@ history.
 
 The strip is a second view of the minimap, so it lives in `Modules/Minimap/`:
 
-- `Config.lua`: a `strip` table with `width = 640`, `height = 88`, the mask,
+- `Config.lua`: a `strip` table with `width = 640`, `height = 88`, the masks,
   letter and tick settings and colours (from the compass config).
 - `Geometry.lua`: adds the pure functions for the letter positions (angle to
   the facing, x on the top edge, fade), unit-tested.
