@@ -42,17 +42,20 @@ local function Applying(fn, ...)
 	return result
 end
 
+-- Returns whether a CVar changed, and the names of those that did.
 local function ApplyCVars(cvars)
-	return Applying(function()
-		local changed = false
+	local names = {}
+	local changed = Applying(function()
 		for name, value in pairs(cvars) do
-			if GetCVar(name) ~= value then
+			if not Model.SameCVarValue(GetCVar(name), value) then
 				SetCVar(name, value)
-				changed = true
+				names[#names + 1] = name
 			end
 		end
-		return changed
+		return #names > 0
 	end)
+	table.sort(names)
+	return changed, names
 end
 
 -- Strict: every key not bound in the profile gets unbound, so a fresh client
@@ -105,15 +108,20 @@ local function ApplyProfile()
 	if profile.actionBars and ApplyActionBars(profile.actionBars) then
 		changed[#changed + 1] = ns.T("action bars", "Aktionsleisten")
 	end
-	if profile.cvars and ApplyCVars(EffectiveCVars()) then
-		changed[#changed + 1] = ns.T("settings", "Einstellungen")
+	if profile.cvars then
+		local cvarsChanged, names = ApplyCVars(EffectiveCVars())
+		if cvarsChanged then
+			-- Named, so a CVar the client keeps resetting shows up.
+			changed[#changed + 1] = ("%s: %s"):format(ns.T("settings", "Einstellungen"), table.concat(names, ", "))
+		end
 	end
 	if profile.bindings and ApplyBindings(EffectiveBindings()) then
 		changed[#changed + 1] = ns.T("key bindings", "Tastenbelegung")
 	end
 	profileApplied = true
 	if #changed > 0 then
-		ns.Print(ns.T("Profile applied (%s).", "Profil angewendet (%s)."):format(table.concat(changed, ", ")))
+		-- Nobody asked for it, so it doesn't open the chat (ns.Notify).
+		ns.Notify(ns.T("Profile applied (%s).", "Profil angewendet (%s)."):format(table.concat(changed, "; ")))
 	end
 end
 

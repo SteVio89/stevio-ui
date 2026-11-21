@@ -24,6 +24,16 @@ check(Model.CVarOverrideFor("2", "1", nil) == "2", "unmanaged CVar changed")
 check(Model.CVarOverrideFor("1", "1", nil) == nil, "unmanaged CVar back to the default clears")
 print("cvar capture ok")
 
+-- SameCVarValue: numbers in another spelling count as the same.
+check(Model.SameCVarValue("1", "1"), "same string")
+check(Model.SameCVarValue("1", "1.000000"), "same number, other spelling")
+check(Model.SameCVarValue("0.5", ".5"), "leading zero")
+check(not Model.SameCVarValue("1", "2"), "different numbers")
+check(not Model.SameCVarValue("MTL", "D3D12"), "different strings")
+check(not Model.SameCVarValue(nil, "1"), "unknown CVar")
+check(not Model.SameCVarValue("", "0"), "empty is not zero")
+print("same cvar values ok")
+
 -- CVarOverride: the options panel setting or removing a CVar.
 local override, backToDefault = Model.CVarOverride("3", "5")
 check(override == "3" and not backToDefault, "panel sets a profile CVar")
