@@ -1,7 +1,7 @@
 # Minimap strip (issue 60) – spec
 
-Status: **agreed, not implemented yet.** Replaces the compass from issues 57
-and 58.
+Status: **implemented** in `Modules/Minimap/` (issue 60), not yet tested in
+game. Replaces the compass from issues 57 and 58.
 
 ## Idea
 
@@ -28,8 +28,10 @@ key switches between this strip and the usual square map in the corner.
 - The strip's shape comes from `Minimap:SetMaskTexture()` with a mask texture
   shipped in `Media/`: a square map, with only an 88 px band right above its
   centre visible, fading out towards the left and right ends. A mask is a
-  file, so it fits the default sizes; other `width`/`height` values need a new
-  mask (or a clipping parent, if the minimap respects one: to check in game).
+  file, made by `tools/strip_mask.py` for the default sizes; other `width`,
+  `height`, `behind` or `maskFade` values need a new one. The band also clips
+  its children (`SetClipsChildren`), so frames on the map (other addons' pins)
+  are cut to the strip, and the map too if the game clips it.
 - Unverified until tested in game: whether blips at the map's edge (quest
   arrows, group members) are cut by the mask or stick out at the square's
   edge, and whether rotation works inside instances.
@@ -57,9 +59,14 @@ key switches between this strip and the usual square map in the corner.
   - Notch island: covers the strip while open, as with the compass.
   - Instances: the strip stays and the letters hide, as `GetPlayerFacing()`
     returns nothing there.
+- **Edit Mode** sets the rotation from its layout (north up in ours), so the
+  strip applies it again after `UpdateSystemSettingRotateMinimap`.
+- **Combat:** if something protected sits on the map, the switch waits for
+  the end of combat.
 - **Corner view:** exactly today's minimap (bottom right, north up, its own
   zoom, icons, mouse wheel). The mark toolbar and vehicle leave button stay
-  where they are in both views.
+  where they are in both views: they and the tooltip anchor to
+  `StevioUI_MinimapCorner`, a stand-in at the corner map's position and size.
 
 ## Removed
 
@@ -76,6 +83,8 @@ The strip is a second view of the minimap, so it lives in `Modules/Minimap/`:
   letter and tick settings and colours (from the compass config).
 - `Geometry.lua`: adds the pure functions for the letter positions (angle to
   the facing, x on the top edge, fade), unit-tested.
-- `Strip.lua`: the switch, moving and masking the map, the CVar and zoom,
-  the letters, the island and instance handling.
+- `Strip.lua`: the band, the letters, moving the map in, and the island and
+  instance handling.
+- `Minimap.lua`: the switch (`ns.ToggleMinimapView`), the saved view, the
+  CVar, zoom, mask, icons and mouse per view.
 - `Modules/Compass/` goes away.
