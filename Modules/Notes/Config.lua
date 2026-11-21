@@ -31,7 +31,6 @@ ns.config.notes = {
 	window = { width = 780, height = 500 },
 
 	colors = {
-		star = { 1, 0.82, 0 },
 		dim = { 0.5, 0.5, 0.5 },
 		note = { 0.85, 0.85, 0.6 },
 		selected = { 0.3, 0.5, 0.9, 0.35 },
