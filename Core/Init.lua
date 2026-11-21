@@ -91,6 +91,12 @@ function ns.PrintLine(text)
 	PrintMarked(text)
 end
 
+-- Like ns.Print, but for a notice nobody asked for (e.g. at login): it only
+-- counts as unread in the System channel instead of opening the chat on it.
+function ns.Notify(text)
+	print(("|cff33ff99%s|r: %s"):format(addonName, text))
+end
+
 local slashCommands = {}
 
 function ns.RegisterSlashCommand(name, handler)
