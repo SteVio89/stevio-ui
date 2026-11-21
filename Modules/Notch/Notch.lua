@@ -284,8 +284,8 @@ end
 -- Returns the notch in UIParent units: left and right edge, height, and how far
 -- the real screen top lies above UIParent's top. UIParent may be shifted below
 -- the notch depending on the notch display mode; anchoring against the screen
--- top works in every mode. Also used by the compass, which hangs below the
--- notch, so it works with the notch module turned off.
+-- top works in every mode. Also used by the minimap strip, which hangs below
+-- the notch, so it works with the notch module turned off.
 local function GetNotchRect()
 	local physicalWidth, physicalHeight = GetPhysicalScreenSize()
 	local _, leftEarRight, _, leftEarBottom = C_UI.GetTopLeftNotchSafeRegion()
@@ -328,7 +328,7 @@ local function CreateIsland()
 	island = CreateFrame("Frame", "StevioUI_NotchIsland", UIParent)
 	island:SetFrameStrata("FULLSCREEN_DIALOG")
 	island:Hide()
-	-- The compass hides while the island covers it.
+	-- The minimap strip hides while the island covers it.
 	ns.notchIsland = island
 	local background = island:CreateTexture(nil, "BACKGROUND")
 	background:SetAllPoints()

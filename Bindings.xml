@@ -15,6 +15,9 @@
 	<Binding name="STEVIOUI_CHAT_PREVIOUS" category="ADDONS">
 		StevioUI.PreviousChatChannel()
 	</Binding>
+	<Binding name="STEVIOUI_TOGGLE_MAP" category="ADDONS">
+		StevioUI.ToggleMinimapView()
+	</Binding>
 	<Binding name="STEVIOUI_QUICKJUMP" category="ADDONS">
 		StevioUI.QuickJumpLeader()
 	</Binding>

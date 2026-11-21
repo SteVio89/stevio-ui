@@ -46,6 +46,7 @@ Modules\KeyboardHealing\KeyboardHealing.lua
 
 Modules\Minimap\Config.lua
 Modules\Minimap\Geometry.lua
+Modules\Minimap\Strip.lua
 Modules\Minimap\Minimap.lua
 
 Modules\Tooltip\Config.lua
@@ -59,11 +60,6 @@ Modules\Notch\Zone.lua
 Modules\Notch\Buttons.lua
 Modules\Notch\Layout.lua
 Modules\Notch\Notch.lua
-
-Modules\Compass\Config.lua
-Modules\Compass\Geometry.lua
-Modules\Compass\Markers.lua
-Modules\Compass\Compass.lua
 
 Modules\Chat\Config.lua
 Modules\Chat\History.lua
