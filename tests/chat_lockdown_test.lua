@@ -89,7 +89,7 @@ C.Label = function(channel)
 	return channel.label or channel.key
 end
 C.ShowEntry = function() end
-C.ShowChannel = function() end
+C.Peek = function() end
 C.StartAutoTimer = function() end
 C.Update = function() end
 C.Selected = function() end

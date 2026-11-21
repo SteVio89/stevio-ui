@@ -16,6 +16,8 @@ local Chat = ns.RegisterModule("chat", {})
 
 -- Picking a channel in the open chat is opening it by hand.
 function C.Select(key)
+	-- A channel picked by hand stays, also when picked during a peek.
+	state.peekReturn = nil
 	if not C.hidden then
 		C.Pin()
 	end
@@ -26,10 +28,13 @@ function C.Select(key)
 	C.RefreshSidebar()
 end
 
--- Where the chat opens when no channel is picked: the latest activity, so
--- messages in quiet channels (say, General, ...) aren't hidden behind an empty
--- Guild channel.
+-- Where the chat opens when no channel is picked: Main (#65), without it the
+-- latest activity, so messages in quiet channels (say, General, ...) aren't
+-- hidden behind an empty Guild channel.
 local function DefaultKey()
+	if config.main.enabled then
+		return config.main.key
+	end
 	local recent = C.store:MostRecent()
 	if recent then
 		return recent.key
@@ -55,9 +60,26 @@ function C.DeleteChannel(key)
 	C.UpdateBadge()
 end
 
+-- Shows channel `key` in the chat that pops up for a message (see Receive.lua)
+-- until it hides again: the channel open before comes back then, so the
+-- messages at login don't leave the chat on System (#65).
+function C.Peek(key)
+	if not C.Attended() and state.peekReturn == nil then
+		state.peekReturn = state.selected or false
+	end
+	C.ShowChannel(key)
+end
+
 function C.Update()
 	local wasHidden = C.hidden
 	C.hidden = not (state.manual or state.typing or state.autoTimer)
+	if C.hidden and state.peekReturn ~= nil then
+		local key = state.peekReturn
+		state.peekReturn = nil
+		if key and key ~= state.selected then
+			C.ShowChannel(key)
+		end
+	end
 	local channel = C.Selected()
 	-- An empty channel picked by hand stays open; one left over from before
 	-- the chat was hidden gives way to where something happened.
@@ -103,6 +125,8 @@ C.StartAutoTimer = StartAutoTimer
 -- by hand. Only a chat that popped up by itself hides by itself (#37).
 function C.Pin()
 	state.manual = true
+	-- Opened during a peek, the chat stays on the peeked channel.
+	state.peekReturn = nil
 	if state.autoTimer then
 		state.autoTimer:Cancel()
 		state.autoTimer = nil

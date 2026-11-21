@@ -77,7 +77,7 @@ function C.Receive(def, key, opts, entry)
 		return
 	end
 	if open then
-		C.ShowChannel(show)
+		C.Peek(show)
 	end
 	C.StartAutoTimer(config.autoShowDuration)
 	C.Update()

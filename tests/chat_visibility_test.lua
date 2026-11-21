@@ -30,7 +30,7 @@ local function NotShown()
 	return false
 end
 local ns = {
-	config = { chat = { autoShowDuration = 8 } },
+	config = { chat = { autoShowDuration = 8, main = { enabled = true, key = "main" } } },
 	ChatInternal = { state = {} },
 	RegisterModule = function()
 		return {}
@@ -40,9 +40,11 @@ local C = ns.ChatInternal
 local state = C.state
 local channel = { key = "guild", messages = { {} }, unread = 0 }
 C.Selected = function()
-	return channel
+	return state.selected and channel
 end
-C.ShowChannel = function()
+C.RenderMessages = Stub
+C.ShowChannel = function(key)
+	state.selected = key
 	return channel
 end
 C.Attended = function()
@@ -58,6 +60,7 @@ loadAddonFile("Modules/Chat/Chat.lua", ns)
 
 local function Reset()
 	state.manual, state.typing, state.autoTimer, state.selected = false, false, nil, "guild"
+	state.peekReturn = nil
 	timers = {}
 	C.Update()
 end
@@ -121,5 +124,64 @@ check(not C.hidden, "typing into the popped-up chat keeps it open after sending"
 Reset()
 C.Select("party")
 check(C.hidden and not state.manual, "selecting in the hidden chat doesn't open it")
+
+-- With no channel open yet (login) the chat starts on Main (#65).
+Reset()
+state.selected = nil
+C.Update()
+check(state.selected == "main", "the chat starts on Main")
+
+-- A message peeks at its channel in the hidden chat; once the chat hides
+-- again, the channel open before comes back (#65: login left it on System).
+local function PeekAt(key)
+	C.Peek(key)
+	C.StartAutoTimer(8)
+	C.Update()
+end
+
+Reset()
+PeekAt("system")
+check(not C.hidden and state.selected == "system", "the popped-up chat shows the message's channel")
+PeekAt("party")
+check(state.selected == "party", "a later message peeks at its channel")
+FireTimers()
+check(C.hidden and state.selected == "guild", "hidden again, the channel open before comes back")
+ns.ToggleChat()
+check(state.selected == "guild", "opened by hand on the channel open before")
+
+-- Closing the popped-up chat with the toggle key ends the peek as well.
+Reset()
+PeekAt("system")
+ns.ToggleChat()
+check(C.hidden and state.selected == "guild", "toggled closed: the channel open before comes back")
+
+-- Opened or picked in during a peek: the chat stays on that channel.
+Reset()
+PeekAt("system")
+ns.ToggleChat()
+ns.ToggleChat()
+check(not C.hidden and state.selected == "guild", "toggled closed and open again: no peek left")
+ns.ToggleChat()
+
+Reset()
+PeekAt("system")
+ns.FocusChatInput()
+ns.ToggleChat()
+check(C.hidden and state.selected == "system", "typing into the peeked channel keeps it")
+
+Reset()
+PeekAt("system")
+C.Select("party")
+FireTimers()
+ns.ToggleChat()
+ns.ToggleChat()
+check(state.selected == "party", "a channel picked during a peek stays picked")
+
+-- A focus channel opened in the chat the player opened is no peek.
+Reset()
+ns.ToggleChat()
+PeekAt("system")
+ns.ToggleChat()
+check(C.hidden and state.selected == "system", "focus channel in the open chat stays")
 
 print("chat_visibility_test: ok")
