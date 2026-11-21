@@ -25,7 +25,7 @@ local TITLES = {
 	lootTicker = { "Loot ticker", "Beuteticker" },
 	notch = { "Notch", "Notch" },
 	questRewards = { "Quest rewards", "Questbelohnungen" },
-	accessibility = { "Quickjump", "Schnellsprung" },
+	taxi = { "Flight list", "Flugliste" },
 	notes = { "Notes", "Notizen" },
 	settings = { "Profile", "Profil" },
 }

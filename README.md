@@ -35,17 +35,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   cursor's player; moving starts with the next one.
   When you target something else (an enemy, loot, nothing), the cursor stays
   on its cell with a thinner, dimmer border.
-- **Quickjump** – two-letter labels on dialogs, gossip, quest windows, flight
-  maps and other panels; type the letters to click. Shift on the first letter
-  right-clicks. Labels only appear when you press `,`; nothing is labelled on
-  its own. Popups get their labels first, then an open gossip, quest or flight
-  master dialog, which keeps labelling each next page until it closes.
-  Pressing `,` again moves the labels to the next open window, topmost first,
-  and after the last one hides them. Flight masters get a sorted list of
-  destinations next to the map.
-  `J`/`K` scroll the labelled window if it has a scroll bar. Windows with more
-  targets than the usual letters can label also use D S A E W Q as first letters
-  for the targets after the first 81, whose labels stay the same.
+- **Flight list** – flight masters get a list of the reachable destinations
+  next to the map, sorted by name with their cost; click one to fly there.
 - **Action bars, menu and bags** – Blizzard's secure buttons, stripped down and
   placed via a dedicated Edit Mode layout named `stevio-ui`.
   Two columns of 12 buttons on the right screen edge (bars 4 and 5, no
@@ -179,8 +170,8 @@ until it is needed, and as much as possible can be done from the keyboard.
 stevio-ui is built for one setup; its defaults in code are the author's, and
 the options panel (see Configuration) changes them for yours:
 
-- **German keyboard layout** – Quickjump letters and some keys are chosen for
-  it (`Y`/`Z` are swapped compared to US).
+- **German keyboard layout** – some keys are chosen for it (`Y`/`Z` are
+  swapped compared to US).
 - **UI scale around 0.8** (≈ 960 UI units screen height). At higher scales the
   40-player grid overlaps the loot ticker at the bottom left.
 - **The bundled keybinding and graphics profile is the author's own.** Change
@@ -198,8 +189,6 @@ first login.
 | Key | Action |
 | --- | --- |
 | Arrow keys | Move the group grid cursor (sets your target) |
-| `,` | Quickjump: show labels / next window |
-| `J` / `K` | Quickjump: scroll |
 | `.` | Toggle chat |
 | *(unbound)* | Chat: write message, next / previous channel (`Tab` / `Shift-Tab` in the input) |
 | `-` | Toggle objective tracker |
@@ -217,7 +206,6 @@ first login.
 | `/sui bars forget` | Drop those actions from the active set |
 | `/sui notes [item link]` | Toggle the notes window, or edit the note of that item |
 | `/sui chat` | List the chat channels with message and unread counts |
-| `/sui qj` | List the current Quickjump targets |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |
 | `/sui errors` | Show stevio-ui's logged Lua errors, kept across sessions (`/sui errors clear` empties the log) |
 | `/sui config` | Open the options panel |

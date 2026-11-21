@@ -91,7 +91,7 @@ function ns.CreateBorder(frame, sublevel, size)
 	return border
 end
 
--- Near-black backdrop of small overlay panels (Quickjump badges, flight list).
+-- Near-black backdrop of small overlay panels (flight list).
 ns.PANEL_COLOR = { 0, 0, 0, 0.9 }
 
 -- `color` defaults to the style's background colour.

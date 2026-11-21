@@ -61,10 +61,7 @@ need a check in game.
 ### Other
 - The action bars are styled and placed from `ns.layout.actionBars` alone.
 - A channel's cast bar stays visible when it turns interruptible or not.
-- `/sui loot`, `/sui notch`, `/sui test` and `/sui qj` say the module is off
-  while it is; `/sui qj` no longer changes which window gets labels next.
-- Quickjump in windows with more than 81 targets: the first 81 labels stay as
-  they were, and later targets get the extra first letters.
+- `/sui loot`, `/sui notch` and `/sui test` say the module is off while it is.
 
 ### Action sets (#33)
 - Switching to a set that can't place everything lists each missing action with
