@@ -156,7 +156,7 @@ ns.config.settings.profile = {
 		-- stevio-ui
 		["-"] = "STEVIOUI_TOGGLE_TRACKER",
 		["."] = "STEVIOUI_TOGGLE_CHAT",
-		[","] = "STEVIOUI_TOGGLE_MAP",
+		[","] = "STEVIOUI_QUICKJUMP",
 	},
 
 	cvars = {

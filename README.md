@@ -37,11 +37,10 @@ until it is needed, and as much as possible can be done from the keyboard.
   on its cell with a thinner, dimmer border.
 - **Quickjump** – two-letter labels on dialogs, gossip, quest windows, flight
   maps and other panels; type the letters to click. Shift on the first letter
-  right-clicks. Labels only appear when you press the Quickjump key (unbound
-  by default); nothing is labelled on
+  right-clicks. Labels only appear when you press `,`; nothing is labelled on
   its own. Popups get their labels first, then an open gossip, quest or flight
   master dialog, which keeps labelling each next page until it closes.
-  Pressing it again moves the labels to the next open window, topmost first,
+  Pressing `,` again moves the labels to the next open window, topmost first,
   and after the last one hides them. Flight masters get a sorted list of
   destinations next to the map.
   `J`/`K` scroll the labelled window if it has a scroll bar. Windows with more
@@ -64,19 +63,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   their slot; `/sui bars forget` drops them from the active set (so does putting
   something else in their slot). The two columns on the right edge are left
   alone by every switch (`sharedBars` in the action bar options).
-- **Minimap** – two views, switched with `,` (the choice is kept):
-  - *Strip* – a 640 × 88 band hanging below the notch, black like the notch,
-    showing the minimap ahead of your character. The map rotates with the
-    character (the game has no camera direction for addons), your arrow sits
-    at the bottom centre, and the map fades into the band at both ends.
-    Direction letters (N highlighted) and ticks every 15° run along the top
-    edge, each where its direction leaves the strip; they're gone in
-    instances, where the game gives addons no facing. Widest zoom, no mouse
-    (clicks pass through), hidden while the notch island is open; mail,
-    tracking and the looking-for-group button only show in the corner view.
-  - *Corner* – square, north up, borderless, mouse-wheel zoom, the
-    looking-for-group button in its lower left corner, size derived from the
-    screen. Other
+- **Minimap** – square, borderless, mouse-wheel zoom, the looking-for-group
+  button in its lower left corner, size derived from the screen. Other
   addons' minimap buttons move into the notch island (the black panel that
   opens when the cursor reaches the top of the screen), in a clickable grid
   below its other rows (`minimapButtons` in the notch options). The mail and
@@ -210,8 +198,7 @@ first login.
 | Key | Action |
 | --- | --- |
 | Arrow keys | Move the group grid cursor (sets your target) |
-| `,` | Switch the minimap: strip below the notch / corner |
-| *(unbound)* | Quickjump: show labels / next window |
+| `,` | Quickjump: show labels / next window |
 | `J` / `K` | Quickjump: scroll |
 | `.` | Toggle chat |
 | *(unbound)* | Chat: write message, next / previous channel (`Tab` / `Shift-Tab` in the input) |

@@ -46,7 +46,6 @@ Modules\KeyboardHealing\KeyboardHealing.lua
 
 Modules\Minimap\Config.lua
 Modules\Minimap\Geometry.lua
-Modules\Minimap\Strip.lua
 Modules\Minimap\Minimap.lua
 
 Modules\Tooltip\Config.lua

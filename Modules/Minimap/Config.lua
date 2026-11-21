@@ -11,39 +11,4 @@ ns.config.minimap = {
 	iconScale = 0.8,
 	-- Space between the map's bottom edge and the vehicle leave button below it.
 	vehicleLeaveGap = 4,
-
-	-- The strip view below the notch (the ',' key switches): the map rotates
-	-- with the character and shows only what lies ahead.
-	strip = {
-		-- Width and height above the player's arrow. The map also shows
-		-- `behind` below the arrow, so the arrow isn't cut in half.
-		width = 640,
-		height = 88,
-		behind = 8,
-		-- The map fades into the black band over this fraction of each half.
-		maskFade = 0.25,
-		-- A rotating minimap turns its mask along, so there is one mask per
-		-- this many degrees of facing, turned back by it. The masks in
-		-- Media/StripMasks are made for width, height, behind, maskFade and
-		-- maskStep; after changing them, run tools/strip_mask.py with the new
-		-- values.
-		maskStep = 3,
-		-- 1, or -1 if the band turns the wrong way (twice as fast as you).
-		maskDirection = 1,
-
-		-- Direction letters and ticks along the top edge.
-		tickStep = 15,
-		tickHeight = 4,
-		letterSize = 12,
-		-- They fade from this fraction of the half width on to edgeAlpha at the ends.
-		fadeStart = 0.5,
-		edgeAlpha = 0.15,
-
-		colors = {
-			background = { 0, 0, 0, 1 },
-			letter = { 1, 1, 1 },
-			north = { 1, 0.82, 0 },
-			tick = { 0.6, 0.6, 0.6 },
-		},
-	},
 }
