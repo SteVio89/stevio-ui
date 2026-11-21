@@ -32,6 +32,17 @@ function Model.CVarOverrideFor(value, defaultValue, profileValue)
 	return value
 end
 
+-- Whether a CVar holding `current` already has `value`. The client may store
+-- a number in another spelling than the profile's ("1" for "1.000000"); that
+-- counts as the same, or the profile would be set again on every login.
+function Model.SameCVarValue(current, value)
+	if current == value then
+		return true
+	end
+	local a, b = tonumber(current), tonumber(value)
+	return a ~= nil and a == b
+end
+
 -- The override for a key set to `command` in the options panel (nil unbinds
 -- it); none for the profile's own command, `false` for unbinding a key the
 -- profile binds.
