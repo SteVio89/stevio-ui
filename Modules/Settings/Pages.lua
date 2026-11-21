@@ -24,7 +24,7 @@ Pages.MODULES = {
 	{ "lootTicker", layout = { "lootTicker" } },
 	{ "notch" },
 	{ "questRewards" },
-	{ "accessibility" },
+	{ "taxi" },
 	{ "notes" },
 	{ "settings" },
 }

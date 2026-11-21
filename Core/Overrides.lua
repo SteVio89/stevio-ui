@@ -222,6 +222,8 @@ local OLD_GROUP_HALF_WIDTH = 331
 Overrides.MIGRATIONS = {
 	{ id = "actionBarsKey", rename = { "config/actionbars", "config/actionBars" } },
 	{ id = "restedAlpha", rename = { "config/notch/colors/restedAlpha", "config/notch/restedAlpha" } },
+	-- The flight list was part of Quickjump, which is gone.
+	{ id = "taxiModule", rename = { "config/accessibility/taxi", "config/taxi" } },
 	{
 		-- targetAuras and focus count their x from the group grid's edge now.
 		id = "besideGroupOffsets",

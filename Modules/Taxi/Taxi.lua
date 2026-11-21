@@ -1,10 +1,10 @@
 local _, ns = ...
 
-local config = ns.config.accessibility.taxi
-local Internal = ns.AccessibilityInternal
+local config = ns.config.taxi
+local Taxi = ns.RegisterModule("taxi", {})
 
--- Blizzard's flight map has no list to label, so reachable destinations get
--- their own compact list next to it; the map stays for orientation.
+-- Reachable destinations as a compact list sorted by name next to Blizzard's
+-- flight map; the map stays for orientation.
 
 local panel
 local rows = {}
@@ -45,7 +45,7 @@ end
 
 -- Testable without the game: the reachable nodes ({ index, type, name, cost })
 -- sorted by name, ignoring case.
-function Internal.ReachableSorted(nodes)
+function Taxi.ReachableSorted(nodes)
 	local reachable = {}
 	for _, node in ipairs(nodes) do
 		if node.type == "REACHABLE" then
@@ -67,7 +67,7 @@ local function Build()
 			all[index].name, all[index].cost = TaxiNodeName(index), TaxiNodeCost(index)
 		end
 	end
-	local nodes = Internal.ReachableSorted(all)
+	local nodes = Taxi.ReachableSorted(all)
 
 	for index, node in ipairs(nodes) do
 		local row = GetRow(index)
@@ -89,40 +89,15 @@ local function Build()
 		panel:SetPoint("CENTER")
 	end
 	panel:SetShown(#nodes > 0)
-	ns.QuickJump:RequestRefresh()
 end
 
-local taxiSource = {
-	name = "taxi",
-	priority = 15,
-	IsOpen = function()
-		return Internal.IsDialogRequested() and panel:IsShown()
-	end,
-	Collect = function()
-		local targets = {}
-		for _, row in ipairs(rows) do
-			if row:IsShown() then
-				targets[#targets + 1] = row
-			end
-		end
-		return targets
-	end,
-}
-
-function Internal.IsTaxiListOpen()
-	return panel ~= nil and panel:IsShown()
-end
-
-function Internal.SetupTaxiList()
+function Taxi:OnEnable()
 	panel = CreateFrame("Frame", "StevioUI_TaxiList", UIParent)
 	panel:SetWidth(config.width)
 	panel:SetFrameStrata("HIGH")
 	ns.CreateBackground(panel, ns.PANEL_COLOR)
 	ns.CreateBorder(panel)
 	panel:Hide()
-	panel:HookScript("OnHide", Internal.DialogHidden)
-
-	ns.QuickJump:RegisterSource(taxiSource)
 
 	-- The map frame is shown after the event, and the list anchors to it.
 	ns.RegisterEvent("TAXIMAP_OPENED", function()
