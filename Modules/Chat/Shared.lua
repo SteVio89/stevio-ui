@@ -21,6 +21,9 @@ local C = {
 		-- Channel key Main writes to while it is picked or being typed into
 		-- (nil: the channel of Main's latest line).
 		mainTarget = nil,
+		-- Channel key the chat goes back to when a peek (C.Peek) ends; false
+		-- when none was open, nil while not peeking.
+		peekReturn = nil,
 	},
 	store = nil,
 	ui = {}, -- frame, sidebar, listScroll, list, thumb, header, messages, input, rows, copy

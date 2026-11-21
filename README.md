@@ -116,8 +116,10 @@ until it is needed, and as much as possible can be done from the keyboard.
   up the chat. Hidden by default, toggled by key or by the badge at the left
   screen edge (also hiding a chat that just popped up), whose three segments light up on new whispers, group (party,
   raid, instance) or guild messages. A new message that pops up the chat
-  switches to its channel (or Main); otherwise the chat reopens on the
-  channel last shown. Raid warnings and officer chat are marked `[RW]` and
+  switches to its channel (or Main) until it hides again, then goes back to
+  the channel shown before, unless you opened the chat or picked a channel
+  meanwhile. The chat starts on Main and otherwise reopens on the channel
+  last shown. Raid warnings and officer chat are marked `[RW]` and
   `[O]`. During boss fights, Mythic+ and PvP matches the game hides chat
   from addons: those messages show as "… (readable after the fight)" and
   are filled in once it is over; whispers from then arrive afterwards. The mouse wheel scrolls (`scrollStep`), and the Copy button in the
