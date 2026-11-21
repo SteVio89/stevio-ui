@@ -49,4 +49,13 @@ degrees = Geometry.DirectionDegrees(30)
 check(#degrees == 16, "30 degree ticks plus the letters at 45, 135, ...: " .. #degrees)
 check(degrees[2] == 30 and degrees[3] == 45, "ascending, letters in between")
 
+check(Geometry.StripMapSize(640, 88) == 664, "band corners fit at any angle")
+check(Geometry.MaskIndex(0, 120) == 0, "facing north")
+check(Geometry.MaskIndex(pi / 2, 120) == 30, "facing west: a quarter")
+check(Geometry.MaskIndex(-pi / 2, 120) == 90, "facing east: three quarters")
+check(Geometry.MaskIndex(2 * pi - 0.001, 120) == 0, "just short of a full turn rounds to north")
+check(Geometry.MaskIndex(math.rad(4), 120) == 1, "nearest step")
+check(Geometry.MaskIndex(pi / 2, 120, -1) == 90, "the other way round")
+check(Geometry.MaskIndex(0, 120, -1) == 0, "north either way")
+
 print("minimap geometry tests passed")

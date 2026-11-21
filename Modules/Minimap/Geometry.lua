@@ -103,3 +103,21 @@ function Geometry.DirectionDegrees(tickStep)
 	table.sort(list)
 	return list
 end
+
+-- Side of the square map in the strip view: the band's corners (`width`
+-- wide, `height` above the centre) stay inside the square at any angle, as
+-- the mask turns with the map. Must match tools/strip_mask.py.
+function Geometry.StripMapSize(width, height)
+	return math.ceil(2 * math.sqrt((width / 2) ^ 2 + height ^ 2))
+end
+
+-- Which of the `count` pre-turned masks (Media/StripMasks, mask i turned by
+-- i * 360 / count degrees) keeps the band level at `facing`. `direction` -1
+-- picks them the other way round, in case the map turns the other way.
+function Geometry.MaskIndex(facing, count, direction)
+	local index = math.floor(Geometry.Normalize(facing) / twoPi * count + 0.5) % count
+	if direction == -1 then
+		index = (count - index) % count
+	end
+	return index
+end

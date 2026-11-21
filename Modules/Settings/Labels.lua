@@ -244,11 +244,23 @@ local labels = {
 		"Gruppe, Gilde, Flüstern und Emotes gemeinsam in einem Kanal.",
 	},
 	marks = { "Mark toolbar", "Markierungsleiste" },
+	maskDirection = {
+		"Mask direction",
+		"Maskenrichtung",
+		"1, or -1 if the strip turns twice as fast as you instead of staying level.",
+		"1, oder -1, wenn sich der Streifen doppelt so schnell dreht wie du, statt waagerecht zu bleiben.",
+	},
 	maskFade = {
 		"Fade at the ends",
 		"Ausblenden an den Enden",
 		"Fraction (0-1) of each half over which the map fades into the band. Needs a new mask (tools/strip_mask.py).",
 		"Anteil (0-1) jeder Hälfte, über den die Karte ins Band übergeht. Braucht eine neue Maske (tools/strip_mask.py).",
+	},
+	maskStep = {
+		"Mask step (°)",
+		"Maskenschritt (°)",
+		"Degrees of facing per strip mask. Needs new masks (tools/strip_mask.py).",
+		"Grad Blickrichtung pro Streifenmaske. Braucht neue Masken (tools/strip_mask.py).",
 	},
 	max = { "Maximum", "Maximum" },
 	maxRows = { "Rows", "Zeilen" },

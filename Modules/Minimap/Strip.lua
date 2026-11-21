@@ -5,20 +5,25 @@ local colors = config.colors
 local Geometry = ns.MinimapGeometry
 
 -- The band below the notch that holds the minimap in the strip view
--- (Minimap.lua moves the map in and out): black like the notch, clipping the
--- map and anything on it to the band, with the direction letters along its
--- top edge. There is only one minimap, so the strip is the real one, masked
--- (Media/StripMask.tga) and rotating with the character.
+-- (Minimap.lua moves the map in and out): black like the notch, with the
+-- direction letters along its top edge. There is only one minimap, so the
+-- strip is the real one, rotating with the character. Neither clipping nor a
+-- scroll frame cuts the minimap, only its mask does, and a rotating minimap
+-- turns its mask along. So the mask is swapped as the character turns, for
+-- one turned back by the facing (Media/StripMasks, tools/strip_mask.py).
 
 local Strip = {}
 ns.MinimapStrip = Strip
 
-Strip.MASK = ("Interface\\AddOns\\%s\\Media\\StripMask"):format(addonName)
+local MASK_PATH = ("Interface\\AddOns\\%s\\Media\\StripMasks\\%%03d"):format(addonName)
+local maskCount = math.floor(360 / config.maskStep + 0.5)
 
 local DIRECTION_NAMES = ns.isGerman and { NE = "NO", E = "O", SE = "SO" } or nil
 
-local band, letters
+local band, letters, map
 local directions = {}
+-- The mask on the map; nil forces the next frame to set one.
+local maskIndex
 
 -- Hangs below the notch, or from the top edge without one, centred on it.
 local function UpdateGeometry()
@@ -75,8 +80,14 @@ local function OnUpdate()
 	-- No facing in instances: the map stays, the letters go.
 	local facing = GetPlayerFacing()
 	letters:SetShown(facing ~= nil)
-	if facing then
-		UpdateDirections(facing)
+	if not facing then
+		return
+	end
+	UpdateDirections(facing)
+	local index = Geometry.MaskIndex(facing, maskCount, config.maskDirection)
+	if index ~= maskIndex and map then
+		map:SetMaskTexture(MASK_PATH:format(index))
+		maskIndex = index
 	end
 end
 
@@ -87,7 +98,6 @@ function Strip.Create(strata)
 	band = CreateFrame("Frame", "StevioUI_MinimapStrip", UIParent)
 	band:SetFrameStrata(strata)
 	band:SetSize(config.width, config.height + config.behind)
-	band:SetClipsChildren(true)
 	band:Hide()
 	local background = band:CreateTexture(nil, "BACKGROUND")
 	background:SetAllPoints()
@@ -108,14 +118,36 @@ function Strip.Create(strata)
 	return band
 end
 
--- Puts the map (as wide as the band) into the band, centred on the arrow,
--- which sits `behind` above the band's bottom edge.
+-- Puts the map into the band, centred on the arrow, which sits `behind`
+-- above the band's bottom edge. The mask follows from the next frame on.
 function Strip.Adopt(minimap)
+	map = minimap
+	maskIndex = nil
 	minimap:SetParent(band)
 	minimap:SetFrameStrata(band:GetFrameStrata())
 	minimap:SetFrameLevel(band:GetFrameLevel() + 1)
-	minimap:SetSize(config.width, config.width)
+	local size = Geometry.StripMapSize(config.width, config.height)
+	minimap:SetSize(size, size)
 	letters:SetFrameLevel(minimap:GetFrameLevel() + 10)
+end
+
+-- Sets the mask again once the rotation has changed. Setting the one
+-- already set does nothing, so a neighbour goes first.
+function Strip.RefreshMask()
+	if map then
+		C_Timer.After(0.2, function()
+			if band:IsShown() and maskIndex then
+				map:SetMaskTexture(MASK_PATH:format((maskIndex + 1) % maskCount))
+				map:SetMaskTexture(MASK_PATH:format(maskIndex))
+			end
+		end)
+	end
+end
+
+-- The map left for the corner: stop swapping its mask.
+function Strip.Release()
+	map = nil
+	maskIndex = nil
 end
 
 function Strip.Place(minimap)

@@ -5,6 +5,8 @@ local config = ns.config.minimap
 local Strip = ns.MinimapStrip
 
 local SQUARE_MASK = "Interface\\Buttons\\WHITE8X8"
+-- Another plain square, set first: setting the mask already set does nothing.
+local OTHER_SQUARE_MASK = "Interface\\ChatFrame\\ChatFrameBackground"
 
 -- Two views of the one minimap, switched with ns.ToggleMinimapView (the ','
 -- key): the square map in the corner, north up, and the strip below the
@@ -113,12 +115,28 @@ local function PlaceMap(frame)
 	end
 end
 
+-- A mask set while the map still rotates (or before it rotates) turns with
+-- it, so the mask follows the rotation CVar a moment later.
+local function RefreshMask()
+	if appliedView == STRIP then
+		Strip.RefreshMask()
+		return
+	end
+	C_Timer.After(0.2, function()
+		if appliedView == CORNER then
+			Minimap:SetMaskTexture(OTHER_SQUARE_MASK)
+			Minimap:SetMaskTexture(SQUARE_MASK)
+		end
+	end)
+end
+
 -- The rotation is a CVar, which Edit Mode also sets from its layout (north
 -- up in ours), so it is applied again after Edit Mode.
 local function ApplyRotation()
 	local rotate = appliedView == STRIP and "1" or "0"
 	if GetCVar("rotateMinimap") ~= rotate then
 		SetCVar("rotateMinimap", rotate)
+		RefreshMask()
 	end
 end
 
@@ -130,13 +148,12 @@ local function ApplyView()
 	appliedView = view
 	if strip then
 		Strip.Adopt(Minimap)
-		Minimap:SetMaskTexture(Strip.MASK)
 	else
+		Strip.Release()
 		Minimap:SetParent(UIParent)
 		Minimap:SetFrameStrata(cornerStrata)
 		Minimap:SetFrameLevel(cornerLevel)
 		Minimap:SetSize(cornerSize, cornerSize)
-		Minimap:SetMaskTexture(SQUARE_MASK)
 	end
 	PlaceMap(Minimap)
 	band:SetShown(strip)
@@ -147,6 +164,7 @@ local function ApplyView()
 	Minimap:EnableMouseWheel(not strip)
 	ApplyRotation()
 	Redraw(strip and 0 or cornerZoom)
+	RefreshMask()
 end
 
 -- Moving the map is protected in combat once something protected sits on it.
@@ -180,7 +198,6 @@ function MinimapModule:OnEnable()
 
 	Minimap:SetParent(UIParent)
 	Minimap:SetSize(cornerSize, cornerSize)
-	Minimap:SetMaskTexture(SQUARE_MASK)
 	border = ns.CreateBorder(Minimap)
 	icons = CreateFrame("Frame", nil, Minimap)
 	icons:SetAllPoints()
