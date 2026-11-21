@@ -99,7 +99,8 @@ function Marks:OnEnable()
 	bar = CreateFrame("Frame", "StevioUI_MarkBar", UIParent)
 	local count = #Symbols.LIST + 1
 	bar:SetSize(count * config.buttonSize + (count - 1) * config.buttonGap, config.buttonSize)
-	ns.SetPoint(bar, ns.layout.marks, Minimap)
+	-- The map's corner stand-in stays put while the map is in the strip view.
+	ns.SetPoint(bar, ns.layout.marks, ns.minimapCorner or Minimap)
 
 	for position, symbol in ipairs(Symbols.LIST) do
 		CreateButton(position, symbol)

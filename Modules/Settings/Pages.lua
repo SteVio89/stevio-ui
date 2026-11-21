@@ -23,7 +23,6 @@ Pages.MODULES = {
 	{ "marks", layout = { "marks" } },
 	{ "lootTicker", layout = { "lootTicker" } },
 	{ "notch" },
-	{ "compass" },
 	{ "questRewards" },
 	{ "accessibility" },
 	{ "notes" },

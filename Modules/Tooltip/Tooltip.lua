@@ -18,9 +18,11 @@ end
 
 function Tooltip:OnEnable()
 	local mapLayout = ns.layout.minimap
+	-- The corner stand-in keeps the corner map's size while the map is in the strip.
+	local map = ns.minimapCorner or Minimap
 	ns.SetEditModeSystem(Enum.EditModeSystem.HudTooltip, nil, {
 		point = "BOTTOMRIGHT",
 		x = mapLayout.x,
-		y = mapLayout.y + Minimap:GetHeight() + MarkBarHeight() + config.gapAboveMinimap,
+		y = mapLayout.y + map:GetHeight() + MarkBarHeight() + config.gapAboveMinimap,
 	})
 end
