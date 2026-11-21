@@ -3,6 +3,9 @@
 	<Binding name="STEVIOUI_TOGGLE_TRACKER" header="STEVIOUI" category="ADDONS">
 		StevioUI.ToggleTracker()
 	</Binding>
+	<Binding name="STEVIOUI_TOGGLE_CORNER" category="ADDONS">
+		StevioUI.ToggleCorner()
+	</Binding>
 	<Binding name="STEVIOUI_TOGGLE_CHAT" category="ADDONS">
 		StevioUI.ToggleChat()
 	</Binding>

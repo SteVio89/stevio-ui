@@ -5,6 +5,7 @@ local T = ns.T
 
 BINDING_HEADER_STEVIOUI = "stevio-ui"
 BINDING_NAME_STEVIOUI_TOGGLE_TRACKER = T("Toggle objective tracker", "Questverfolgung ein-/ausblenden")
+BINDING_NAME_STEVIOUI_TOGGLE_CORNER = T("Toggle minimap corner", "Minimap-Ecke ein-/ausblenden")
 BINDING_NAME_STEVIOUI_TOGGLE_CHAT = T("Toggle chat", "Chat ein-/ausblenden")
 BINDING_NAME_STEVIOUI_CHAT_INPUT = T("Chat: write message", "Chat: Nachricht schreiben")
 BINDING_NAME_STEVIOUI_CHAT_NEXT = T("Chat: next channel", "Chat: nächster Kanal")

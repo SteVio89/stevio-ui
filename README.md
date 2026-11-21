@@ -60,6 +60,9 @@ until it is needed, and as much as possible can be done from the keyboard.
   opens when the cursor reaches the top of the screen), in a clickable grid
   below its other rows (`minimapButtons` in the notch options). The mail and
   tracking icons stay on the map, the vehicle leave button sits below it.
+  `,` hides the whole lower right corner (the map with its icons, the mark
+  toolbar and the micro menu) and shows it again; the choice is kept across
+  sessions. The vehicle leave button stays.
 - **Notch island** – a black panel that grows out of the notch when the cursor
   reaches the top of the screen (not while mouselooking) and hides again
   shortly after it leaves: level and XP bar with rested XP, the watched
@@ -70,7 +73,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   and the mark toolbar.
 - **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
   or the badge at the right screen edge, placed below the auras.
-- **Mark toolbar** – always shown on top of the minimap, right aligned,
+- **Mark toolbar** – shown on top of the minimap, right aligned,
   with the default tooltip position above it: the eight raid symbols (skull
   first) and a clear button. Left click puts the symbol on the target or
   takes it off again (the target's symbol is outlined; symbols are dimmed
@@ -194,6 +197,7 @@ first login.
 | `.` | Toggle chat |
 | *(unbound)* | Chat: write message, next / previous channel (`Tab` / `Shift-Tab` in the input) |
 | `-` | Toggle objective tracker |
+| `,` | Toggle the lower right corner (minimap, mark toolbar, micro menu) |
 | `F12` | Game console (`consoleKey` in the settings options) |
 | *(unbound)* | Next action set |
 
