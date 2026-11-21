@@ -45,5 +45,8 @@ ns.config.settings = {
 		"^EJLootClass$",
 		-- Mirrors the actionBars section of the profile, which is the one place to change it.
 		"^enableMultiActionBars$",
+		-- Set by stevio-ui modules themselves; a profile value or override would
+		-- fight them on every login (tests/config_usage_test.lua checks the list).
+		"^rotateMinimap$", -- Minimap keeps the map north up
 	},
 }

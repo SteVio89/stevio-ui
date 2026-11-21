@@ -363,7 +363,6 @@ local labels = {
 	slideTime = { "Slide time (s)", "Gleitzeit (s)" },
 	spacing = { "Spacing", "Abstand" },
 	stanceBar = { "Stance bar", "Haltungsleiste" },
-	star = { "Star", "Stern" },
 	style = { "Style", "Stil" },
 	system = { "System", "System" },
 	tappedColor = { "Tapped by others", "Von anderen markiert" },
