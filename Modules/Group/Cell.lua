@@ -139,6 +139,16 @@ local globalEvents = {
 	PLAYER_ROLES_ASSIGNED = UpdateRole,
 }
 
+-- A cell whose token may now stand for another player. Blizzard's aura
+-- containers only reread on a new token (SetUnit ignores the same one), so
+-- they are told to, like the target auras on a target change.
+local function RefreshCell(cell)
+	UpdateAll(cell)
+	for _, container in ipairs(cell.auraContainers) do
+		container:UpdateAllAuras()
+	end
+end
+
 -- Every cell the headers created.
 local cells = {}
 local rosterRefreshPending = false
@@ -147,7 +157,7 @@ local function RefreshAllCells()
 	rosterRefreshPending = false
 	for _, cell in ipairs(cells) do
 		if cell.unit then
-			UpdateAll(cell)
+			RefreshCell(cell)
 		end
 	end
 end
@@ -201,7 +211,7 @@ local function OnAttributeChanged(cell, name, value)
 	if value ~= cell.unit then
 		SetUnit(cell, value)
 	elseif value then
-		UpdateAll(cell)
+		RefreshCell(cell)
 	end
 end
 
