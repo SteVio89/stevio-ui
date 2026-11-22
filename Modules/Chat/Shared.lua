@@ -259,24 +259,13 @@ end
 -- ones, so readers on other client languages get them too
 -- (ChatFrameUtil.SubstituteChatMessageBeforeSend, as Blizzard's input box does).
 function C.SubstituteTags(text)
-	if ChatFrameUtil and ChatFrameUtil.SubstituteChatMessageBeforeSend then
-		return ChatFrameUtil.SubstituteChatMessageBeforeSend(text)
-	end
-	return text
+	return ChatFrameUtil.SubstituteChatMessageBeforeSend(text)
 end
 
 -- On receiving: {star}, {rt1}, ... become raid icons, and group tags expand
 -- where Blizzard's chat expands them (raids). `noIconReplacement` is the
 -- event's 17th argument (true where icons aren't allowed, e.g. public channels).
 function C.ExpandExpressions(text, chatType, noIconReplacement)
-	if not (C_ChatInfo and C_ChatInfo.ReplaceIconAndGroupExpressions) then
-		return text
-	end
-	local util = ChatFrameUtil
-	local canExpand = util
-		and util.CanChatGroupPerformExpressionExpansion
-		and util.CanChatGroupPerformExpressionExpansion(
-			util.GetChatCategory and util.GetChatCategory(chatType) or chatType
-		)
+	local canExpand = ChatFrameUtil.CanChatGroupPerformExpressionExpansion(ChatFrameUtil.GetChatCategory(chatType))
 	return C_ChatInfo.ReplaceIconAndGroupExpressions(text, noIconReplacement, not canExpand)
 end

@@ -18,8 +18,6 @@ local T = ns.T
 local state
 local button
 
-local PickupSpellByID = C_Spell and C_Spell.PickupSpell or PickupSpell
-local PickupItemByID = C_Item and C_Item.PickupItem or PickupItem
 local RANDOM_FAVORITE_MOUNT = 268435455
 
 local function ReadSlot(slot)
@@ -46,9 +44,6 @@ local function Snapshot()
 end
 
 local function FindFlyout(flyoutID)
-	if not (C_SpellBook and C_SpellBook.GetNumSpellBookSkillLines) then
-		return nil
-	end
 	local bank = Enum.SpellBookSpellBank.Player
 	for line = 1, C_SpellBook.GetNumSpellBookSkillLines() do
 		local info = C_SpellBook.GetSpellBookSkillLineInfo(line)
@@ -62,21 +57,19 @@ local function FindFlyout(flyoutID)
 	return nil
 end
 
-local FindBaseSpell = C_Spell and C_Spell.GetBaseSpell or FindBaseSpellByID
-
 -- Puts an action on the cursor; the caller checks GetCursorInfo() for success.
 local pickup = {
 	spell = function(entry)
-		PickupSpellByID(entry.id)
+		C_Spell.PickupSpell(entry.id)
 		-- A slot can report a talent's replacement spell, which is not in the
 		-- spellbook itself; the spell it replaces is, and shows the replacement.
-		local base = not GetCursorInfo() and FindBaseSpell and FindBaseSpell(entry.id)
+		local base = not GetCursorInfo() and C_Spell.GetBaseSpell(entry.id)
 		if base and base ~= entry.id then
-			PickupSpellByID(base)
+			C_Spell.PickupSpell(base)
 		end
 	end,
 	item = function(entry)
-		PickupItemByID(entry.id)
+		C_Item.PickupItem(entry.id)
 	end,
 	macro = function(entry)
 		local index = entry.name and GetMacroIndexByName(entry.name)
@@ -97,7 +90,7 @@ local pickup = {
 			C_MountJournal.Pickup(0)
 		else
 			local _, spellID = C_MountJournal.GetMountInfoByID(entry.id)
-			PickupSpellByID(spellID)
+			C_Spell.PickupSpell(spellID)
 		end
 	end,
 	flyout = function(entry)
@@ -154,16 +147,13 @@ local function CurrentName()
 	return config.sets[state.current] or "?"
 end
 
-local GetSpellName = C_Spell and C_Spell.GetSpellName or GetSpellInfo
-local GetItemName = C_Item and C_Item.GetItemNameByID or GetItemInfo
-
 -- A readable name for a stored action, e.g. "Flash Heal" or "Macro: Mount".
 local function ActionName(entry)
 	local name
 	if entry.type == "spell" then
-		name = GetSpellName(entry.id)
+		name = C_Spell.GetSpellName(entry.id)
 	elseif entry.type == "item" then
-		name = GetItemName(entry.id)
+		name = C_Item.GetItemNameByID(entry.id)
 	elseif entry.type == "macro" then
 		return T("Macro: ", "Makro: ") .. (entry.name or tostring(entry.id))
 	elseif entry.type == "summonmount" and entry.id ~= RANDOM_FAVORITE_MOUNT then

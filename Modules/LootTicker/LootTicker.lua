@@ -180,7 +180,7 @@ local function OnMessage(event, text, _, ...)
 end
 
 local function ReadPending()
-	if #pending == 0 or (C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown()) then
+	if #pending == 0 or C_ChatInfo.InChatMessagingLockdown() then
 		return
 	end
 	local lines = pending
@@ -263,9 +263,7 @@ function LootTicker:OnEnable()
 	for event in pairs(readers) do
 		ns.RegisterEvent(event, OnMessage)
 	end
-	if C_RestrictedActions then
-		ns.RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", ReadSoon)
-	end
+	ns.RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", ReadSoon)
 	ns.RegisterEvent("PLAYER_REGEN_ENABLED", ReadSoon)
 end
 

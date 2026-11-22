@@ -142,11 +142,8 @@ end
 
 -- Rolls still open after a /reload get their card again.
 local function OpenActiveRolls()
-	if not GetActiveLootRollIDs then
-		return
-	end
 	for _, rollID in ipairs(GetActiveLootRollIDs()) do
-		local duration = C_Loot.GetLootRollDuration and C_Loot.GetLootRollDuration(rollID)
+		local duration = C_Loot.GetLootRollDuration(rollID)
 		local timeLeft = GetLootRollTimeLeft(rollID)
 		if not issecretvalue(duration) and not issecretvalue(timeLeft) and duration and timeLeft then
 			Cards.Open(rollID, duration / 1000, timeLeft / 1000, not config.replaceBlizzardRolls)
@@ -158,7 +155,7 @@ end
 -- its roll frames never show, while the bind-on-pickup confirmation (its own
 -- event) still comes from Blizzard.
 local function SuppressBlizzard()
-	if config.replaceBlizzardRolls and GameEvent and GameEvent.UnregisterInternalEvent then
+	if config.replaceBlizzardRolls then
 		GameEvent.UnregisterInternalEvent("START_LOOT_ROLL")
 	end
 end
@@ -249,9 +246,7 @@ function Rolls:OnEnable()
 	ns.RegisterEvent("CANCEL_LOOT_ROLL", OnCancelRoll)
 	ns.RegisterEvent("CANCEL_ALL_LOOT_ROLLS", OnCancelAll)
 	ns.RegisterEvent("LOOT_HISTORY_UPDATE_DROP", OnDrop)
-	if C_RestrictedActions then
-		ns.RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", ReadSoon)
-	end
+	ns.RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", ReadSoon)
 	ns.RegisterEvent("PLAYER_REGEN_ENABLED", ReadSoon)
 	OpenActiveRolls()
 end

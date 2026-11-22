@@ -18,8 +18,7 @@ local lookups = {
 		return C_BattleNet.GetAccountInfoByID(bnetID)
 	end,
 	channelLabel = function(baseName)
-		local resolve = ChatFrameUtil and ChatFrameUtil.ResolveChannelName
-		return resolve and resolve(baseName) or baseName
+		return ChatFrameUtil.ResolveChannelName(baseName) or baseName
 	end,
 	ambiguate = Ambiguate,
 }
@@ -166,8 +165,8 @@ local function Read(event, now, text, sender, ...)
 	return def, key, opts, entry or nil
 end
 
--- Chat lines that arrived secret during the chat lockdown (encounters,
--- Mythic+, PvP, ...): the client hands addons only their chat line id then,
+-- Chat lines that arrived secret during the chat lockdown (encounters, PvP,
+-- ...): the client hands addons only their chat line id then,
 -- and the line can be read by it once the lockdown is over (#38). Each is
 -- { event, time, lineID, args, n, key, mainKey }, `key`/`mainKey` where its
 -- placeholder went (nil when its channel couldn't be told, e.g. a whisper).
@@ -186,13 +185,7 @@ end
 -- can't be told apart. Neither can outgoing whispers, whose line names us
 -- rather than who they went to.
 local function CanReadLater(def, lineID)
-	return not def.bnet
-		and not def.outgoing
-		and C_ChatInfo.GetChatLineText
-		and C_ChatInfo.InChatMessagingLockdown
-		and not issecretvalue(lineID)
-		and type(lineID) == "number"
-		and lineID > 0
+	return not def.bnet and not def.outgoing and not issecretvalue(lineID) and type(lineID) == "number" and lineID > 0
 end
 
 -- Keeps what the event said for the line `lineID` (secret values are left out:
@@ -313,22 +306,16 @@ function C.ReadPending()
 	C.Update()
 end
 
--- The chat lockdown comes with the addon restrictions (combat, encounter,
--- Mythic+, PvP); clients without it have nothing to read later.
+-- The chat lockdown comes with the addon restrictions (combat, encounter, PvP).
 function C.SetupLockdown()
 	C.store:ForgetPending(UnreadableText())
-	if not (C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.GetChatLineText) then
-		return
-	end
 	-- A frame later: the lockdown may only be lifted once the event is through.
 	local function ReadSoon()
 		if #pending > 0 then
 			C_Timer.After(0, C.ReadPending)
 		end
 	end
-	if C_RestrictedActions then
-		ns.RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", ReadSoon)
-	end
+	ns.RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", ReadSoon)
 	ns.RegisterEvent("PLAYER_REGEN_ENABLED", ReadSoon)
 end
 

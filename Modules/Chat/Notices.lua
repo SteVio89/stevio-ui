@@ -24,10 +24,8 @@ local function OnLevelChanged(_, oldLevel, newLevel, real)
 	if not real or oldLevel == 0 or newLevel == 0 or newLevel <= oldLevel then
 		return
 	end
-	local noLink = C_PlayerInfo.IsPlayerNPERestricted and C_PlayerInfo.IsPlayerNPERestricted()
-	if C_GameRules and C_GameRules.IsGameRuleActive and Enum.GameRule and Enum.GameRule.ChatLinkLevelToastsDisabled then
-		noLink = noLink or C_GameRules.IsGameRuleActive(Enum.GameRule.ChatLinkLevelToastsDisabled)
-	end
+	local noLink = C_GameRules.IsGameRuleActive(Enum.GameRule.ChatLinkLevelToastsDisabled)
+		or C_PlayerInfo.IsPlayerNPERestricted()
 	local text = noLink and format(LEVEL_UP_NO_LINK, newLevel) or format(LEVEL_UP, newLevel, newLevel)
 	Add(config.notices.levelUp, text, "SYSTEM")
 end

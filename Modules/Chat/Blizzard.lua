@@ -190,21 +190,15 @@ function C.SizeSettings(Setting, width, height)
 end
 
 -- Typing in Blizzard's input box (Enter, a slash command) opens the chat by
--- hand: it stays open after the line is sent (see C.Pin). The hooks moved into
--- ChatFrameUtil in newer clients; older ones still have the globals.
-local function HookChatActivation(name, legacy, typing)
-	local function OnActivation()
+-- hand: it stays open after the line is sent (see C.Pin).
+local function HookChatActivation(name, typing)
+	hooksecurefunc(ChatFrameUtil, name, function()
 		C.state.typing = typing
 		if typing then
 			C.Pin()
 		end
 		C.Update()
-	end
-	if ChatFrameUtil and ChatFrameUtil[name] then
-		hooksecurefunc(ChatFrameUtil, name, OnActivation)
-	elseif _G[legacy] then
-		hooksecurefunc(legacy, OnActivation)
-	end
+	end)
 end
 
 -- Needs the channel view (C.ui.frame) to exist, since the input box hangs under it.
@@ -221,14 +215,12 @@ function C.SetupBlizzardChat()
 	ManageAlerts()
 	GuardAlpha(GeneralDockManager)
 	-- Temporary windows (whispers popped out, pet battle log, ...) get hidden
-	-- as they open; a client without this global loads the chat without it.
-	if FCF_OpenTemporaryWindow then
-		hooksecurefunc("FCF_OpenTemporaryWindow", function()
-			ScanChatFrames()
-			C.ApplyBlizzardVisibility(true)
-		end)
-	end
+	-- as they open.
+	hooksecurefunc("FCF_OpenTemporaryWindow", function()
+		ScanChatFrames()
+		C.ApplyBlizzardVisibility(true)
+	end)
 
-	HookChatActivation("ActivateChat", "ChatEdit_ActivateChat", true)
-	HookChatActivation("DeactivateChat", "ChatEdit_DeactivateChat", false)
+	HookChatActivation("ActivateChat", true)
+	HookChatActivation("DeactivateChat", false)
 end
