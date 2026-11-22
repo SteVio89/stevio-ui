@@ -97,6 +97,34 @@ publicStore:Add(
 )
 check(publicStore:Get("channel:trade").channelIndex == 5, "channel number follows the latest message")
 check(publicStore:Get("channel:trade").chatType == "CHANNEL5", "channel color follows the channel number")
+
+-- ChannelNumber: the channel's name is looked up when sending, its last
+-- message's number is the fallback.
+do
+	local joined = { Trade = 3 }
+	local function GetChannelName(name)
+		return joined[name] or 0
+	end
+	local trade = { channelIndex = 2, channelName = "Trade" }
+	check(History.ChannelNumber(trade, GetChannelName) == 3, "number looked up by name")
+	joined.Trade = nil
+	check(History.ChannelNumber(trade, GetChannelName) == 2, "not joined: the last number")
+	check(History.ChannelNumber({ channelIndex = 4 }, GetChannelName) == 4, "saved before names were kept")
+	local named = History.New({}, 3)
+	named:Add(
+		"channel:trade",
+		{ kind = "public", chatType = "CHANNEL2", channelIndex = 2, channelName = "Trade" },
+		{ time = 1, text = "a" },
+		true
+	)
+	named:Add(
+		"channel:trade",
+		{ kind = "public", chatType = "CHANNEL2", channelIndex = 2 },
+		{ time = 2, text = "b" },
+		true
+	)
+	check(named:Get("channel:trade").channelName == "Trade", "the name is kept")
+end
 publicStore:Add(
 	"other",
 	{ kind = "other", chatType = "CHANNEL", label = "Other", readOnly = true },
