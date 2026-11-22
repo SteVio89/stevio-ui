@@ -187,6 +187,9 @@ function C.PickMainTarget(key)
 end
 
 function C.CycleChannel(step)
+	if not C.store then
+		return
+	end
 	local channels = C.store:Sorted(config.kindOrder)
 	local keys = {}
 	for i, channel in ipairs(channels) do
@@ -200,7 +203,12 @@ end
 
 -- Hides the chat whenever it is shown, also when it only popped up for a
 -- message (#50: that press used to pin it open instead); opens it otherwise.
+-- The key bindings call these even when the chat is off or failed to enable,
+-- so they do nothing until its view exists, like the other toggles.
 function ns.ToggleChat()
+	if not C.ui.input then
+		return
+	end
 	if C.hidden then
 		C.Pin()
 	else
@@ -216,6 +224,9 @@ end
 
 -- Opens the chat and starts typing into the selected channel.
 function ns.FocusChatInput()
+	if not C.ui.input then
+		return
+	end
 	if not state.manual then
 		C.Pin()
 		C.Update()
