@@ -124,6 +124,8 @@ local function Read(event, now, text, sender, ...)
 		sender = nil -- finished lines name whoever they are about in their text
 	elseif def.textEmote then
 		sender = nil -- text emotes name the sender in their text
+	elseif not secret then
+		text = C.ExpandExpressions(text, chatType, select(15, ...))
 	end
 
 	-- Character names are clickable (see C.FormatEntry); Battle.net names, our

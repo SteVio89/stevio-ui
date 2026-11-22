@@ -74,6 +74,7 @@ end
 -- chat. Returns false when there is nothing to send yet (e.g. "/p" alone),
 -- which leaves the command to Blizzard's input box.
 local function RunChatType(chatType, message)
+	message = C.SubstituteTags(message)
 	if chatType == "WHISPER" or chatType == "SMART_WHISPER" then
 		-- WHISPER (/tell to a character) never means a Battle.net friend.
 		local target, text, isBattleNet =

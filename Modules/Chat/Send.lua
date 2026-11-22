@@ -128,6 +128,7 @@ function C.Send(text)
 		C.RunCommand(text)
 		return
 	end
+	text = C.SubstituteTags(text)
 	local channel = C.Selected()
 	if channel and C.IsMain(channel.key) then
 		channel = C.MainTarget()

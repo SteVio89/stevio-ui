@@ -214,6 +214,39 @@ do
 end
 print("size ok")
 
+-- Group tags before sending and raid icons on receiving, through Blizzard's helpers.
+do
+	check(C.SubstituteTags("{Heiler} bitte") == "{Heiler} bitte", "without Blizzard's helper the text stays")
+	_G.ChatFrameUtil = {
+		SubstituteChatMessageBeforeSend = function(text)
+			return (text:gsub("{Heiler}", "{healer}"))
+		end,
+		GetChatCategory = function(chatType)
+			return chatType == "RAID_LEADER" and "RAID" or chatType
+		end,
+		CanChatGroupPerformExpressionExpansion = function(group)
+			return group == "RAID"
+		end,
+	}
+	check(C.SubstituteTags("{Heiler} bitte") == "{healer} bitte", "localized tag made language-independent")
+
+	check(C.ExpandExpressions("{star}", "PARTY") == "{star}", "without the client function the text stays")
+	local calls = {}
+	_G.C_ChatInfo = {
+		ReplaceIconAndGroupExpressions = function(text, noIcons, noGroups)
+			calls[#calls + 1] = { text = text, noIcons = noIcons, noGroups = noGroups }
+			return noIcons and text or (text:gsub("{star}", "|TStar:0|t"))
+		end,
+	}
+	check(C.ExpandExpressions("go {star}", "PARTY", false) == "go |TStar:0|t", "raid icon")
+	check(calls[1].noGroups == true, "group tags only expand in raids")
+	C.ExpandExpressions("x", "RAID_LEADER", false)
+	check(calls[2].noGroups == false, "raid leader lines expand group tags")
+	check(C.ExpandExpressions("{star}", "CHANNEL", true) == "{star}", "no icons where the event says so")
+	_G.ChatFrameUtil, _G.C_ChatInfo = nil, nil
+end
+print("tags and icons ok")
+
 print("chat shared tests passed")
 
 -- Sidebar scrolling: 10 rows of 20 in a view 70 high (list 200 high).

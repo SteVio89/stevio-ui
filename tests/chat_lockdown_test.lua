@@ -91,6 +91,9 @@ C.Label = function(channel)
 	return channel.label or channel.key
 end
 C.ShowEntry = function() end
+C.ExpandExpressions = function(text)
+	return text
+end
 C.Peek = function() end
 local previews = {}
 C.ShowPreview = function(channel, entry)
