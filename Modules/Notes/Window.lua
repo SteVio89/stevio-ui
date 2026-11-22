@@ -538,9 +538,14 @@ local function CreateWindow()
 	panels.items = CreateItemsPanel(detail)
 	panels.notes = CreateNotesPanel(detail)
 
-	ns.RegisterEvent("GET_ITEM_INFO_RECEIVED", function()
+	-- Names of items not cached yet arrive later: the list and the selected
+	-- item's header get them (only the header, so a note being typed stays).
+	ns.RegisterEvent("GET_ITEM_INFO_RECEIVED", function(_, itemID)
 		if state.tab == "items" then
 			Window.RefreshList()
+			if itemID and itemID == state.selected then
+				panels.items.name:SetText(ItemName(itemID))
+			end
 		end
 	end)
 end
