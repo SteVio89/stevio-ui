@@ -10,6 +10,13 @@ Keeps:
 - own currency, money on one line, repeats merged ("x3")
 - position, rows, fading and sliding as they are; click-through
 
+Hidden loot (chat lockdown: boss encounters, a whole Mythic+ run, PvP):
+- Own loot, currency and money messages that arrive secret are no longer
+  dropped. They are remembered by chat line id and read with
+  `C_ChatInfo.GetChatLineText` once the lockdown ends (as the chat module
+  does, `Modules/Chat/Receive.lua`), then shown and merged as usual. An M+
+  run ends in one burst of lines.
+
 Removed:
 - other group members' loot (`showGroupLoot`, `groupMinQuality`,
   `groupAlpha`, `groupHoldTime`) – gone entirely, not moved anywhere
@@ -50,6 +57,11 @@ Active card (roll open, from `START_LOOT_ROLL` / `GetLootRollItemInfo`):
 - Unavailable buttons are greyed out with `LOOT_ROLL_INELIGIBLE_REASON<n>`
   as tooltip.
 - The bind-on-pickup confirmation stays Blizzard's static popup.
+- Hidden roll data (lockdown): our card is still shown with what the game
+  lets us display (secret text can go into a font string, but can't be read
+  or compared); the buttons still work. Quality color and stripe may be
+  missing. Needs a check in game which parts of `GetLootRollItemInfo` are
+  secret then.
 
 Compact card (after you chose; dimmed after Pass, but still shows the
 winner):
@@ -79,6 +91,8 @@ Blizzard's popup back if this ever causes taint.
   won), clear history button with confirmation.
 
 ### Recording
+- Drops whose names are secret are read again from `C_LootHistory` once the
+  lockdown ends; the history keeps the encounter's drops.
 - Boss name from `C_LootHistory.GetInfoForEncounter`, instance from
   `GetInstanceInfo()` when the drop is recorded, date from the time recorded.
 
