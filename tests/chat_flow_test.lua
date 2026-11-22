@@ -22,41 +22,43 @@ do
 	end
 	local party = { kind = "group", key = "party" }
 
-	local markUnread, show, open, popUp = C.Delivery(party, "party", false, "guild", false, true, unfocused)
-	check(markUnread and show == "party" and open and popUp, "hidden chat peeks at the message's channel")
+	local markUnread, show, action = C.Delivery(party, "party", false, "guild", false, true, unfocused)
+	check(markUnread and show == "party" and action == "preview", "hidden chat: a preview line instead of popping up")
 
-	markUnread, show, open, popUp = C.Delivery(party, "party", false, "guild", true, false, unfocused)
-	check(markUnread and show == "party" and not open and popUp, "open chat stays on its channel")
+	markUnread, show, action = C.Delivery(party, "party", false, "guild", true, false, unfocused)
+	check(markUnread and show == "party" and not action, "open chat stays on its channel")
 
 	markUnread = C.Delivery(party, "party", false, "party", true, false, unfocused)
 	check(not markUnread, "read while viewing the channel")
 	markUnread = C.Delivery(party, "party", false, "party", false, false, unfocused)
-	check(markUnread, "unread when only auto-shown")
+	check(markUnread, "unread when the chat only showed for /sui")
 
-	markUnread, show, open = C.Delivery(party, "party", "main", "main", true, false, unfocused)
-	check(not markUnread and show == "main" and not open, "read while viewing Main")
-	markUnread, show, open = C.Delivery(party, "party", "main", "guild", true, true, unfocused)
-	check(markUnread and show == "main" and open, "merged channels show in Main")
+	markUnread, show, action = C.Delivery(party, "party", "main", "main", true, false, unfocused)
+	check(not markUnread and show == "main" and not action, "read while viewing Main")
+	markUnread, show, action = C.Delivery(party, "party", "main", "guild", true, true, unfocused)
+	check(markUnread and show == "main" and action == "preview", "merged channels preview from Main")
 
 	local say = { kind = "public", key = "say", quiet = true }
-	markUnread, show, open, popUp = C.Delivery(say, "say", false, "guild", false, true, unfocused)
-	check(markUnread and show == "say" and not open and not popUp, "quiet channels only count unread")
+	markUnread, show, action = C.Delivery(say, "say", false, "guild", false, true, unfocused)
+	check(markUnread and show == "say" and not action, "quiet channels only count unread")
+	markUnread, show, action = C.Delivery(say, "say", "main", "guild", false, true, unfocused)
+	check(markUnread and show == "main" and action == "preview", "quiet lines shown in Main preview too")
 
 	local outgoing = { kind = "whisper", outgoing = true }
-	markUnread, show, open, popUp = C.Delivery(outgoing, "whisper:Bob", "main", "guild", false, true, unfocused)
-	check(not markUnread and show == "main" and not open and not popUp, "outgoing never counts unread nor pops up")
+	markUnread, show, action = C.Delivery(outgoing, "whisper:Bob", "main", "guild", false, true, unfocused)
+	check(not markUnread and show == "main" and not action, "outgoing never counts unread nor shows")
 
 	focusAsked = 0
-	local answer = { key = "system", focus = true }
-	markUnread, show, open, popUp = C.Delivery(answer, "system", false, "guild", true, false, unfocused)
-	check(markUnread and show == "system" and open and popUp, "focus channels open in the open chat")
-	open = select(3, C.Delivery(answer, "system", false, "guild", true, false, focused))
-	check(not open, "focus channels don't interrupt typing")
+	local answer = { key = "system", focus = true, quiet = true }
+	markUnread, show, action = C.Delivery(answer, "system", false, "guild", true, false, unfocused)
+	check(markUnread and show == "system" and action == "open", "focus channels open in the open chat")
+	action = select(3, C.Delivery(answer, "system", false, "guild", true, false, focused))
+	check(not action, "focus channels don't interrupt typing")
 	check(focusAsked == 2, "input focus asked for focus channels")
-	open = select(3, C.Delivery(answer, "system", false, "system", true, false, unfocused))
-	check(not open and focusAsked == 2, "focus channel already open: focus not asked")
-	open = select(3, C.Delivery(answer, "system", false, "guild", true, true, focused))
-	check(open and focusAsked == 2, "hidden chat: focus not asked")
+	action = select(3, C.Delivery(answer, "system", false, "system", true, false, unfocused))
+	check(action == "open" and focusAsked == 2, "focus channel already open: focus not asked")
+	action = select(3, C.Delivery(answer, "system", false, "guild", true, true, focused))
+	check(action == "open" and focusAsked == 2, "hidden chat: focus not asked")
 end
 print("delivery ok")
 

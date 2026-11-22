@@ -51,6 +51,7 @@ C.Attended = function()
 	return state.manual or state.typing
 end
 C.MarkRead, C.RefreshSidebar, C.UpdateBadge, C.ApplyBlizzardVisibility = Stub, Stub, Stub, Stub
+C.ClearPreview = Stub
 C.ui = {
 	frame = { SetShown = Stub, IsVisible = NotShown, IsMouseOver = NotShown },
 	input = { ClearFocus = Stub, SetFocus = Stub, HasFocus = NotShown },

@@ -9,7 +9,7 @@ local Chat = ns.RegisterModule("chat", {})
 -- Chat organised in channels like Slack/Teams. This file holds the visibility
 -- state, channel switching and the setup; incoming messages are handled in
 -- Receive.lua and outgoing ones in Send.lua. The frames live in View.lua,
--- Copy.lua and Badge.lua, the handling of Blizzard's own chat in Blizzard.lua,
+-- Copy.lua, Preview.lua and Badge.lua, the handling of Blizzard's own chat in Blizzard.lua,
 -- the wording of finished lines in Format.lua, lines without a chat event in
 -- Notices.lua, typed slash commands in Commands.lua and the channel store in
 -- History.lua.
@@ -60,7 +60,7 @@ function C.DeleteChannel(key)
 	C.UpdateBadge()
 end
 
--- Shows channel `key` in the chat that pops up for a message (see Receive.lua)
+-- Shows channel `key` in the chat that pops up for an answer to /sui (see Receive.lua)
 -- until it hides again: the channel open before comes back then, so the
 -- messages at login don't leave the chat on System (#65).
 function C.Peek(key)
@@ -95,6 +95,10 @@ function C.Update()
 	end
 	C.ApplyBlizzardVisibility()
 	C.ui.frame:SetShown(not C.hidden)
+	-- The open chat shows the lines the preview did.
+	if not C.hidden then
+		C.ClearPreview()
+	end
 	C.RefreshSidebar()
 	C.UpdateBadge()
 end
@@ -262,6 +266,7 @@ function Chat:OnEnable()
 		C.store:Ensure(config.main.key, config.main)
 	end
 	C.CreateChannelView()
+	C.CreatePreview()
 	C.CreateBadge()
 
 	-- Registered first, so messages are stored even if a Blizzard hook below fails.

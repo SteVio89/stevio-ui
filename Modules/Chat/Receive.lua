@@ -6,7 +6,7 @@ local state = C.state
 local History = ns.ChatHistory
 
 -- Incoming messages: which channel each one belongs to, storing it there and
--- popping up the hidden chat for it (the visibility state is in Chat.lua).
+-- showing it as a preview or opening the chat for it (the visibility state is in Chat.lua).
 
 -- Upvalues, as these run for every chat message.
 local issecretvalue, Ambiguate, time = issecretvalue, Ambiguate, time
@@ -34,22 +34,32 @@ end
 -- key when the channel is merged into it (else false), `selected` the open
 -- channel, `attended` and `hidden` the chat's state and `hasFocus()` whether
 -- the input line is being typed into. Returns whether the message counts as
--- unread, the channel it shows in (Main for merged channels), whether that
--- channel is opened and whether the chat pops up for it.
+-- unread, the channel it shows in (Main for merged channels) and what it does
+-- besides: "open" that channel in the chat, "preview" it while the chat is
+-- hidden, or nothing.
 function C.Delivery(def, key, mainKey, selected, attended, hidden, hasFocus)
 	local viewing = attended and (selected == key or (mainKey and selected == mainKey))
 	local markUnread = not viewing and not def.outgoing
-	-- Lines of merged channels pop up in Main.
+	-- Lines of merged channels show in Main.
 	local show = mainKey or key
-	-- Busy public chat only counts as unread; it doesn't pop up the hidden chat.
-	if def.outgoing or def.quiet then
-		return markUnread, show, false, false
+	if def.outgoing then
+		return markUnread, show
 	end
-	-- Peek at the channel the message arrived in while the chat is hidden;
-	-- `focus` channels are opened even when the chat is open, unless the
-	-- player is typing into another channel.
-	local open = hidden or (def.focus and selected ~= show and not hasFocus())
-	return markUnread, show, open, true
+	-- `focus` channels (answers to /sui) open, also in the open chat, unless
+	-- the player is typing into another channel.
+	if def.focus then
+		if hidden or selected == show or not hasFocus() then
+			return markUnread, show, "open"
+		end
+		return markUnread, show
+	end
+	-- Lines of Main and the other channels that aren't quiet (busy public
+	-- chat, NPCs, loot, ...) show as a preview instead of popping up the
+	-- hidden chat (#69).
+	if hidden and (mainKey or not def.quiet) then
+		return markUnread, show, "preview"
+	end
+	return markUnread, show
 end
 
 local function InputHasFocus()
@@ -60,26 +70,31 @@ end
 -- and shows it according to `def` (see config.events).
 function C.Receive(def, key, opts, entry)
 	local main = C.IsMerged(def) and config.main
-	local markUnread, show, open, popUp =
+	local markUnread, show, action =
 		C.Delivery(def, key, main and main.key, state.selected, C.Attended(), C.hidden, InputHasFocus)
+	-- The line as it shows in `show`, for the preview.
+	local shownChannel, shownEntry
 	if not entry then
 		C.store:AddUnreadOnly(key, opts, time(), main ~= false)
 	else
 		local channel = C.store:Add(key, opts, entry, markUnread, main ~= false)
 		Append(channel, entry)
+		shownChannel, shownEntry = channel, entry
 		if main then
 			local copy = History.Mirror(entry, key, C.Label(channel), channel.chatType)
-			Append(C.store:Add(main.key, main, copy, false), copy)
+			shownChannel, shownEntry = C.store:Add(main.key, main, copy, false), copy
+			Append(shownChannel, copy)
 		end
 	end
-	if not popUp then
-		C.Update()
-		return
+	-- Lines whose contents are secret (chat lockdown) only light the badge.
+	if action == "preview" and shownEntry and config.preview.enabled then
+		C.ShowPreview(shownChannel, shownEntry)
+	elseif action == "open" then
+		if show ~= state.selected then
+			C.Peek(show)
+		end
+		C.StartAutoTimer(config.autoShowDuration)
 	end
-	if open then
-		C.Peek(show)
-	end
-	C.StartAutoTimer(config.autoShowDuration)
 	C.Update()
 end
 

@@ -71,6 +71,14 @@ ns.config.chat = {
 	height = 300,
 
 	backgroundColor = { 0, 0, 0, 1 },
+	-- The background is see-through, so the open chat doesn't sit on the
+	-- screen like a black block, and turns nearly solid while the cursor is
+	-- over the chat or it is typed into (#69); its opacity then and otherwise
+	-- (times backgroundColor's), and the seconds it takes from one to the other.
+	-- The text has an outline, so it stays readable either way.
+	activeAlpha = 0.85,
+	openAlpha = 0.45,
+	fadeTime = 0.25,
 	selectedColor = { 1, 1, 1, 0.12 },
 	dividerColor = { 0.3, 0.3, 0.3, 1 },
 	-- Scroll position shown on the sidebar edge when the channels don't all fit.
@@ -94,7 +102,21 @@ ns.config.chat = {
 	alertGap = 4,
 	alertHeight = 63,
 
+	-- Seconds an answer to /sui shows the hidden chat (see `print`).
 	autoShowDuration = 8,
+
+	-- New lines of Main and the other channels that aren't `quiet` don't pop
+	-- up the hidden chat (#69): they show for a moment as lines of text where
+	-- the chat sits, the newest at the bottom, up to maxRows of them. Each
+	-- stays holdTime seconds (longer under the cursor), then fades out in
+	-- fadeOutTime; a click opens the chat on its channel. Off, they only
+	-- light the badge.
+	preview = {
+		enabled = true,
+		maxRows = 3,
+		holdTime = 6,
+		fadeOutTime = 1.5,
+	},
 
 	-- Messages kept per channel; also what survives a /reload or relog.
 	historyLimit = 200,
@@ -161,8 +183,9 @@ ns.config.chat = {
 
 	-- Chat events that feed the channels. Group channels (party, raid, instance)
 	-- are one channel each, whispers get one channel per partner.
-	-- Each message also briefly shows the hidden chat and lights its badge segment,
-	-- except `quiet` ones (nearby, chat channels, NPC, loot, system): they only
+	-- Each message shows as a preview line while the chat is hidden (see
+	-- `preview`) and lights its badge segment, except `quiet` ones (nearby,
+	-- chat channels, NPC, loot, system) that aren't shown in Main: they only
 	-- count as unread. Events not listed here (other players joining or leaving
 	-- channels, channel member lists, pet battle combat log, voice-to-text) are ignored.
 	events = {

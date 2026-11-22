@@ -197,6 +197,43 @@ function C.Attended()
 	return C.state.manual or C.state.typing
 end
 
+-- The opacity of the chat's background: nearly solid while it is read
+-- closely (`active`: the cursor over it, typing, the copy view), see-through
+-- otherwise (#69).
+function C.BackgroundAlpha(active)
+	return active and config.activeAlpha or config.openAlpha
+end
+
+-- `current` moved towards `target` by at most `step`.
+function C.Approach(current, target, step)
+	if current < target then
+		return math.min(current + step, target)
+	end
+	return math.max(current - step, target)
+end
+
+-- The opacity of a preview line `age` seconds old: full for `hold` seconds,
+-- then fading out over `fadeOut`; 0 once it is gone.
+function C.PreviewAlpha(age, hold, fadeOut)
+	if age < hold then
+		return 1
+	end
+	if fadeOut <= 0 then
+		return 0
+	end
+	return math.max(0, 1 - (age - hold) / fadeOut)
+end
+
+-- Adds `item` to the preview lines `items` (oldest first), dropping the
+-- oldest beyond `maxRows`.
+function C.PushPreview(items, item, maxRows)
+	items[#items + 1] = item
+	while #items > math.max(maxRows, 0) do
+		table.remove(items, 1)
+	end
+	return items
+end
+
 -- Sidebar scrolling: `offset` is how far the channel list is scrolled down,
 -- `viewHeight` how much of it fits. Returns `offset` kept within the list.
 function C.ClampSidebarScroll(offset, viewHeight, count, rowHeight)
