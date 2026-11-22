@@ -19,7 +19,8 @@ fi
 
 # Same file set as the CurseForge package: .pkgmeta's ignore list plus dev-only files.
 excludes=(--exclude=.git --exclude=.gitignore --exclude=.pkgmeta --exclude=.release
-  --exclude=.DS_Store --exclude=.claude --exclude=deploy.sh)
+  --exclude=.DS_Store --exclude=.claude --exclude=deploy.sh
+  --exclude=/Blizz-Source --exclude=/debug-screens)
 while IFS= read -r path; do
   excludes+=("--exclude=/$path")
 done < <(awk '/^ignore:/ { inside = 1; next } /^[^ ]/ { inside = 0 } inside && /^ *- / { sub(/^ *- */, ""); print }' "$src/.pkgmeta")
