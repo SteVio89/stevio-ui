@@ -76,8 +76,8 @@ end
 -- comes from its link color (nil if that is unknown too).
 local function LinkInfo(link)
 	if link:find("|Hcurrency:", 1, true) then
-		local info = C_CurrencyInfo.GetCurrencyInfoFromLink(link)
-		return info and info.iconFile, info and info.quality, true
+		local icon, quality = Feed.CurrencyDisplay(C_CurrencyInfo.GetCurrencyInfoFromLink(link))
+		return icon, quality, true
 	end
 	local _, _, _, _, icon = C_Item.GetItemInfoInstant(link)
 	local quality = C_Item.GetItemQualityByID(link) or Feed.QualityFromColor(Feed.LinkColor(link), QualityHex())
