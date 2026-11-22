@@ -10,12 +10,12 @@ Keeps:
 - own currency, money on one line, repeats merged ("x3")
 - position, rows, fading and sliding as they are; click-through
 
-Hidden loot (chat lockdown: boss encounters, a whole Mythic+ run, PvP):
+Hidden loot (while the game's chat lockdown is on, e.g. boss encounters):
 - Own loot, currency and money messages that arrive secret are no longer
   dropped. They are remembered by chat line id and read with
   `C_ChatInfo.GetChatLineText` once the lockdown ends (as the chat module
-  does, `Modules/Chat/Receive.lua`), then shown and merged as usual. An M+
-  run ends in one burst of lines.
+  does, `Modules/Chat/Receive.lua`), then shown and merged as usual, so a
+  long lockdown ends in one burst of lines.
 
 Removed:
 - other group members' loot (`showGroupLoot`, `groupMinQuality`,
