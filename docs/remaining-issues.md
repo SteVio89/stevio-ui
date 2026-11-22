@@ -109,3 +109,26 @@ need a check in game.
 - The Notes item tab names an item that wasn't cached yet once it loads.
 - Options panel: "Add binding" works while in combat; "Set" with an empty
   CVar value does nothing.
+- Main bar: the page arrows (left of the main bar) no longer react to clicks;
+  Edit Mode's "hide bar scrolling" is now set in our layout.
+- Combo points follow the target: switching targets shows that target's
+  points (WoW Forever keeps them on the target; detected through Blizzard's
+  `TargetBoundComboPointBarMixin`). Check that `COMBO_TARGET_CHANGED` exists
+  there (registering an unknown event would error at login).
+- The objective tracker is made invisible at login, but really hidden only
+  after our Edit Mode layout is applied. Check `/console taintLog 1` shows no
+  blocked action for the right-side action bars.
+- Edit Mode: with five account layouts already, a chat line asks to delete
+  one instead of saving a sixth. Our layout is saved only once Blizzard has
+  the layouts (`EditModeManagerFrame:IsInitialized()` at entering the world).
+- Chat: lines Blizzard keeps in the cinematic letterbox stay out of the chat;
+  Guild Discord users' names aren't links; `{star}`/`{rt1}` show as raid icons
+  where Blizzard shows them, and `{tags}` are sent language-independent.
+  Our whispers no longer set Blizzard's "last told" target: the re-whisper
+  key only offers whispers from Blizzard's own input box (and received ones).
+- Flight list: a list taller than the map scrolls (Blizzard's scroll box with
+  a minimal scroll bar that shows only when needed); free flights show no cost.
+- Notes: sessions open at logout end at the logout; after a `/reload` in the
+  same group they continue, after a later login alone the rating popup shows.
+- Settings: `GxApi` and the resolution CVars are no longer set from the
+  profile; saved overrides of them are dropped at login.
