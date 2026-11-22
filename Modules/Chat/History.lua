@@ -420,8 +420,7 @@ function Store:CountUnread(channel, inMain)
 	end
 end
 
--- Messages arriving secret during the chat lockdown (encounters, Mythic+,
--- PvP, ...) are stored as a placeholder naming their chat line (`lineID`)
+-- Messages arriving secret during the chat lockdown (encounters, PvP, ...) are stored as a placeholder naming their chat line (`lineID`)
 -- until the lockdown ends and the line can be read (see Receive.lua, #38).
 function History.Placeholder(now, lineID, text)
 	return { time = now, text = text, pending = lineID }

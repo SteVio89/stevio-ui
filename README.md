@@ -130,7 +130,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   `activeAlpha`), so it doesn't cover the game like a black block yet reads
   well when you want it. The chat starts on Main and otherwise reopens on the channel
   last shown. Raid warnings and officer chat are marked `[RW]` and
-  `[O]`. During boss fights, Mythic+ and PvP matches the game hides chat
+  `[O]`. During boss fights and PvP matches the game hides chat
   from addons: those messages show as "… (readable after the fight)" and
   are filled in once it is over; whispers from then arrive afterwards. The mouse wheel scrolls (`scrollStep`), and the Copy button in the
   header shows the channel as plain text to copy. Chat commands, emotes and addon
