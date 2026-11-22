@@ -130,7 +130,7 @@ function Group:OnEnable()
 		ns.RunAfterCombat(UpdateMode)
 	end)
 
-	-- All of Blizzard's group frames, the classic party frame too: the grid replaces them.
+	-- All of Blizzard's group frames, PartyFrame too: the grid replaces them.
 	ns.HideBlizzard(PartyFrame)
 	ns.HideBlizzard(CompactPartyFrame)
 	ns.HideBlizzard(CompactRaidFrameContainer)
