@@ -142,19 +142,15 @@ until it is needed, and as much as possible can be done from the keyboard.
   input box (Enter, slash commands) is used, shown right under the channel view
   and hidden together with it. Blizzard's chat toasts (e.g. a Battle.net friend
   coming online) pop up right under that input box.
-- **Loot ticker** – your last 24 looted items, currencies and gold above the
-  bags, with icon, name in quality colour and count; gold is shown with coin
-  icons on one line. Other group members' loot from rare quality up
-  (`groupMinQuality`) appears as "item  Name" with the name in class colour,
-  dimmed and gone sooner. A group loot roll is a single line per drop, read
-  from the loot history and updated in place: "rolling · you: Need" until it
-  is decided, then the winner with their roll and yours (or "all passed");
-  the winner's loot message adds no extra line. Details (count, player,
-  roll) sit on the right and are never cut off; only a long item name is
-  shortened. New loot enters at the bottom
-  and pushes older lines up; when all rows are taken the oldest drops out,
-  and every line fades out slowly after a few seconds. Looting more of
-  something still listed adds to that line.
+- **Loot ticker** – your own last 24 looted items, currencies and gold above
+  the bags, with icon, name in quality colour and count; gold is shown with
+  coin icons on one line. Other players' loot and group loot rolls are not
+  listed (rolls have their own cards, see Loot rolls); an item you win shows
+  up as your own loot. New loot enters at the bottom and pushes older lines
+  up; when all rows are taken the oldest drops out, and every line fades out
+  slowly after a few seconds. Looting more of something still listed adds to
+  that line. Loot the game hides from addons during a boss fight is listed
+  once the fight is over.
 - **Quest rewards** – on the turn-in page with at least two item choices,
   a gold coin marks the one with the highest vendor value (sell price × count).
 - **Notes** – a window (button in the notch island, or `/sui notes`) with three
