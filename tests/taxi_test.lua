@@ -20,4 +20,17 @@ local nodes = Taxi.ReachableSorted({
 check(#nodes == 3, "reachable only")
 check(nodes[1].index == 3 and nodes[2].index == 5 and nodes[3].index == 1, "sorted ignoring case")
 
+-- Cost column: nothing for free flights, like Blizzard's flight map.
+local function Money(copper)
+	return copper .. "c"
+end
+check(Taxi.CostText(0, Money) == "", "free flight")
+check(Taxi.CostText(nil, Money) == "", "no cost known")
+check(Taxi.CostText(150, Money) == "150c", "paid flight")
+
+-- Panel height: the rows plus padding, at most the map's height (the rest scrolls).
+check(Taxi.PanelHeight(3, 18, 6, 500) == 66, "short list")
+check(Taxi.PanelHeight(50, 18, 6, 500) == 500, "long list capped at the map")
+check(Taxi.PanelHeight(50, 18, 6, nil) == 912, "no cap")
+
 print("taxi tests passed")
