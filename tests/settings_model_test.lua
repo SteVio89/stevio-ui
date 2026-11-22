@@ -32,6 +32,13 @@ check(not Model.SameCVarValue("1", "2"), "different numbers")
 check(not Model.SameCVarValue("MTL", "D3D12"), "different strings")
 check(not Model.SameCVarValue(nil, "1"), "unknown CVar")
 check(not Model.SameCVarValue("", "0"), "empty is not zero")
+
+-- Overrides: a number back at the profile's value in another spelling is none.
+check(Model.CVarOverrideFor("1", "1", "1.000000") == nil, "captured: profile value, other spelling")
+check(Model.CVarOverrideFor("2", "1", "1.000000") == "2", "captured: other value")
+check(Model.CVarOverrideFor("0", "0", nil) == nil, "captured: back at the default")
+check(Model.CVarOverride("1", "1.000000") == nil, "set: profile value, other spelling")
+check(Model.CVarOverride("2", "1.000000") == "2", "set: other value")
 print("same cvar values ok")
 
 -- CVarOverride: the options panel setting or removing a CVar.

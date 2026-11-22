@@ -24,9 +24,9 @@ end
 
 -- The override for a CVar the player changed to `value`. Back at the
 -- profile's value (or, for a CVar outside the profile, at the game default)
--- there is none.
+-- there is none, also when the client spells the number differently.
 function Model.CVarOverrideFor(value, defaultValue, profileValue)
-	if value == (profileValue or defaultValue) then
+	if Model.SameCVarValue(value, profileValue or defaultValue) then
 		return nil
 	end
 	return value
@@ -63,7 +63,7 @@ end
 -- longer managed (outside the profile).
 function Model.CVarOverride(value, profileValue)
 	local override = value
-	if value == nil or value == profileValue then
+	if value == nil or Model.SameCVarValue(value, profileValue) then
 		override = nil
 	end
 	return override, value == nil and profileValue == nil
