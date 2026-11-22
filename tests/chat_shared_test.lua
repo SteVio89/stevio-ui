@@ -35,6 +35,19 @@ check(C.Label({ key = "whisper:Bob", label = "Bob" }) == "Bob", "other channels 
 check(C.Time(5) == "t5" and C.Day(5) == "d5", "time and day")
 print("labels ok")
 
+-- The preview lines (#69).
+check(C.PreviewAlpha(0, 6, 2) == 1 and C.PreviewAlpha(5.9, 6, 2) == 1, "preview line held")
+check(C.PreviewAlpha(7, 6, 2) == 0.5, "then fades out")
+check(C.PreviewAlpha(8, 6, 2) == 0 and C.PreviewAlpha(20, 6, 2) == 0, "and is gone")
+check(C.PreviewAlpha(6, 6, 0) == 0, "no fade time: gone at once")
+local items = {}
+for i = 1, 4 do
+	C.PushPreview(items, i, 3)
+end
+check(#items == 3 and items[1] == 2 and items[3] == 4, "oldest preview line drops out")
+check(#C.PushPreview({}, 1, 0) == 0, "no rows: no preview lines")
+print("preview ok")
+
 -- Main: unread of its members, reading it, the channel it writes to.
 do
 	C.store = History.New({}, 10, true)

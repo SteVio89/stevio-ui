@@ -60,6 +60,7 @@ local ns = {
 			},
 			cityChannels = {},
 			autoShowDuration = 10,
+			preview = { enabled = true },
 		},
 	},
 	ChatInternal = { state = {}, hidden = true },
@@ -90,6 +91,10 @@ C.Label = function(channel)
 end
 C.ShowEntry = function() end
 C.Peek = function() end
+local previews = {}
+C.ShowPreview = function(channel, entry)
+	previews[#previews + 1] = { key = channel.key, entry = entry }
+end
 C.StartAutoTimer = function() end
 C.Update = function() end
 C.Selected = function() end
@@ -124,6 +129,10 @@ check(Messages("party")[1].text:find("readable after the fight", 1, true), "plac
 check(#Messages("main") == 2 and Messages("main")[1].pending == 11, "placeholder mirrored in Main")
 check(C.store:Get("party").unread == 2, "placeholders count as unread")
 check(C.store:Get("whisper:Ann-Other") == nil, "whisper partner unknown during the lockdown")
+check(
+	#previews == 2 and previews[1].key == "main" and previews[1].entry.pending == 11,
+	"placeholders preview from Main"
+)
 
 C.ReadPending()
 check(Messages("party")[1].pending == 11 and rendered == 0, "nothing read while still locked down")

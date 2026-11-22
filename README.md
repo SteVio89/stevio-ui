@@ -115,13 +115,16 @@ until it is needed, and as much as possible can be done from the keyboard.
   and starts typing into it; right click opens a menu to whisper or invite
   them.
   `x` deletes any channel but guild and Main with its history. Nearby, chat
-  and community channels, NPC, Loot & Progress and System only count as unread and don't pop
-  up the chat. Hidden by default, toggled by key or by the badge at the left
-  screen edge (also hiding a chat that just popped up), whose three segments light up on new whispers, group (party,
-  raid, instance) or guild messages. A new message that pops up the chat
-  switches to its channel (or Main) until it hides again, then goes back to
-  the channel shown before, unless you opened the chat or picked a channel
-  meanwhile. The chat starts on Main and otherwise reopens on the channel
+  and community channels, NPC, Loot & Progress and System only count as unread
+  unless their lines show in Main. Hidden by default, toggled by key or by the badge at the left
+  screen edge, whose three segments light up on new whispers, group (party,
+  raid, instance) or guild messages. A new message doesn't pop up the hidden
+  chat: it shows for a few seconds as a line of text where the chat sits,
+  without a background (up to three, the newest at the bottom; a line under
+  the cursor stays, a click opens the chat on its channel; `preview`). Only
+  `/sui` replies open the chat, on System, until it hides again; then it goes
+  back to the channel shown before, unless you opened the chat or picked a
+  channel meanwhile. The chat starts on Main and otherwise reopens on the channel
   last shown. Raid warnings and officer chat are marked `[RW]` and
   `[O]`. During boss fights, Mythic+ and PvP matches the game hides chat
   from addons: those messages show as "… (readable after the fight)" and
