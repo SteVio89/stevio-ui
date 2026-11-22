@@ -43,6 +43,9 @@ ns.config.settings = {
 		"^serviceTypeFilter$",
 		"^auctionHouseDurationDropdown$",
 		"^EJLootClass$",
+		-- The graphics API and screen resolutions belong to the machine: the same
+		-- account on another computer (or screen) must keep its own.
+		"^[Gg]x",
 		-- Mirrors the actionBars section of the profile, which is the one place to change it.
 		"^enableMultiActionBars$",
 		-- Set by stevio-ui modules themselves; a profile value or override would

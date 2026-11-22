@@ -87,6 +87,17 @@ check(Model.IsIgnoredCVar("enableMultiActionBars", patterns), "action bars")
 check(not Model.IsIgnoredCVar("graphicsQuality", patterns), "a preference")
 check(not Model.IsIgnoredCVar("anything", {}), "no patterns")
 check(Model.IsIgnoredCVar("rotateMinimap", patterns), "set by the minimap module")
+check(Model.IsIgnoredCVar("GxApi", patterns), "graphics API belongs to the machine")
+check(Model.IsIgnoredCVar("GxWindowedResolution", patterns), "resolution belongs to the machine")
+check(Model.IsIgnoredCVar("gxMaximize", patterns), "window mode belongs to the machine")
+
+-- The profile holds no CVar it would ignore (it would never be applied).
+do
+	loadAddonFile("Modules/Settings/Profile.lua", ns)
+	for name in pairs(ns.config.settings.profile.cvars) do
+		check(not Model.IsIgnoredCVar(name, patterns), "profile CVar is ignored: " .. name)
+	end
+end
 print("ignored cvars ok")
 
 -- RemoveIgnoredCVars: overrides saved before their CVar became ignored go.

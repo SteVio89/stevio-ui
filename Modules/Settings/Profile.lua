@@ -160,9 +160,6 @@ ns.config.settings.profile = {
 	},
 
 	cvars = {
-		GxApi = "MTL",
-		GxFullscreenResolution = "3024x1964",
-		GxWindowedResolution = "2560x1600",
 		OutlineEngineMode = "1",
 		RAIDOutlineEngineMode = "1",
 		RAIDSSAO = "2",
