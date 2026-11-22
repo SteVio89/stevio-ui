@@ -7,11 +7,16 @@ local Tracker = ns.RegisterModule("tracker", {})
 
 local shown = false
 local applying = false
+local layoutApplied = false
 local badge
 
 -- The tracker holds secure quest item buttons, which makes Show/Hide protected
 -- in combat. Alpha is never restricted, so it takes effect immediately and the
 -- real Show/Hide follows once combat allows it.
+-- The real Show/Hide also waits for our Edit Mode layout: in Blizzard's default
+-- position the tracker belongs to the right side's managed frames, and hiding
+-- it there from addon code would reorder (and taint) that container, which
+-- also lays out action bars.
 local function ApplyShown()
 	applying = true
 	ObjectiveTrackerFrame:SetShown(shown)
@@ -23,7 +28,9 @@ local function Apply()
 	ObjectiveTrackerFrame:SetAlpha(shown and 1 or 0)
 	applying = false
 	badge.texture:SetColorTexture(unpack(shown and badgeStyle.shownColor or badgeStyle.hiddenColor))
-	ns.RunAfterCombat(ApplyShown)
+	if layoutApplied then
+		ns.RunAfterCombat(ApplyShown)
+	end
 end
 
 -- Bound to a key even while the module is off; then there is nothing to toggle.
@@ -60,4 +67,8 @@ function Tracker:OnEnable()
 	badge = CreateBadge()
 	shown = config.shownOnLogin
 	Apply()
+	ns.OnEditModeLayoutApplied(function()
+		layoutApplied = true
+		ns.RunAfterCombat(ApplyShown)
+	end)
 end
