@@ -1,6 +1,15 @@
 # Loot ticker and roll widget (#72)
 
-Decisions from the brainstorm in #72. Nothing here is built yet.
+Decisions from the brainstorm in #72, built in `Modules/LootTicker` and
+`Modules/Rolls`. What still needs a check in game is listed in
+`docs/remaining-issues.md`.
+
+How Blizzard's popup is replaced: Blizzard opens it from its game event
+router (`GameEvent.HandleStartLootRoll` → `GroupLootContainer_AddRoll`), so
+the module calls `GameEvent.UnregisterInternalEvent("START_LOOT_ROLL")`.
+Blizzard's roll frames then never open, nothing of theirs is hidden or
+hooked, and the bind-on-pickup confirmation (`CONFIRM_LOOT_ROLL`, its own
+route) still comes from Blizzard.
 
 ## Loot ticker: personal only
 

@@ -151,6 +151,24 @@ until it is needed, and as much as possible can be done from the keyboard.
   slowly after a few seconds. Looting more of something still listed adds to
   that line. Loot the game hides from addons during a boss fight is listed
   once the fight is over.
+- **Loot rolls** – a card for every group loot roll you are offered, below the
+  notch (it slides down under the notch island while that is open), in place
+  of Blizzard's Need/Greed/Pass popup: icon, name in quality colour with a
+  stripe of that colour on the left, a timer bar and three buttons, Need ·
+  Greed (or Transmog, when the item allows it) · Pass. A choice the game
+  doesn't allow is greyed out, its reason shows on hover. Several drops stack
+  up, rolls still to answer on top. Once you rolled, the card shrinks to the
+  result: the winner ("You win" in green) and the three best rolls plus
+  yours, filled in from the loot history; after a pass it is dimmed. It fades
+  out 15 seconds after the winner is known (not while the cursor is on it);
+  ✕ closes it earlier. Hover shows the item, shift-click links it. The dice
+  button in the notch island opens the roll history in the loot ticker's
+  place: every decided roll, newest first, under a header per boss
+  (boss · instance · date); a click on a drop lists everyone's choice and
+  number. It has a search (item, boss or player), a "Mine" filter (drops you
+  rolled on or won) and a Clear button; the history is kept per character.
+  `replaceBlizzardRolls = false` brings Blizzard's popup back (after
+  `/reload`); the cards then appear once you rolled there.
 - **Quest rewards** – on the turn-in page with at least two item choices,
   a gold coin marks the one with the highest vendor value (sell price × count).
 - **Notes** – a window (button in the notch island, or `/sui notes`) with three
@@ -210,6 +228,7 @@ first login.
 | --- | --- |
 | `/sui test 1-40` | Preview the group grid with that many players (e.g. 5, 10, 25, 40); `/sui test` alone turns it off |
 | `/sui loot` | Preview the loot ticker with a few items from your bags |
+| `/sui rolls` | Preview two roll cards (with an item from your bags) and the roll history with made-up entries |
 | `/sui bars [name\|number\|next]` | List the action sets or switch to one |
 | `/sui bars missing` | List the actions the active set could not place |
 | `/sui bars forget` | Drop those actions from the active set |
@@ -225,7 +244,7 @@ first login.
 
 `/sui` alone lists all commands. `config`, `reset`, `export`, `apply` and
 `restore` only exist once you have accepted the first-login dialog. `test`,
-`loot`, `qj` and `notch` say so when their module is turned off.
+`loot`, `rolls`, `qj` and `notch` say so when their module is turned off.
 
 ## Configuration
 

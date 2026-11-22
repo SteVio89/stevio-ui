@@ -132,3 +132,30 @@ need a check in game.
   same group they continue, after a later login alone the rating popup shows.
 - Settings: `GxApi` and the resolution CVars are no longer set from the
   profile; saved overrides of them are dropped at login.
+
+### Loot ticker and roll cards (#72)
+- Loot ticker: only your own loot; no lines for other players or rolls. Loot,
+  currency and gold from a boss fight (chat lockdown) appear once the fight
+  is over, not before and not twice.
+- Blizzard's Need/Greed/Pass popup no longer opens; our card does (top
+  center, below the notch). `/console taintLog 1` shows nothing blocked after
+  rolling. Bind-on-pickup items still ask for confirmation (Blizzard's
+  dialog).
+- Need/Greed/Transmog/Pass on the card really roll; greyed-out buttons show
+  the reason on hover. Transmog replaces Greed for items that allow it.
+- The answered card fills in the rolls and winner; it matches the right
+  drop when the boss drops two of the same item.
+- Not answering: the card turns into a dimmed "passed" card when the timer
+  runs out.
+- Hovering the notch while cards are open: the cards slide below the island
+  and back.
+- Which parts of `GetLootRollItemInfo` are secret during a fight (the card
+  then shows what it can, buttons still work), and whether trash rolls
+  appear in the loot history at all (without it the answered card shows no
+  winner and fades after `resultTimeout`).
+- History: entries survive a relog, aren't doubled after a `/reload`,
+  group under the right boss and instance, and drops decided during a fight
+  are added once it is over. Search, "Mine" and Clear work; Esc closes it;
+  the loot ticker comes back when it closes.
+- `replaceBlizzardRolls = false` + `/reload`: Blizzard's popup is back and
+  our card appears after rolling there.
