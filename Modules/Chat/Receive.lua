@@ -268,7 +268,7 @@ function C.ReadPending()
 	for _, line in ipairs(lines) do
 		local text = C_ChatInfo.GetChatLineText(line.lineID)
 		local sender = C_ChatInfo.GetChatLineSenderName(line.lineID)
-		local readable = text ~= nil and sender ~= nil and not issecretvalue(text) and not issecretvalue(sender)
+		local readable = not issecretvalue(text) and not issecretvalue(sender) and text ~= nil and sender ~= nil
 		local def, key, opts, entry
 		if readable then
 			-- One line failing to read mustn't lose the others.

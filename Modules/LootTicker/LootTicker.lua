@@ -86,7 +86,7 @@ end
 
 -- The class of a group member, from the message's GUID or else by name.
 local function PlayerClass(name, guid)
-	if guid and not issecretvalue(guid) and guid ~= "" then
+	if not issecretvalue(guid) and guid and guid ~= "" then
 		local _, class = GetPlayerInfoByGUID(guid)
 		if class then
 			return class
@@ -101,7 +101,7 @@ local function PlayerClass(name, guid)
 	for i = 1, count do
 		local unit = prefix .. i
 		local unitName, unitRealm = UnitName(unit)
-		if unitName and not issecretvalue(unitName) and not issecretvalue(unitRealm) then
+		if not issecretvalue(unitName) and not issecretvalue(unitRealm) and unitName then
 			local fullName = unitRealm and unitRealm ~= "" and (unitName .. "-" .. unitRealm) or unitName
 			if Ambiguate(fullName, "short") == shortName then
 				return select(2, UnitClass(unit))
@@ -278,7 +278,7 @@ local function OnDrop(_, encounterID, lootListID)
 		return
 	end
 	local drop = C_LootHistory.GetSortedInfoForDrop(encounterID, lootListID)
-	if drop and drop.itemHyperlink and not HasSecrets(drop) then
+	if drop and not HasSecrets(drop) and drop.itemHyperlink then
 		AddDrop(("drop:%s:%s"):format(encounterID, lootListID), drop)
 	end
 end
