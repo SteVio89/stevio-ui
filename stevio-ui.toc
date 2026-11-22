@@ -6,7 +6,7 @@
 ## IconTexture: Interface\AddOns\stevio-ui\Media\Icon
 ## X-License: MIT
 ## SavedVariables: StevioUIState, StevioUIConfig, StevioUIExport, StevioUIDebug, StevioUIErrors, StevioUINotes
-## SavedVariablesPerCharacter: StevioUIChatHistory, StevioUIActionSets
+## SavedVariablesPerCharacter: StevioUIChatHistory, StevioUIActionSets, StevioUIRollHistory
 ## X-Curse-Project-ID: 1739367
 
 Core\Init.lua
@@ -92,6 +92,12 @@ Modules\QuestRewards\QuestRewards.lua
 Modules\LootTicker\Config.lua
 Modules\LootTicker\Feed.lua
 Modules\LootTicker\LootTicker.lua
+
+Modules\Rolls\Config.lua
+Modules\Rolls\Logic.lua
+Modules\Rolls\Cards.lua
+Modules\Rolls\History.lua
+Modules\Rolls\Rolls.lua
 
 Modules\Taxi\Config.lua
 Modules\Taxi\Taxi.lua
