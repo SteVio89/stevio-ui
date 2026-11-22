@@ -24,4 +24,20 @@ check(is("PLAYER_FOCUS_CHANGED", "refresh"), "new focus")
 check(is("UNIT_SPELLCAST_INTERRUPTIBLE", "refresh"), "interruptible again")
 check(is("UNIT_SPELLCAST_NOT_INTERRUPTIBLE", "refresh"), "no longer interruptible")
 
+-- EndsShownCast: a cast ends only with its own castID.
+local SECRET = {}
+function _G.issecretvalue(value)
+	return value == SECRET
+end
+local Ends = ns.CastBar.EndsShownCast
+check(Ends("UNIT_SPELLCAST_STOP", "cast-1", "cast-1"), "own cast stops")
+check(not Ends("UNIT_SPELLCAST_FAILED", "cast-2", "cast-1"), "another spell pressed during the cast")
+check(not Ends("UNIT_SPELLCAST_INTERRUPTED", "cast-2", "cast-1"), "another cast interrupted")
+check(Ends("UNIT_SPELLCAST_INTERRUPTED", "cast-1", "cast-1"), "own cast interrupted")
+check(Ends("UNIT_SPELLCAST_CHANNEL_STOP", "cast-2", "cast-1"), "channel stop always ends")
+check(Ends("UNIT_SPELLCAST_STOP", "cast-1", nil), "a channel has no castID")
+check(Ends("UNIT_SPELLCAST_STOP", nil, "cast-1"), "event without castID")
+check(Ends("UNIT_SPELLCAST_FAILED", SECRET, "cast-1"), "secret event castID")
+check(Ends("UNIT_SPELLCAST_FAILED", "cast-2", SECRET), "secret shown castID")
+
 print("cast bar tests passed")

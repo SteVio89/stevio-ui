@@ -44,6 +44,20 @@ function CastBar.CastAction(event)
 	return "refresh"
 end
 
+-- Whether a stop event ends the cast the bar shows. Like Blizzard's casting bar,
+-- a cast's stop, failure or interruption must carry its castID: pressing another
+-- spell during a cast fails that attempt, not the cast. Without both IDs
+-- (channels, secret values) every stop counts.
+function CastBar.EndsShownCast(event, eventCastID, shownCastID)
+	if event == "UNIT_SPELLCAST_CHANNEL_STOP" or eventCastID == nil or shownCastID == nil then
+		return true
+	end
+	if issecretvalue(eventCastID) or issecretvalue(shownCastID) then
+		return true
+	end
+	return eventCastID == shownCastID
+end
+
 -- The notInterruptible flag may be secret, and secret booleans can't be branched on;
 -- the FromBoolean setter lets the client resolve the color instead.
 local function ApplyColor(texture, notInterruptible)
@@ -58,14 +72,14 @@ end
 -- Spell name and remaining seconds may be secret; the font strings take them as they are.
 local function Start(castBar, isChannel)
 	local unit = castBar.unit
-	local name, isTradeskill, notInterruptible, duration, _
+	local name, isTradeskill, notInterruptible, duration, castID, _
 	if isChannel then
 		-- name, displayName, texture, startTime, endTime, isTradeskill, notInterruptible, ...
 		name, _, _, _, _, isTradeskill, notInterruptible = UnitChannelInfo(unit)
 		duration = UnitChannelDuration(unit)
 	else
 		-- name, displayName, texture, startTime, endTime, isTradeskill, castID, notInterruptible, ...
-		name, _, _, _, _, isTradeskill, _, notInterruptible = UnitCastingInfo(unit)
+		name, _, _, _, _, isTradeskill, castID, notInterruptible = UnitCastingInfo(unit)
 		duration = UnitCastingDuration(unit)
 	end
 
@@ -74,6 +88,7 @@ local function Start(castBar, isChannel)
 		castBar:Hide()
 		return
 	end
+	castBar.castID = castID
 
 	ApplyColor(castBar:GetStatusBarTexture(), notInterruptible)
 	local direction = isChannel and Enum.StatusBarTimerDirection.RemainingTime
@@ -92,10 +107,12 @@ local function Refresh(castBar)
 	end
 end
 
-local function OnEvent(castBar, event)
+local function OnEvent(castBar, event, _, castID)
 	local action, isChannel = CastBar.CastAction(event)
 	if action == "stop" then
-		castBar:Hide()
+		if CastBar.EndsShownCast(event, castID, castBar.castID) then
+			castBar:Hide()
+		end
 	elseif action == "start" then
 		Start(castBar, isChannel)
 	else
