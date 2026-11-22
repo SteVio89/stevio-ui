@@ -141,6 +141,12 @@ local function PlaceBars()
 			[Setting.IconPadding] = config.iconPadding,
 			[Setting.HideBarArt] = 1,
 		}
+		-- The main bar's page arrows: alpha 0 (StripMainBarArt) only makes them
+		-- invisible, they still take clicks; Edit Mode's setting hides them.
+		-- Bars without the setting ignore it (only carried settings are written).
+		if Setting.HideBarScrolling then
+			barSettings[Setting.HideBarScrolling] = 1
+		end
 		ns.SetEditModeSystem(Enum.EditModeSystem.ActionBar, bar.systemIndex, bar.layout, barSettings)
 	end
 

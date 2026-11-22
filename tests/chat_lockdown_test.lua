@@ -57,6 +57,7 @@ local ns = {
 				CHAT_MSG_PARTY = party,
 				CHAT_MSG_WHISPER = { kind = "whisper", chatType = "WHISPER", merge = "whisper" },
 				CHAT_MSG_BN_WHISPER = { kind = "whisper", chatType = "BN_WHISPER", merge = "whisper", bnet = true },
+				CHAT_MSG_GUILD = { kind = "group", key = "guild", chatType = "GUILD" },
 			},
 			cityChannels = {},
 			autoShowDuration = 10,
@@ -90,6 +91,9 @@ C.Label = function(channel)
 	return channel.label or channel.key
 end
 C.ShowEntry = function() end
+C.ExpandExpressions = function(text)
+	return text
+end
 C.Peek = function() end
 local previews = {}
 C.ShowPreview = function(channel, entry)
@@ -172,4 +176,44 @@ local annLines = C.store:Get("whisper:Ann-Other").messages
 check(annLines[3].text == "hello" and annLines[4].text:find("marked", 1, true), "readable whisper warned right away")
 Whisper("yo", "Bob-Realm", 17)
 check(#C.store:Get("whisper:Bob-Realm").messages == 1, "unmarked whisperer: no warning")
+
+-- Like Blizzard's chat: a line hidden in the cinematic letterbox (16th
+-- argument) isn't stored; a Discord user in guild chat (18th) has no
+-- clickable character name.
+local function Guild(text, sender, lineID, hideSender, discordInfo)
+	C.OnChatMessage(
+		"CHAT_MSG_GUILD",
+		text,
+		sender,
+		"",
+		"",
+		"",
+		"",
+		0,
+		0,
+		"",
+		0,
+		lineID,
+		0,
+		"",
+		nil,
+		nil,
+		hideSender,
+		nil,
+		discordInfo
+	)
+end
+Guild("from a cutscene", "Bob-Realm", 18, true)
+check(C.store:Get("guild") == nil or #C.store:Get("guild").messages == 0, "letterbox line not stored")
+Guild("hi from discord", "Dee", 19, false, { userID = 77 })
+local guildLines = C.store:Get("guild").messages
+check(
+	guildLines[#guildLines].text == "hi from discord" and not guildLines[#guildLines].player,
+	"Discord user not linked"
+)
+Guild("hi from game", "Bob-Realm", 20, false, { userID = 0 })
+check(guildLines[#guildLines].player == "Bob-Realm", "character in guild chat linked")
+check(not C.IsFromDiscord(nil) and not C.IsFromDiscord({ userID = SECRET }), "no or secret Discord info")
+print("letterbox and Discord ok")
+
 print("chat lockdown tests passed")

@@ -233,7 +233,12 @@ end
 local function AddToList(page, path)
 	local list = Overrides.Get(ns.overrideRoots, path)
 	local last = list[#list]
-	list[#list + 1] = last ~= nil and Overrides.DeepCopy(last) or ""
+	-- A copy of the last entry (false too), or an empty text in an empty list.
+	if last == nil then
+		list[#list + 1] = ""
+	else
+		list[#list + 1] = Overrides.DeepCopy(last)
+	end
 	page.collapsed[Overrides.Encode(path)] = false
 	Commit(page, path)
 end

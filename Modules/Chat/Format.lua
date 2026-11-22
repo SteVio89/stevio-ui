@@ -29,15 +29,18 @@ function formatters.plain(_, text)
 	return text
 end
 
--- Blizzard's "%s says: " style prefix (CHAT_<TYPE>_GET). NPC emotes also carry
--- the name as "%s" in their own text, so prefix and text are formatted together;
--- text with a stray "%" (a player's AFK reply) falls back to the prefix alone.
+-- Blizzard's "%s says: " style prefix (CHAT_<TYPE>_GET). Like Blizzard's chat,
+-- only NPC lines (MONSTER_*, RAID_BOSS_*) carry the name as "%s" in their own
+-- text and are formatted with it; a player's text stays as typed, "%" and all
+-- (an AFK reply "back in 5%s"). NPC text with a stray "%" keeps it too.
 function formatters.get(chatType, text, sender)
 	sender = PlayerName(sender)
 	local prefix = GetPrefix(chatType)
-	local ok, line = pcall(format, prefix .. text, sender, sender)
-	if ok then
-		return line
+	if chatType:sub(1, 7) == "MONSTER" or chatType:sub(1, 9) == "RAID_BOSS" then
+		local ok, line = pcall(format, prefix .. text, sender, sender)
+		if ok then
+			return line
+		end
 	end
 	return format(prefix, sender) .. text
 end
@@ -98,7 +101,7 @@ function formatters.noticeUser(_, token, sender, channelName, otherPlayer, chann
 		return nil
 	end
 	channelName = ChannelDisplayName(channelName)
-	if otherPlayer and not issecretvalue(otherPlayer) and otherPlayer ~= "" then
+	if not issecretvalue(otherPlayer) and otherPlayer and otherPlayer ~= "" then
 		return format(template, channelIndex, channelName, sender, otherPlayer)
 	elseif token == "INVITE" then
 		return format(template, channelName, "[" .. sender .. "]")
@@ -118,6 +121,8 @@ function formatters.broadcast(_, text, sender)
 	if text == "" then
 		return nil
 	end
+	-- Cleaned up like Blizzard's chat does, so a broadcast stays on one line.
+	text = RemoveNewlines((RemoveExtraSpaces(text)))
 	return format(BN_INLINE_TOAST_BROADCAST, "[" .. sender .. "]", text)
 end
 

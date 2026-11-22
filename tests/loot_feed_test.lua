@@ -237,4 +237,11 @@ check(Feed.Passes(0, true, false, filter), "currency ignores the quality")
 check(not Feed.Passes(5, true, false, { showCurrency = false, minQuality = 0 }), "currency off")
 check(Feed.Passes(1, false, true, { minQuality = 1 }), "no group minimum falls back")
 
+-- CurrencyDisplay reads the fields C_CurrencyInfo returns.
+do
+	local icon, quality = Feed.CurrencyDisplay({ iconFileID = 4638724, quality = 3, name = "Valorstones" })
+	check(icon == 4638724 and quality == 3, "currency icon and quality")
+	check(Feed.CurrencyDisplay(nil) == nil, "unknown currency")
+end
+
 print("loot feed tests passed")

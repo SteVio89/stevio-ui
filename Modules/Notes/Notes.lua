@@ -24,7 +24,7 @@ local ended = {}
 -- isn't known yet or is secret.
 local function UnitKey(unit)
 	local name, realm = UnitName(unit)
-	if not name or issecretvalue(name) or issecretvalue(realm) or name == "" or name == UNKNOWNOBJECT then
+	if issecretvalue(name) or issecretvalue(realm) or not name or name == "" or name == UNKNOWNOBJECT then
 		return nil
 	end
 	if realm and realm ~= "" then
@@ -83,7 +83,7 @@ local function CheckGuild(unit)
 	end
 	local guild = GetGuildInfo(unit)
 	-- Nil both for no guild and not known yet: only a name is recorded.
-	if not guild or issecretvalue(guild) or guild == "" then
+	if issecretvalue(guild) or not guild or guild == "" then
 		return Notes.store:Player(name), false
 	end
 	local _, class = UnitClass(unit)
@@ -258,7 +258,7 @@ local function AddUnitLines(tooltip)
 		return
 	end
 	local _, unit = tooltip:GetUnit()
-	if not unit or issecretvalue(unit) then
+	if issecretvalue(unit) or not unit then
 		return
 	end
 	local isPlayer = UnitIsPlayer(unit)
@@ -286,7 +286,7 @@ local function AddItemLines(tooltip, data)
 		return
 	end
 	local itemID = data and data.id
-	if not itemID or issecretvalue(itemID) then
+	if issecretvalue(itemID) or not itemID then
 		return
 	end
 	local text = Notes.store:ItemNote(itemID)
@@ -339,6 +339,20 @@ end
 function Notes:OnEnable()
 	self.store = Store.New(StevioUINotes, { rejoinGrace = config.rejoinGrace })
 	StevioUINotes = self.store.db
+	-- Sessions still open at the last logout ended then, not now: the time
+	-- offline isn't spent in their place. After a /reload in the same group
+	-- they continue (rejoinGrace). Without a recorded logout (a crash) they
+	-- end at the next roster check, as before.
+	local loggedOut = self.store.db.loggedOut
+	self.store.db.loggedOut = nil
+	if loggedOut then
+		for _, name in ipairs(self.store:OpenNames()) do
+			EndSession(name, loggedOut)
+		end
+	end
+	ns.RegisterEvent("PLAYER_LOGOUT", function()
+		Notes.store.db.loggedOut = time()
+	end)
 	self.store:Prune(time(), config.keepUnratedDays)
 
 	ns.RegisterEvent("GROUP_ROSTER_UPDATE", Sync)

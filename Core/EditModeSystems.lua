@@ -31,6 +31,18 @@ function Systems.FindOwnLayout(customLayouts, layoutName)
 	end
 end
 
+-- Whether there is room for our account layout among `customLayouts`: Edit
+-- Mode keeps at most `max` layouts per type (EditModeMaxLayoutsPerType).
+function Systems.HasRoomForOwnLayout(customLayouts, max)
+	local count = 0
+	for _, layoutInfo in ipairs(customLayouts) do
+		if layoutInfo.layoutType == Enum.EditModeLayoutType.Account then
+			count = count + 1
+		end
+	end
+	return count < max
+end
+
 function Systems.ApplyAnchor(systemInfo, anchorInfo)
 	local current = systemInfo.anchorInfo
 	local changed = systemInfo.isInDefaultPosition or systemInfo.anchorInfo2 ~= nil

@@ -11,6 +11,8 @@ Every group is recorded, guild members and friends included.
   when they join (or you join them) and ends when either of you leaves. A
   player who rejoins within a few minutes (`rejoinGrace`, e.g. a disconnect)
   continues the same session.
+  Logging out ends the open sessions at that moment, so time offline doesn't
+  count; after a `/reload` in the same group they continue.
 - Each session records the date, the **role** the game assigned (Tank, Healer,
   DPS; changeable), an optional **1–5 star rating**, an optional comment and
   the **place**.

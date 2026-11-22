@@ -157,11 +157,13 @@ function ns.RunAfterCombat(fn)
 	combatQueue[#combatQueue + 1] = fn
 end
 
+-- Each queued function runs protected: one that fails doesn't drop the
+-- others, which were already taken out of the queue.
 ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
 	local pending = combatQueue
 	combatQueue = {}
 	for _, fn in ipairs(pending) do
-		fn()
+		ns.SafeCall(fn)
 	end
 end)
 

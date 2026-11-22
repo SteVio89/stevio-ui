@@ -27,7 +27,15 @@ function ns.SetEditModeSystem(system, systemIndex, layout, settings)
 end
 
 local layoutsReady, systemsReady, applied = false, false, false
+local appliedCallbacks, layoutDone = {}, false
 
+-- Account layouts Edit Mode allows (Blizzard's constant, 5 when written).
+local function MaxLayouts()
+	local consts = Constants and Constants.EditModeConsts
+	return consts and consts.EditModeMaxLayoutsPerType or 5
+end
+
+-- Returns false when our layout can't be added (no room left).
 local function ApplyLayout()
 	local saved = C_EditMode.GetLayouts()
 	local presets = EditModePresetLayoutManager:GetCopyOfPresetLayouts()
@@ -36,6 +44,16 @@ local function ApplyLayout()
 	local changed = false
 	local customIndex, layoutInfo = Systems.FindOwnLayout(customLayouts, LAYOUT_NAME)
 	if not layoutInfo then
+		-- Saving one more than Edit Mode allows would be refused or drop a layout.
+		if not Systems.HasRoomForOwnLayout(customLayouts, MaxLayouts()) then
+			ns.Notify(
+				ns.T(
+					"Edit Mode already has %d account layouts; delete one so the stevio-ui layout can be added.",
+					"Der Bearbeitungsmodus hat schon %d Account-Layouts; lösche eins, damit das stevio-ui-Layout angelegt werden kann."
+				):format(MaxLayouts())
+			)
+			return false
+		end
 		layoutInfo = CopyTable(presets[1])
 		layoutInfo.layoutName = LAYOUT_NAME
 		layoutInfo.layoutType = Enum.EditModeLayoutType.Account
@@ -57,7 +75,7 @@ local function ApplyLayout()
 	local activeIndex = #presets + customIndex
 	local wasActive = saved.activeLayout == activeIndex
 	if not changed and wasActive then
-		return
+		return true
 	end
 
 	local allLayouts = presets
@@ -70,6 +88,29 @@ local function ApplyLayout()
 		C_EditMode.SetActiveLayout(1)
 	end
 	C_EditMode.SetActiveLayout(activeIndex)
+	return true
+end
+
+-- Runs `fn` once our layout is in place (right away if it already is), e.g. to
+-- hide a frame only once it no longer sits in Blizzard's default position.
+function ns.OnEditModeLayoutApplied(fn)
+	if layoutDone then
+		fn()
+	else
+		appliedCallbacks[#appliedCallbacks + 1] = fn
+	end
+end
+
+-- The callbacks also run when the layout couldn't be applied or failed, so
+-- nothing waits for good.
+local function ApplyAndNotify()
+	ns.SafeCall(ApplyLayout)
+	layoutDone = true
+	local callbacks = appliedCallbacks
+	appliedCallbacks = {}
+	for _, fn in ipairs(callbacks) do
+		ns.SafeCall(fn)
+	end
 end
 
 -- Needs both the layout data from the server and every module's wishes, and
@@ -79,10 +120,22 @@ local function TryApply()
 		return
 	end
 	applied = true
-	ns.RunAfterCombat(ApplyLayout)
+	ns.RunAfterCombat(ApplyAndNotify)
 end
 
-local function OnLayoutsReady()
+-- Blizzard reads the layouts only from EDIT_MODE_LAYOUTS_UPDATED. Entering the
+-- world counts as ready only once its Edit Mode manager has them (the event
+-- may have fired before this addon loaded); before that, the list could miss
+-- the player's own layouts, and saving it would drop them.
+local function OnLayoutsReady(event)
+	if
+		event == "PLAYER_ENTERING_WORLD"
+		and EditModeManagerFrame
+		and EditModeManagerFrame.IsInitialized
+		and not EditModeManagerFrame:IsInitialized()
+	then
+		return
+	end
 	ns.UnregisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsReady)
 	ns.UnregisterEvent("PLAYER_ENTERING_WORLD", OnLayoutsReady)
 	layoutsReady = true

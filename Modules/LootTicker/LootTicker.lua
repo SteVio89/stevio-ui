@@ -76,8 +76,8 @@ end
 -- comes from its link color (nil if that is unknown too).
 local function LinkInfo(link)
 	if link:find("|Hcurrency:", 1, true) then
-		local info = C_CurrencyInfo.GetCurrencyInfoFromLink(link)
-		return info and info.iconFile, info and info.quality, true
+		local icon, quality = Feed.CurrencyDisplay(C_CurrencyInfo.GetCurrencyInfoFromLink(link))
+		return icon, quality, true
 	end
 	local _, _, _, _, icon = C_Item.GetItemInfoInstant(link)
 	local quality = C_Item.GetItemQualityByID(link) or Feed.QualityFromColor(Feed.LinkColor(link), QualityHex())
@@ -86,7 +86,7 @@ end
 
 -- The class of a group member, from the message's GUID or else by name.
 local function PlayerClass(name, guid)
-	if guid and not issecretvalue(guid) and guid ~= "" then
+	if not issecretvalue(guid) and guid and guid ~= "" then
 		local _, class = GetPlayerInfoByGUID(guid)
 		if class then
 			return class
@@ -101,7 +101,7 @@ local function PlayerClass(name, guid)
 	for i = 1, count do
 		local unit = prefix .. i
 		local unitName, unitRealm = UnitName(unit)
-		if unitName and not issecretvalue(unitName) and not issecretvalue(unitRealm) then
+		if not issecretvalue(unitName) and not issecretvalue(unitRealm) and unitName then
 			local fullName = unitRealm and unitRealm ~= "" and (unitName .. "-" .. unitRealm) or unitName
 			if Ambiguate(fullName, "short") == shortName then
 				return select(2, UnitClass(unit))
@@ -278,7 +278,7 @@ local function OnDrop(_, encounterID, lootListID)
 		return
 	end
 	local drop = C_LootHistory.GetSortedInfoForDrop(encounterID, lootListID)
-	if drop and drop.itemHyperlink and not HasSecrets(drop) then
+	if drop and not HasSecrets(drop) and drop.itemHyperlink then
 		AddDrop(("drop:%s:%s"):format(encounterID, lootListID), drop)
 	end
 end

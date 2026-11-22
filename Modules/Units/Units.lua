@@ -109,7 +109,11 @@ local eventUpdaters = {
 	UNIT_FACTION = UpdateHealthColor,
 	UNIT_CONNECTION = UpdateHealthColor,
 	UNIT_FLAGS = UpdateHealthColor,
-	UNIT_NAME_UPDATE = UpdateName,
+	-- The name arriving may also mean the class is now known (CompactUnitFrame).
+	UNIT_NAME_UPDATE = function(frame)
+		UpdateName(frame)
+		UpdateHealthColor(frame)
+	end,
 	UNIT_LEVEL = UpdateName,
 	PLAYER_REGEN_DISABLED = UpdateCombat,
 	PLAYER_REGEN_ENABLED = UpdateCombat,

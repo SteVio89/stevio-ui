@@ -32,6 +32,13 @@ check(not Model.SameCVarValue("1", "2"), "different numbers")
 check(not Model.SameCVarValue("MTL", "D3D12"), "different strings")
 check(not Model.SameCVarValue(nil, "1"), "unknown CVar")
 check(not Model.SameCVarValue("", "0"), "empty is not zero")
+
+-- Overrides: a number back at the profile's value in another spelling is none.
+check(Model.CVarOverrideFor("1", "1", "1.000000") == nil, "captured: profile value, other spelling")
+check(Model.CVarOverrideFor("2", "1", "1.000000") == "2", "captured: other value")
+check(Model.CVarOverrideFor("0", "0", nil) == nil, "captured: back at the default")
+check(Model.CVarOverride("1", "1.000000") == nil, "set: profile value, other spelling")
+check(Model.CVarOverride("2", "1.000000") == "2", "set: other value")
 print("same cvar values ok")
 
 -- CVarOverride: the options panel setting or removing a CVar.
@@ -80,6 +87,17 @@ check(Model.IsIgnoredCVar("enableMultiActionBars", patterns), "action bars")
 check(not Model.IsIgnoredCVar("graphicsQuality", patterns), "a preference")
 check(not Model.IsIgnoredCVar("anything", {}), "no patterns")
 check(Model.IsIgnoredCVar("rotateMinimap", patterns), "set by the minimap module")
+check(Model.IsIgnoredCVar("GxApi", patterns), "graphics API belongs to the machine")
+check(Model.IsIgnoredCVar("GxWindowedResolution", patterns), "resolution belongs to the machine")
+check(Model.IsIgnoredCVar("gxMaximize", patterns), "window mode belongs to the machine")
+
+-- The profile holds no CVar it would ignore (it would never be applied).
+do
+	loadAddonFile("Modules/Settings/Profile.lua", ns)
+	for name in pairs(ns.config.settings.profile.cvars) do
+		check(not Model.IsIgnoredCVar(name, patterns), "profile CVar is ignored: " .. name)
+	end
+end
 print("ignored cvars ok")
 
 -- RemoveIgnoredCVars: overrides saved before their CVar became ignored go.

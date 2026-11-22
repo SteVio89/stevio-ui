@@ -243,7 +243,8 @@ function History.Route(def, sender, bnetID, channelIndex, baseName, channelName,
 				}
 		end
 		local key, label = History.PublicChannel(channelName, baseName, cities)
-		return key, { kind = def.kind, chatType = chatType, label = label, channelIndex = channelIndex }
+		return key,
+			{ kind = def.kind, chatType = chatType, label = label, channelIndex = channelIndex, channelName = baseName }
 	end
 	if lookups.isSecret(sender) or lookups.isSecret(bnetID) then
 		return nil
@@ -330,7 +331,21 @@ function Store:Get(key)
 	return self.db.channels[key]
 end
 
--- opts: kind, chatType, label, bnetID, battleTag, target, channelIndex, readOnly, silent,
+-- The number to send a chat channel's message to. Numbers change between
+-- sessions (Trade was /2, now /3), so like Blizzard's edit box the channel's
+-- name is looked up at send time (`getChannelName` is GetChannelName); the
+-- number of its latest message is the fallback when the name isn't joined.
+function History.ChannelNumber(channel, getChannelName)
+	if channel.channelName then
+		local number = getChannelName(channel.channelName)
+		if number and number > 0 then
+			return number
+		end
+	end
+	return channel.channelIndex
+end
+
+-- opts: kind, chatType, label, bnetID, battleTag, target, channelIndex, channelName, readOnly, silent,
 -- clubId, streamId, relabel. Created on first use; the channel number and color follow
 -- the latest message, and so does the label with `relabel` (a renamed community).
 function Store:Ensure(key, opts)
@@ -360,6 +375,7 @@ function Store:Ensure(key, opts)
 	end
 	if opts.channelIndex then
 		channel.channelIndex = opts.channelIndex
+		channel.channelName = opts.channelName or channel.channelName
 		channel.chatType = opts.chatType
 	end
 	if opts.clubId then

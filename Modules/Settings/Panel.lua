@@ -195,9 +195,13 @@ local function CaptureKey(button, onKey)
 	button.idleText = button.idleText or button:GetText()
 	button:SetText(T("Press a key", "Taste drücken"))
 	button:EnableKeyboard(true)
-	button:SetPropagateKeyboardInput(false)
+	-- Restricted in combat (the panel can be open then); the key still arrives.
+	if not InCombatLockdown() then
+		button:SetPropagateKeyboardInput(false)
+	end
 	button:SetScript("OnKeyDown", function(self, key)
-		if IsMetaKey and IsMetaKey(key) then
+		-- The keys Blizzard's keybinding page waits past (modifiers alone, ...).
+		if IsKeyPressIgnoredForBinding(key) then
 			return
 		end
 		StopCapture(self)
@@ -293,6 +297,10 @@ local function CreateCVarsPage()
 			local cvar = name:GetText():match("^%s*(.-)%s*$")
 			if cvar == "" or ns.SettableCVar(cvar) == nil then
 				hint:SetText(T("Unknown or protected CVar", "Unbekannte oder geschützte CVar"))
+				return
+			end
+			if value:GetText() == "" then
+				hint:SetText(T("CVar name and value", "CVar-Name und Wert"))
 				return
 			end
 			SetCVarOverride(cvar, value:GetText())

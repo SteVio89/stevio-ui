@@ -217,6 +217,14 @@ function Feed:Expire(now, options)
 	return #self.entries
 end
 
+-- Icon and quality of a currency from C_CurrencyInfo.GetCurrencyInfoFromLink
+-- (nil for an unknown currency).
+function Feed.CurrencyDisplay(info)
+	if info then
+		return info.iconFileID, info.quality
+	end
+end
+
 -- A player name without its realm ("Bob-Realm" -> "Bob").
 function Feed.ShortName(name)
 	return name and (name:match("^([^-]+)-") or name)

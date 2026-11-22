@@ -25,6 +25,13 @@ local globals = {
 	BN_INLINE_TOAST_FRIEND_REQUEST = "%s wants to be friends.",
 	BN_INLINE_TOAST_BROADCAST = "%s: %s",
 	BN_INLINE_TOAST_BROADCAST_INFORM = "Broadcast sent.",
+	-- Blizzard_ChatFrameBase/Shared/ChatFrameUtil.lua
+	RemoveExtraSpaces = function(str)
+		return string.gsub(str, "     +", "    ")
+	end,
+	RemoveNewlines = function(str)
+		return string.gsub(str, "\n", "")
+	end,
 }
 for name, value in pairs(globals) do
 	_G[name] = value
@@ -40,6 +47,9 @@ check(f.get("WHISPER", "hi", "Bob") == "Bob<none>: hi", "get falls back to a pla
 check(f.get("SAY", "100% done", "Bob") == "Bob<none> says: 100% done", "a stray % keeps the text as it is")
 check(f.get("MONSTER_EMOTE", "%s roars.", "Onyxia") == "Onyxia<none> roars.", "NPC emotes name the sender in the text")
 check(f.get("SAY", "hi", "") == " says: hi", "empty sender stays empty")
+check(f.get("AFK", "back in 5%s", "Bob") == "Bob<none>: back in 5%s", "a player's %s stays text")
+check(f.get("SAY", "50%% off", "Bob") == "Bob<none> says: 50%% off", "a player's %% stays text")
+check(f.get("MONSTER_EMOTE", "100% angry", "Ogre") == "100% angry", "NPC text with a stray % keeps it")
 print("get ok")
 
 -- name: achievements name the player as "%s"
@@ -92,6 +102,7 @@ check(f.toast(nil, "FRIEND_REQUEST", "Anna", nil, nil, nil, toastDef) == nil, "u
 check(f.toast(nil, "FRIEND_GONE", "Anna", nil, nil, nil, { toast = { FRIEND_GONE = true } }) == nil, "unknown toast")
 check(f.broadcast(nil, "hello", "Anna") == "[Anna]: hello", "broadcast")
 check(f.broadcast(nil, "", "Anna") == nil, "empty broadcast")
+check(f.broadcast(nil, "a\nb         c", "Anna") == "[Anna]: ab    c", "broadcast on one line")
 check(f.broadcastInform(nil, "hello") == "Broadcast sent.", "broadcast inform")
 check(f.broadcastInform(nil, "") == nil, "empty broadcast inform")
 print("battle.net ok")

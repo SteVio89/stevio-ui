@@ -251,7 +251,10 @@ local function CreateMessages(frame)
 			C.ShowPlayerMenu(self, player)
 			return
 		end
-		SetItemRef(link, text, button, self)
+		-- A modified click on a name whispers through a chat frame's edit box
+		-- (ChatFrameUtil.SendTell), which this view doesn't have: Blizzard's chat
+		-- frame takes it instead of erroring.
+		SetItemRef(link, text, button, player and DEFAULT_CHAT_FRAME or self)
 	end)
 	ui.messages = messages
 end

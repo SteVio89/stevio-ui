@@ -88,3 +88,47 @@ need a check in game.
 - Left click on a symbol marks the target, again takes the mark off; it also
   works in combat. The target's symbol is outlined, also when another player
   sets it. Clear unmarks the target.
+
+### Code validation against Blizzard's UI (#71)
+- Cast bar: pressing another spell during a cast ("Another action is in
+  progress") no longer hides the bar; stops now need the cast's own castID,
+  like Blizzard's casting bar. Check on target/focus in combat too (castIDs
+  may be secret there; then every stop hides the bar as before).
+- Group cells reread their auras when a token is handed out again (party3
+  becomes party2 after someone leaves): no stale debuffs or HoTs.
+- A typo in an aura filter in the options (e.g. `HARMFUL|RAD`) reports an
+  error and leaves that one aura group empty; the cells keep working.
+- Health bars take the class color as soon as a member's name arrives.
+- Ctrl/Alt+click on a player name in the chat view whispers through
+  Blizzard's input box instead of raising an error.
+- Writing in a chat channel (e.g. Trade) after a relog goes to the channel's
+  current number, also before anyone said something there.
+- An AFK/DND reply with `%s` or `%%` shows as typed; Battle.net broadcasts
+  stay on one line.
+- The loot ticker shows currency icons (was always the question mark).
+- The Notes item tab names an item that wasn't cached yet once it loads.
+- Options panel: "Add binding" works while in combat; "Set" with an empty
+  CVar value does nothing.
+- Main bar: the page arrows (left of the main bar) no longer react to clicks;
+  Edit Mode's "hide bar scrolling" is now set in our layout.
+- Combo points follow the target: switching targets shows that target's
+  points (WoW Forever keeps them on the target; detected through Blizzard's
+  `TargetBoundComboPointBarMixin`). Check that `COMBO_TARGET_CHANGED` exists
+  there (registering an unknown event would error at login).
+- The objective tracker is made invisible at login, but really hidden only
+  after our Edit Mode layout is applied. Check `/console taintLog 1` shows no
+  blocked action for the right-side action bars.
+- Edit Mode: with five account layouts already, a chat line asks to delete
+  one instead of saving a sixth. Our layout is saved only once Blizzard has
+  the layouts (`EditModeManagerFrame:IsInitialized()` at entering the world).
+- Chat: lines Blizzard keeps in the cinematic letterbox stay out of the chat;
+  Guild Discord users' names aren't links; `{star}`/`{rt1}` show as raid icons
+  where Blizzard shows them, and `{tags}` are sent language-independent.
+  Our whispers no longer set Blizzard's "last told" target: the re-whisper
+  key only offers whispers from Blizzard's own input box (and received ones).
+- Flight list: a list taller than the map scrolls (Blizzard's scroll box with
+  a minimal scroll bar that shows only when needed); free flights show no cost.
+- Notes: sessions open at logout end at the logout; after a `/reload` in the
+  same group they continue, after a later login alone the rating popup shows.
+- Settings: `GxApi` and the resolution CVars are no longer set from the
+  profile; saved overrides of them are dropped at login.

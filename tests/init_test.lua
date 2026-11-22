@@ -111,6 +111,18 @@ check(afterFailing == 1, "handler after a failing one still runs")
 check(#reported == 1 and reported[1]:find("handler broke", 1, true), "handler error reported")
 print("handler isolation ok")
 
+-- A failing queued function is reported and doesn't drop the ones after it.
+reported, ran, inCombat = {}, {}, true
+ns.RunAfterCombat(function()
+	error("queued broke")
+end)
+ns.RunAfterCombat(B)
+inCombat = false
+onEvent(nil, "PLAYER_REGEN_ENABLED")
+check(table.concat(ran, " ") == "B", "function after a failing one still runs")
+check(#reported == 1 and reported[1]:find("queued broke", 1, true), "queued error reported")
+print("combat queue isolation ok")
+
 -- A failing module is reported and doesn't keep the later ones from enabling.
 reported = {}
 local enabled = {}

@@ -36,7 +36,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   When you target something else (an enemy, loot, nothing), the cursor stays
   on its cell with a thinner, dimmer border.
 - **Flight list** – flight masters get a list of the reachable destinations
-  next to the map, sorted by name with their cost; click one to fly there.
+  next to the map, sorted by name with their cost (none for free flights);
+  click one to fly there. A list taller than the map scrolls.
 - **Action bars, menu and bags** – Blizzard's secure buttons, stripped down and
   placed via a dedicated Edit Mode layout named `stevio-ui`.
   Two columns of 12 buttons on the right screen edge (bars 4 and 5, no

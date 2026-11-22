@@ -53,6 +53,7 @@ do
 	key, opts, source, sourceType = Route(def, "Bob", 0, 2, "Trade", nil, "2. Trade - City")
 	check(key == "channel:trade" and opts.kind == "public", "public channel of its own: " .. key)
 	check(opts.chatType == "CHANNEL2" and opts.channelIndex == 2 and opts.label == "Trade", "public channel options")
+	check(opts.channelName == "Trade", "public channel name for sending")
 	check(source == nil and sourceType == nil, "public channel has no source")
 
 	-- Zone channels: one per zone (#50); cities (Trade) one wherever they are.

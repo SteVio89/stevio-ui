@@ -128,6 +128,7 @@ function C.Send(text)
 		C.RunCommand(text)
 		return
 	end
+	text = C.SubstituteTags(text)
 	local channel = C.Selected()
 	if channel and C.IsMain(channel.key) then
 		channel = C.MainTarget()
@@ -152,7 +153,7 @@ function C.Send(text)
 			C_ChatInfo.SendChatMessage(text, "WHISPER", nil, name)
 		end, missing)
 	elseif channel.channelIndex then
-		C_ChatInfo.SendChatMessage(text, "CHANNEL", nil, channel.channelIndex)
+		C_ChatInfo.SendChatMessage(text, "CHANNEL", nil, ns.ChatHistory.ChannelNumber(channel, GetChannelName))
 	else
 		C_ChatInfo.SendChatMessage(text, channel.chatType)
 	end
