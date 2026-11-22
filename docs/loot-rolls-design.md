@@ -32,13 +32,21 @@ Layout.lua positions; the loot ticker stays small and personal.
 - When the notch island opens on hover, the stack slides down below it and
   back up when it closes.
 - Clickable (unlike the ticker): item tooltip on hover, shift-click links it.
+- Background: the UI's default style (`backgroundColor`, dark grey at 85 %)
+  with a 2 px stripe on the left in the item's quality color.
+- 6 px gap below the notch, 4 px between cards.
+- All cards are shown, open rolls on top, compact ones below them.
 
 Active card (roll open, from `START_LOOT_ROLL` / `GetLootRollItemInfo`):
-- icon, name in quality color, count, timer bar
+- icon, name in quality color, count
+- timer: 3 px bar in the item's quality color, shrinking to the left, with the
+  seconds left next to it
+- no ✕ while the roll is open: it has to be answered
 - three text buttons like Blizzard's frame: **Need · Greed/Transmog · Pass**.
   Transmog takes Greed's place when `canTransmog` (never both); no
   Disenchant button (Blizzard shows none). `RollOnLoot` types: 0 pass,
   1 need, 2 greed, 4 transmog.
+- Buttons are flat white text with a faint light background on hover.
 - Unavailable buttons are greyed out with `LOOT_ROLL_INELIGIBLE_REASON<n>`
   as tooltip.
 - The bind-on-pickup confirmation stays Blizzard's static popup.
@@ -46,7 +54,8 @@ Active card (roll open, from `START_LOOT_ROLL` / `GetLootRollItemInfo`):
 Compact card (after you chose; dimmed after Pass, but still shows the
 winner):
 - the top 3 rolls plus your own, filled in live from `C_LootHistory`, then
-  the winner highlighted
+  the winner: name in class color, "You" in green when you won; no glow or
+  sound
 - ✕ closes it; it fades out ~15 s after the winner is known; hovering keeps
   it open
 
@@ -57,6 +66,8 @@ Blizzard's popup back if this ever causes taint.
 ### History window
 - Own window in the loot ticker's place at the bottom left (same column and
   height); the ticker is hidden while it is open and comes back on close.
+- Background like the Notes window (`0.05` at 95 %); rows like the ticker
+  (20 px icons, 14 pt font).
 - Opened from a new button in the notch island; Esc closes it.
 - One scrolling list, newest first, with a header per encounter
   (boss · instance · date). One row per drop: icon, item, winner and their
@@ -75,6 +86,3 @@ Blizzard's popup back if this ever causes taint.
 - `/sui loot` stays the ticker preview.
 - `/sui rolls` shows two made-up cards (one open, one decided) and the
   history with sample entries.
-
-## Still open
-- Card colors and opacity, gap below the notch, row height of the history.
