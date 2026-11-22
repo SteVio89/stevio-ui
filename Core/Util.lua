@@ -330,6 +330,18 @@ function ns.AuraButtonInitializer(size, countSize)
 	end
 end
 
+-- Whether Blizzard's aura containers accept `filter` (AuraUtil.IsValidFilterString;
+-- clients without it accept every string).
+function ns.IsValidAuraFilter(filter)
+	if type(filter) ~= "string" then
+		return false
+	end
+	if AuraUtil and AuraUtil.IsValidFilterString then
+		return AuraUtil.IsValidFilterString(filter) and true or false
+	end
+	return true
+end
+
 -- Blizzard's secure aura container with one aura group, growing in
 -- `options.growth` and then down. Its calls stay in one fixed order, as the
 -- template may depend on it: `options.place(container)` sizes and anchors it
@@ -345,11 +357,18 @@ function ns.CreateAuraContainer(parent, options)
 	end
 	container:SetFlowLayoutAnchorPoint(options.flowAnchor)
 	container:SetFlowLayoutGrowthDirection(options.growth, AnchorUtil.FlowDirection.Down)
-	container:AddAuraGroup(options.key, options.filter, {
-		maxFrameCount = options.max,
-		layout = { elementSpacing = options.spacing },
-		initializeFrame = options.initializeFrame,
-	})
+	-- Filters can be edited in the options panel. Blizzard's container asserts
+	-- on an invalid one, which would break the whole cell or frame; with the
+	-- same check first, only this group stays empty and the typo is reported.
+	if ns.IsValidAuraFilter(options.filter) then
+		container:AddAuraGroup(options.key, options.filter, {
+			maxFrameCount = options.max,
+			layout = { elementSpacing = options.spacing },
+			initializeFrame = options.initializeFrame,
+		})
+	else
+		geterrorhandler()(("invalid aura filter %q (%s)"):format(tostring(options.filter), options.key))
+	end
 	if options.unit then
 		container:SetUnit(options.unit)
 	end
