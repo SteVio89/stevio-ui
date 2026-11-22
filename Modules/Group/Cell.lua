@@ -123,7 +123,12 @@ local unitEvents = {
 	UNIT_DISPLAYPOWER = UpdatePowerType,
 	UNIT_IN_RANGE_UPDATE = UpdateRange,
 	UNIT_THREAT_SITUATION_UPDATE = UpdateThreat,
-	UNIT_NAME_UPDATE = UpdateName,
+	-- Like CompactUnitFrame: the name arriving may also mean the class is now
+	-- known, which colors the health bar.
+	UNIT_NAME_UPDATE = function(cell)
+		UpdateName(cell)
+		UpdateHealth(cell)
+	end,
 	UNIT_HEAL_PREDICTION = UpdatePrediction,
 	UNIT_ABSORB_AMOUNT_CHANGED = UpdatePrediction,
 	UNIT_HEAL_ABSORB_AMOUNT_CHANGED = UpdatePrediction,
