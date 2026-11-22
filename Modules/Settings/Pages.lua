@@ -22,6 +22,7 @@ Pages.MODULES = {
 	{ "chat", layout = { "chat", "chatBadge" } },
 	{ "marks", layout = { "marks" } },
 	{ "lootTicker", layout = { "lootTicker" } },
+	{ "rolls" },
 	{ "notch" },
 	{ "questRewards" },
 	{ "taxi" },
