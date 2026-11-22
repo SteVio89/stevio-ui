@@ -126,9 +126,12 @@ local function Read(event, now, text, sender, ...)
 		sender = nil -- text emotes name the sender in their text
 	end
 
-	-- Character names are clickable (see C.FormatEntry); Battle.net names and our own aren't.
+	-- Character names are clickable (see C.FormatEntry); Battle.net names, our
+	-- own and Discord users' in guild chat (no character to whisper; Blizzard
+	-- links those as Discord users) aren't.
 	local full = not issecretvalue(sender) and sender and History.FullName(sender, GetNormalizedRealmName())
 	local player = not secret
+		and not C.IsFromDiscord(select(16, ...))
 		and not def.format
 		and not def.textEmote
 		and not def.bnet
@@ -218,7 +221,23 @@ end
 -- Message contents may be secret during the chat lockdown: those are stored as
 -- a placeholder and read once it ends (C.ReadPending); without a chat line id
 -- they only light up the channel as unread.
+-- Whether a guild line comes from Discord: the event's discordInfo (its 18th
+-- argument) names a Discord user, as Blizzard's chat checks.
+function C.IsFromDiscord(discordInfo)
+	if type(discordInfo) ~= "table" then
+		return false
+	end
+	local userID = discordInfo.userID
+	return not issecretvalue(userID) and userID ~= nil and userID ~= 0
+end
+
 function C.OnChatMessage(event, text, sender, ...)
+	-- Like Blizzard's chat: a line whose sender is hidden in the cinematic
+	-- letterbox (16th argument) only shows there, not in the chat.
+	local hideSenderInLetterbox = select(14, ...)
+	if not issecretvalue(hideSenderInLetterbox) and hideSenderInLetterbox then
+		return
+	end
 	if event == "CHAT_MSG_WHISPER_INFORM" or event == "CHAT_MSG_BN_WHISPER_INFORM" then
 		C.WhisperEchoed()
 	end
