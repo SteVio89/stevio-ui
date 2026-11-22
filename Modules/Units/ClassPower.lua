@@ -2,20 +2,12 @@ local _, ns = ...
 
 local config = ns.config.units.classPower
 
-local COMBO_POINTS = Enum.PowerType.ComboPoints
-
--- Where combo points live. In the game type that loads Blizzard's
--- TargetBoundComboPointBar (WoW Forever), they are stored on the target: they
--- follow target changes and are read with GetComboPoints, and moving them to
--- a new target fires COMBO_TARGET_CHANGED instead of a power event. Elsewhere
--- they are the player's power.
-local targetBound = TargetBoundComboPointBarMixin ~= nil and GetComboPoints ~= nil
-
+-- WoW Forever stores combo points on the target (like Blizzard's
+-- TargetBoundComboPointBar): they follow target changes and are read with
+-- GetComboPoints, and moving them to a new target fires COMBO_TARGET_CHANGED
+-- instead of a power event.
 local function ComboPoints()
-	if targetBound then
-		return GetComboPoints("player", "target")
-	end
-	return UnitPower("player", COMBO_POINTS)
+	return GetComboPoints("player", "target")
 end
 
 local function UsesComboPoints()
@@ -76,10 +68,8 @@ function ns.CreateClassPower(playerFrame)
 	container:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
 	container:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player")
 	container:RegisterEvent("PLAYER_ENTERING_WORLD")
-	if targetBound then
-		container:RegisterEvent("PLAYER_TARGET_CHANGED")
-		container:RegisterEvent("COMBO_TARGET_CHANGED")
-	end
+	container:RegisterEvent("PLAYER_TARGET_CHANGED")
+	container:RegisterEvent("COMBO_TARGET_CHANGED")
 	container:SetScript("OnEvent", OnEvent)
 	UpdateVisibility(container)
 end

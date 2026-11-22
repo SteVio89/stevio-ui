@@ -112,9 +112,7 @@ need a check in game.
 - Main bar: the page arrows (left of the main bar) no longer react to clicks;
   Edit Mode's "hide bar scrolling" is now set in our layout.
 - Combo points follow the target: switching targets shows that target's
-  points (WoW Forever keeps them on the target; detected through Blizzard's
-  `TargetBoundComboPointBarMixin`). Check that `COMBO_TARGET_CHANGED` exists
-  there (registering an unknown event would error at login).
+  points (WoW Forever keeps them on the target).
 - The objective tracker is made invisible at login, but really hidden only
   after our Edit Mode layout is applied. Check `/console taintLog 1` shows no
   blocked action for the right-side action bars.
