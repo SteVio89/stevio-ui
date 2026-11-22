@@ -88,3 +88,24 @@ need a check in game.
 - Left click on a symbol marks the target, again takes the mark off; it also
   works in combat. The target's symbol is outlined, also when another player
   sets it. Clear unmarks the target.
+
+### Code validation against Blizzard's UI (#71)
+- Cast bar: pressing another spell during a cast ("Another action is in
+  progress") no longer hides the bar; stops now need the cast's own castID,
+  like Blizzard's casting bar. Check on target/focus in combat too (castIDs
+  may be secret there; then every stop hides the bar as before).
+- Group cells reread their auras when a token is handed out again (party3
+  becomes party2 after someone leaves): no stale debuffs or HoTs.
+- A typo in an aura filter in the options (e.g. `HARMFUL|RAD`) reports an
+  error and leaves that one aura group empty; the cells keep working.
+- Health bars take the class color as soon as a member's name arrives.
+- Ctrl/Alt+click on a player name in the chat view whispers through
+  Blizzard's input box instead of raising an error.
+- Writing in a chat channel (e.g. Trade) after a relog goes to the channel's
+  current number, also before anyone said something there.
+- An AFK/DND reply with `%s` or `%%` shows as typed; Battle.net broadcasts
+  stay on one line.
+- The loot ticker shows currency icons (was always the question mark).
+- The Notes item tab names an item that wasn't cached yet once it loads.
+- Options panel: "Add binding" works while in combat; "Set" with an empty
+  CVar value does nothing.
