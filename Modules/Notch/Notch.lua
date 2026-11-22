@@ -416,6 +416,20 @@ local function DumpGeometry()
 	ns.ShowDebugDump(table.concat(lines, "\n"))
 end
 
+-- Where things hanging below the notch go (the roll cards): the horizontal
+-- center and the bottom edge of the notch, or of the island while it is open,
+-- in UIParent units. Nil before the module is set up (or when it is off).
+function ns.NotchBottom()
+	if not notchRect then
+		return nil
+	end
+	local center = (notchRect.left + notchRect.right) / 2
+	if island:IsShown() and island:GetBottom() then
+		return center, island:GetBottom()
+	end
+	return center, notchRect.bottom + config.hoverBelow
+end
+
 function Notch:OnEnable()
 	CreateIsland()
 	UpdateGeometry()
