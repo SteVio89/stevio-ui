@@ -71,6 +71,14 @@ ns.config.chat = {
 	height = 300,
 
 	backgroundColor = { 0, 0, 0, 1 },
+	-- The background is see-through, so the open chat doesn't sit on the
+	-- screen like a black block, and turns nearly solid while the cursor is
+	-- over the chat or it is typed into (#69); its opacity then and otherwise
+	-- (times backgroundColor's), and the seconds it takes from one to the other.
+	-- The text has an outline, so it stays readable either way.
+	activeAlpha = 0.85,
+	openAlpha = 0.45,
+	fadeTime = 0.25,
 	selectedColor = { 1, 1, 1, 0.12 },
 	dividerColor = { 0.3, 0.3, 0.3, 1 },
 	-- Scroll position shown on the sidebar edge when the channels don't all fit.

@@ -197,6 +197,21 @@ function C.Attended()
 	return C.state.manual or C.state.typing
 end
 
+-- The opacity of the chat's background: nearly solid while it is read
+-- closely (`active`: the cursor over it, typing, the copy view), see-through
+-- otherwise (#69).
+function C.BackgroundAlpha(active)
+	return active and config.activeAlpha or config.openAlpha
+end
+
+-- `current` moved towards `target` by at most `step`.
+function C.Approach(current, target, step)
+	if current < target then
+		return math.min(current + step, target)
+	end
+	return math.max(current - step, target)
+end
+
 -- The opacity of a preview line `age` seconds old: full for `hold` seconds,
 -- then fading out over `fadeOut`; 0 once it is gone.
 function C.PreviewAlpha(age, hold, fadeOut)

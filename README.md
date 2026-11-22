@@ -124,7 +124,10 @@ until it is needed, and as much as possible can be done from the keyboard.
   the cursor stays, a click opens the chat on its channel; `preview`). Only
   `/sui` replies open the chat, on System, until it hides again; then it goes
   back to the channel shown before, unless you opened the chat or picked a
-  channel meanwhile. The chat starts on Main and otherwise reopens on the channel
+  channel meanwhile. The open chat's background is see-through and turns
+  nearly solid while the cursor is over it or you type (`openAlpha`,
+  `activeAlpha`), so it doesn't cover the game like a black block yet reads
+  well when you want it. The chat starts on Main and otherwise reopens on the channel
   last shown. Raid warnings and officer chat are marked `[RW]` and
   `[O]`. During boss fights, Mythic+ and PvP matches the game hides chat
   from addons: those messages show as "… (readable after the fight)" and

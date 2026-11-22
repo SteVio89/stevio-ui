@@ -35,7 +35,13 @@ check(C.Label({ key = "whisper:Bob", label = "Bob" }) == "Bob", "other channels 
 check(C.Time(5) == "t5" and C.Day(5) == "d5", "time and day")
 print("labels ok")
 
--- The preview lines (#69).
+-- The background's opacity (#69) and the preview lines.
+check(C.BackgroundAlpha(true) == config.activeAlpha, "read closely: nearly solid")
+check(C.BackgroundAlpha(false) == config.openAlpha, "otherwise see-through")
+check(config.openAlpha < config.activeAlpha, "solid while read")
+check(C.Approach(0.2, 0.85, 0.1) == 0.2 + 0.1, "fades up by a step")
+check(C.Approach(0.8, 0.85, 0.1) == 0.85, "stops at the target")
+check(C.Approach(0.85, 0.2, 0.1) == 0.85 - 0.1 and C.Approach(0.25, 0.2, 0.1) == 0.2, "fades down")
 check(C.PreviewAlpha(0, 6, 2) == 1 and C.PreviewAlpha(5.9, 6, 2) == 1, "preview line held")
 check(C.PreviewAlpha(7, 6, 2) == 0.5, "then fades out")
 check(C.PreviewAlpha(8, 6, 2) == 0 and C.PreviewAlpha(20, 6, 2) == 0, "and is gone")
@@ -46,7 +52,7 @@ for i = 1, 4 do
 end
 check(#items == 3 and items[1] == 2 and items[3] == 4, "oldest preview line drops out")
 check(#C.PushPreview({}, 1, 0) == 0, "no rows: no preview lines")
-print("preview ok")
+print("background and preview ok")
 
 -- Main: unread of its members, reading it, the channel it writes to.
 do

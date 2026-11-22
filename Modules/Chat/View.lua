@@ -290,9 +290,25 @@ function C.CreateChannelView()
 	frame:SetFrameStrata("MEDIUM")
 	frame:EnableMouse(true)
 	frame:Hide()
-	ns.CreateBackground(frame, config.backgroundColor, -8)
+	ui.background = ns.CreateBackground(frame, config.backgroundColor, -8)
 	ns.CreateBorder(frame)
 	ui.frame = frame
+	-- The background turns solid while the chat is read closely (#69); a chat
+	-- that just showed starts at its opacity instead of fading to it.
+	local function TargetAlpha()
+		local active = frame:IsMouseOver() or C.state.typing or ui.input:HasFocus() or ui.copy:IsShown()
+		return C.BackgroundAlpha(active)
+	end
+	frame:SetScript("OnShow", function()
+		ui.background:SetAlpha(TargetAlpha())
+	end)
+	frame:SetScript("OnUpdate", function(_, elapsed)
+		local current, target = ui.background:GetAlpha(), TargetAlpha()
+		if current ~= target then
+			local step = config.fadeTime > 0 and elapsed / config.fadeTime or 1
+			ui.background:SetAlpha(C.Approach(current, target, step))
+		end
+	end)
 	ui.rows = {}
 
 	ui.sidebar = CreateFrame("Frame", nil, frame)

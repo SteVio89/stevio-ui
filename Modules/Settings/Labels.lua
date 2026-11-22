@@ -8,6 +8,12 @@ local _, ns = ...
 local labels = {
 	absorbColor = { "Absorb shields", "Absorbschilde" },
 	activeColor = { "Marked symbol", "Markiertes Symbol" },
+	activeAlpha = {
+		"Opacity when read",
+		"Deckkraft beim Lesen",
+		"Background opacity while the cursor is over the chat or you type.",
+		"Hintergrund-Deckkraft, solange der Mauszeiger über dem Chat ist oder du tippst.",
+	},
 	actionBars = { "Action bars", "Aktionsleisten" },
 	actionSets = { "Action set button", "Knopf Aktionsleisten-Sets" },
 	aggroColor = { "Aggro border", "Aggro-Rahmen" },
@@ -125,6 +131,12 @@ local labels = {
 	extraWidth = { "Extra width", "Zusatzbreite" },
 	fadeInTime = { "Fade-in (s)", "Einblenden (s)" },
 	fadeOutTime = { "Fade-out (s)", "Ausblenden (s)" },
+	fadeTime = {
+		"Fade time (s)",
+		"Überblendzeit (s)",
+		"Seconds the background takes to change its opacity.",
+		"Sekunden, die der Hintergrund braucht, um seine Deckkraft zu ändern.",
+	},
 	fallback = { "Without a notch", "Ohne Notch" },
 	fallbackColor = { "Fallback colour", "Ersatzfarbe" },
 	fallbackHealthColor = { "Fallback health colour", "Ersatz-Lebensfarbe" },
@@ -249,6 +261,12 @@ local labels = {
 	notices = { "Notices", "Hinweise" },
 	npc = { "NPC", "NPC" },
 	offlineColor = { "Offline", "Offline" },
+	openAlpha = {
+		"Opacity",
+		"Deckkraft",
+		"Background opacity of the open chat while it isn't read closely.",
+		"Hintergrund-Deckkraft des offenen Chats, solange er nicht gelesen wird.",
+	},
 	other = { "Other", "Andere" },
 	otherFilter = { "Other debuffs filter", "Filter andere Debuffs" },
 	otherHealColor = { "Others' incoming heals", "Eingehende Heilung anderer" },
