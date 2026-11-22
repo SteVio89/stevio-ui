@@ -7,17 +7,12 @@ local config = ns.config.auras
 -- icon size and icons per row are owned here, so they stay compact in the top
 -- right corner and the tracker fits below them.
 
--- Older clients have one IconLimit setting, newer ones one per frame.
 local function AuraSettings(options, limitSetting)
 	local Setting = Enum.EditModeAuraFrameSetting
-	local settings = {
+	return {
 		[Setting.IconSize] = ns.EditModeStep(options.iconSize, 50, 10),
+		[Setting[limitSetting]] = options.iconsPerRow,
 	}
-	local limit = Setting[limitSetting] or Setting.IconLimit
-	if limit then
-		settings[limit] = options.iconsPerRow
-	end
-	return settings
 end
 
 function Auras:OnEnable()

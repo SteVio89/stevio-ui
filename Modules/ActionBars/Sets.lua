@@ -9,8 +9,8 @@ local _, ns = ...
 local Sets = {}
 ns.ActionSets = Sets
 
--- 12 bars of 12 slots in Blizzard's numbering (1-120 classic pages and
--- bonus bars, 121-180 the extra bars of newer clients).
+-- 15 bars of 12 slots in Blizzard's numbering (1-120 the main pages, side
+-- bars and bonus bars, 121-180 MultiBar5-7).
 Sets.MAX_SLOT = 180
 
 -- An entry is { type = "spell" | "item" | "macro" | ..., id = number|string, name = string? }.

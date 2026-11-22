@@ -82,7 +82,7 @@ local function NoticeTemplate(token)
 end
 
 local function ChannelDisplayName(channelName)
-	if ChatFrameUtil and ChatFrameUtil.ResolvePrefixedChannelName and channelName:find("Community:", 1, true) then
+	if channelName:find("Community:", 1, true) then
 		return ChatFrameUtil.ResolvePrefixedChannelName(channelName)
 	end
 	return channelName

@@ -74,12 +74,11 @@ local function Report(key, text)
 end
 
 local function Lockdown()
-	return C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() or false
+	return C_ChatInfo.InChatMessagingLockdown()
 end
 
 local function Restricted()
-	return C_ChatInfo.AreOutgoingAddonChatMessagesRestricted and C_ChatInfo.AreOutgoingAddonChatMessagesRestricted()
-		or false
+	return C_ChatInfo.AreOutgoingAddonChatMessagesRestricted()
 end
 
 -- Sends a whisper with `send()` and watches for its echo; `key` is the channel

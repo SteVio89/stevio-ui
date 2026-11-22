@@ -249,6 +249,9 @@ do
 		InChatMessagingLockdown = function()
 			return lockdown
 		end,
+		AreOutgoingAddonChatMessagesRestricted = function()
+			return false
+		end,
 	}
 	_G.time = function()
 		return 100

@@ -41,13 +41,9 @@ local function AdoptIndicators()
 end
 
 -- Blizzard anchors the looking-for-group eye to the micro menu, which ends up
--- covering the map; the map's lower left corner keeps it out of the way. The
--- older names cover clients that still ship the minimap-cluster variant.
+-- covering the map; the map's lower left corner keeps it out of the way.
 local function PlaceQueueButton()
-	local button = QueueStatusButton or QueueStatusMinimapButton or MiniMapLFGFrame or LFGMinimapFrame
-	if not button then
-		return
-	end
+	local button = QueueStatusButton
 	AttachToMap(button, "BOTTOMLEFT", 2, 2)
 	-- Above the map; set after the reparenting, which changes the level.
 	button:SetFrameLevel(Minimap:GetFrameLevel() + 5)

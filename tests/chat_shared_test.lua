@@ -216,7 +216,6 @@ print("size ok")
 
 -- Group tags before sending and raid icons on receiving, through Blizzard's helpers.
 do
-	check(C.SubstituteTags("{Heiler} bitte") == "{Heiler} bitte", "without Blizzard's helper the text stays")
 	_G.ChatFrameUtil = {
 		SubstituteChatMessageBeforeSend = function(text)
 			return (text:gsub("{Heiler}", "{healer}"))
@@ -230,7 +229,6 @@ do
 	}
 	check(C.SubstituteTags("{Heiler} bitte") == "{healer} bitte", "localized tag made language-independent")
 
-	check(C.ExpandExpressions("{star}", "PARTY") == "{star}", "without the client function the text stays")
 	local calls = {}
 	_G.C_ChatInfo = {
 		ReplaceIconAndGroupExpressions = function(text, noIcons, noGroups)

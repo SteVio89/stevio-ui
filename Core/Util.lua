@@ -330,16 +330,12 @@ function ns.AuraButtonInitializer(size, countSize)
 	end
 end
 
--- Whether Blizzard's aura containers accept `filter` (AuraUtil.IsValidFilterString;
--- clients without it accept every string).
+-- Whether Blizzard's aura containers accept `filter` (AuraUtil.IsValidFilterString).
 function ns.IsValidAuraFilter(filter)
 	if type(filter) ~= "string" then
 		return false
 	end
-	if AuraUtil and AuraUtil.IsValidFilterString then
-		return AuraUtil.IsValidFilterString(filter) and true or false
-	end
-	return true
+	return AuraUtil.IsValidFilterString(filter) and true or false
 end
 
 -- Blizzard's secure aura container with one aura group, growing in

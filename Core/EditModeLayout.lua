@@ -29,10 +29,9 @@ end
 local layoutsReady, systemsReady, applied = false, false, false
 local appliedCallbacks, layoutDone = {}, false
 
--- Account layouts Edit Mode allows (Blizzard's constant, 5 when written).
+-- Account layouts Edit Mode allows (5 when written).
 local function MaxLayouts()
-	local consts = Constants and Constants.EditModeConsts
-	return consts and consts.EditModeMaxLayoutsPerType or 5
+	return Constants.EditModeConsts.EditModeMaxLayoutsPerType
 end
 
 -- Returns false when our layout can't be added (no room left).

@@ -1,6 +1,6 @@
 -- Run with: lua tests/class_power_test.lua  (from the repo root)
 -- Combo point segments: which events update them and where the points come
--- from, in a game type with target-bound combo points and without.
+-- from (WoW Forever keeps them on the target).
 local check, loadAddonFile = dofile("tests/helpers.lua")
 
 local function Noop() end
@@ -32,8 +32,8 @@ local function Frame()
 end
 
 local state
-local function Setup(targetBound)
-	state = { class = "ROGUE", powerType = 3, power = 0, onTarget = 0 }
+local function Setup()
+	state = { class = "ROGUE", powerType = 3, onTarget = 0 }
 	_G.Enum = { PowerType = { ComboPoints = 4, Energy = 3, Rage = 1 } }
 	_G.PowerBarColor = { COMBO_POINTS = { r = 1, g = 0.9, b = 0 } }
 	_G.UIParent = Frame()
@@ -43,16 +43,10 @@ local function Setup(targetBound)
 	_G.UnitPowerType = function()
 		return state.powerType
 	end
-	_G.UnitPower = function()
-		return state.power
+	_G.GetComboPoints = function(unit, target)
+		assert(unit == "player" and target == "target")
+		return state.onTarget
 	end
-	_G.TargetBoundComboPointBarMixin = targetBound and {} or nil
-	_G.GetComboPoints = targetBound
-			and function(unit, target)
-				assert(unit == "player" and target == "target")
-				return state.onTarget
-			end
-		or nil
 
 	local container
 	local ns = {
@@ -79,8 +73,8 @@ local function Points(container)
 	return value
 end
 
--- Target-bound (WoW Forever): points follow the target.
-local bar = Setup(true)
+-- Points follow the target.
+local bar = Setup()
 check(bar.events.PLAYER_TARGET_CHANGED and bar.events.COMBO_TARGET_CHANGED, "target events registered")
 check(bar.events.UNIT_POWER_FREQUENT, "frequent power event registered")
 state.onTarget = 4
@@ -97,16 +91,8 @@ bar:onEvent("UNIT_POWER_FREQUENT", "player", "ENERGY")
 check(Points(bar) == 3, "other power leaves the segments alone")
 print("target-bound combo points ok")
 
--- Player power (other game types).
-bar = Setup(false)
-check(not bar.events.PLAYER_TARGET_CHANGED and not bar.events.COMBO_TARGET_CHANGED, "no target events")
-state.power = 2
-bar:onEvent("UNIT_POWER_FREQUENT", "player", "COMBO_POINTS")
-check(Points(bar) == 2, "points from player power")
-print("player combo points ok")
-
 -- Visibility: rogues, and druids in cat form (energy).
-bar = Setup(true)
+bar = Setup()
 check(bar.shown, "rogue")
 state.class, state.powerType = "DRUID", 1
 bar:onEvent("UNIT_DISPLAYPOWER", "player")
