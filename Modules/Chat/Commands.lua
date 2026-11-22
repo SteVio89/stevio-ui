@@ -39,8 +39,9 @@ local function IsCharacterName(name)
 	return WhisperChannelKey(name) ~= nil
 end
 
--- Also remembered as last told target, so Blizzard's input box offers it too.
 -- Sent through C.Whisper, which reports a whisper that doesn't go out.
+-- Not remembered as Blizzard's last told target: written from addon code, it
+-- would taint the whisper Blizzard's re-whisper key sends from its input box.
 local function Whisper(target, message, isBattleNet)
 	if isBattleNet then
 		local bnetID = BNet_GetBNetIDAccount(target)
@@ -48,16 +49,12 @@ local function Whisper(target, message, isBattleNet)
 		C.Whisper(nil, target, function()
 			C_BattleNet.SendWhisper(bnetID, message)
 		end, missing)
-		if bnetID then
-			ChatFrameUtil.SetLastToldTarget(target, "BN_WHISPER")
-		end
 	else
 		-- The whisper channel with the character, when there is one, gets the report.
 		local name = ns.ChatHistory.SendName(target)
 		C.Whisper(WhisperChannelKey(name), name, function()
 			C_ChatInfo.SendChatMessage(message, "WHISPER", nil, name)
 		end)
-		ChatFrameUtil.SetLastToldTarget(name, "WHISPER")
 	end
 end
 
