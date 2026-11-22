@@ -329,7 +329,7 @@ function Logic.HistoryRows(records, filter, expanded, linkName)
 	return rows
 end
 
--- "Fyrakk · Amirdrassil · 22.11. 21:40"; `formatDate(time)` gives the date.
+-- "Ragnaros · Molten Core · 22.11. 21:40"; `formatDate(time)` gives the date.
 function Logic.HeaderText(record, formatDate, unknown)
 	local hasName = record.encounter and record.encounter ~= ""
 	local parts = { hasName and record.encounter or unknown }
