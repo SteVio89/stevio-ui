@@ -19,7 +19,13 @@ Removed:
 
 ## Roll widget
 
+A separate `Rolls` module with its own settings page, on/off switch and
+Layout.lua positions; the loot ticker stays small and personal.
+
 ### Cards (top center, below the notch)
+- 320 px wide with the ticker's 14 pt font.
+- Only drops you were offered a roll on get a card; the others go to the
+  history only.
 - One card per open roll, stacked downward when a boss drops several items.
 - Style: lighter floating cards (slightly transparent dark), a small gap
   below the notch, visually separate from the notch island.
@@ -37,7 +43,8 @@ Active card (roll open, from `START_LOOT_ROLL` / `GetLootRollItemInfo`):
   as tooltip.
 - The bind-on-pickup confirmation stays Blizzard's static popup.
 
-Compact card (after you chose):
+Compact card (after you chose; dimmed after Pass, but still shows the
+winner):
 - the top 3 rolls plus your own, filled in live from `C_LootHistory`, then
   the winner highlighted
 - ✕ closes it; it fades out ~15 s after the winner is known; hovering keeps
@@ -48,7 +55,8 @@ Replaces Blizzard's group loot popup (`GroupLootFrame` /
 Blizzard's popup back if this ever causes taint.
 
 ### History window
-- Own window, bottom left above the loot ticker column.
+- Own window in the loot ticker's place at the bottom left (same column and
+  height); the ticker is hidden while it is open and comes back on close.
 - Opened from a new button in the notch island; Esc closes it.
 - One scrolling list, newest first, with a header per encounter
   (boss · instance · date). One row per drop: icon, item, winner and their
@@ -59,10 +67,14 @@ Blizzard's popup back if this ever causes taint.
 - Extras: search box (item or player), "Mine" filter (drops you rolled on or
   won), clear history button with confirmation.
 
+### Recording
+- Boss name from `C_LootHistory.GetInfoForEncounter`, instance from
+  `GetInstanceInfo()` when the drop is recorded, date from the time recorded.
+
+### Preview
+- `/sui loot` stays the ticker preview.
+- `/sui rolls` shows two made-up cards (one open, one decided) and the
+  history with sample entries.
+
 ## Still open
-- Exact sizes, fonts, colors and timings of cards and window.
-- Module split (likely a new `Rolls` module next to `LootTicker`) and
-  settings page entries.
-- How the history gets boss, instance and date when a drop is recorded
-  (`C_LootHistory.GetInfoForEncounter`, instance info at that time).
-- `/sui loot` preview: split into a ticker preview and a roll preview.
+- Card colors and opacity, gap below the notch, row height of the history.
