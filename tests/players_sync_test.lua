@@ -1,6 +1,7 @@
--- Run with: lua tests/notes_sync_test.lua  (from the repo root)
--- Modules/Notes/Notes.lua against a fake group: sessions open and close with
--- the roster, the popup after leaving, and sessions left open at logout.
+-- Run with: lua tests/players_sync_test.lua  (from the repo root)
+-- Modules/Players/Players.lua against a fake group: sessions open and close
+-- with the roster, the popup after leaving, sessions left open at logout,
+-- bosses, the roll history's loot and players moved over from the notes.
 local check, loadAddonFile = dofile("tests/helpers.lua")
 
 local now = 1000
@@ -56,6 +57,8 @@ _G.GetRealZoneText = function()
 	return zone
 end
 _G.hooksecurefunc = function() end
+_G.TooltipDataProcessor = { AddTooltipPostCall = function() end }
+_G.Enum = { TooltipDataType = { Unit = 2 } }
 
 local handlers, module = {}, nil
 local popups, printed = {}, {}
@@ -76,30 +79,35 @@ local ns = {
 	Print = function(text)
 		printed[#printed + 1] = text
 	end,
-	NotesPopup = {
+	PlayersPopup = {
 		Show = function(entries)
 			popups[#popups + 1] = entries
 		end,
 	},
+	PlayersWindow = { Refresh = function() end },
 	NotesWidgets = {
 		ClassColored = function(name)
 			return name
 		end,
+	},
+	PlayerWidgets = {
 		SummaryText = function() end,
 		BlockReason = function() end,
 	},
 }
-loadAddonFile("Modules/Notes/Config.lua", ns)
-loadAddonFile("Modules/Notes/Store.lua", ns)
-loadAddonFile("Modules/Notes/Notes.lua", ns)
+loadAddonFile("Modules/Players/Config.lua", ns)
+loadAddonFile("Modules/Players/Store.lua", ns)
+loadAddonFile("Modules/Rolls/Logic.lua", ns)
+loadAddonFile("Modules/Players/Players.lua", ns)
 
 local function Fire(event, ...)
 	handlers[event](event, ...)
 end
 
 -- Logging in solo with nothing saved.
-_G.StevioUINotes = nil
+_G.StevioUIPlayers = nil
 module:OnEnable()
+module.active = true
 local store = module.store
 check(#store:OpenNames() == 0, "nothing open")
 
@@ -136,7 +144,7 @@ check(saved.loggedOut == 2600, "logout time saved")
 
 inGroup, party, popups = false, {}, {}
 now = 2600 + 86400
-_G.StevioUINotes = saved
+_G.StevioUIPlayers = saved
 module:OnEnable()
 store = module.store
 local ann = store:Player("Ann")
@@ -154,7 +162,7 @@ Fire("GROUP_ROSTER_UPDATE")
 now = 100060
 Fire("PLAYER_LOGOUT")
 now = 100070
-_G.StevioUINotes = store.db
+_G.StevioUIPlayers = store.db
 module:OnEnable()
 store = module.store
 local cid = store:Player("Cid")
@@ -162,4 +170,54 @@ check(#cid.sessions == 1 and cid.sessions[1].open, "reload continues the session
 check(#popups == 0, "no popup after a reload in the group")
 print("reload ok")
 
-print("notes sync tests passed")
+-- A boss kill and a wipe go into Cid's open session.
+Fire("ENCOUNTER_END", 663, "Lucifron", 9, 40, 1)
+Fire("ENCOUNTER_END", 664, "Magmadar", 9, 40, 0)
+check(cid.sessions[1].kills[1] == "Lucifron" and cid.sessions[1].wipes == 1, "kill and wipe recorded")
+print("bosses ok")
+
+-- A decided roll: everyone's choice is counted, the winner gets the item,
+-- your own roll is left out.
+local State = ns.RollLogic.State
+ns.PlayersRecordLoot({
+	link = "[Choker of Enlightenment]",
+	encounter = "Lucifron",
+	instance = "Molten Core",
+	time = 100100,
+	winner = { name = "Cid", fullName = "Cid", class = "PRIEST", state = State.NeedMainSpec, roll = 98 },
+	rolls = {
+		{ name = "Cid", fullName = "Cid", class = "PRIEST", state = State.NeedMainSpec, roll = 98 },
+		{ name = "Dan", fullName = "Dan-Firemaw", class = "MAGE", state = State.Greed, roll = 40 },
+		{ name = "You", isSelf = true, state = State.Pass },
+	},
+})
+check(cid.rolls.need == 1 and #cid.wins == 1, "winner's roll and win")
+check(cid.wins[1].link == "[Choker of Enlightenment]" and cid.wins[1].encounter == "Lucifron", "win recorded")
+local dan = store:Player("Dan-Firemaw")
+check(dan and dan.rolls.greed == 1 and dan.class == "MAGE" and dan.wins == nil, "other roller under the full name")
+check(store:Player("You") == nil, "own roll left out")
+print("loot ok")
+
+-- Players saved in the notes before #74 move over once.
+_G.StevioUINotes = {
+	items = {},
+	players = { Eve = { name = "Eve", sessions = {} }, Cid = { name = "Cid", sessions = {} } },
+	loggedOut = 5,
+}
+_G.StevioUIPlayers = store.db
+module:OnEnable()
+store = module.store
+check(store:Player("Eve") and store:Player("Cid") == cid, "moved over, existing entries win")
+check(StevioUINotes.players == nil and StevioUINotes.loggedOut == nil and StevioUINotes.items, "notes keep the rest")
+-- Into a new table, with the logout time for their open sessions.
+_G.StevioUINotes = {
+	players = { Fay = { name = "Fay", sessions = { { start = 10, open = true, zones = {}, instances = {} } } } },
+	loggedOut = 50,
+}
+_G.StevioUIPlayers = nil
+module:OnEnable()
+local fay = module.store:Player("Fay")
+check(fay and not fay.sessions[1].open and fay.sessions[1].stop == 50, "open session ended at the old logout")
+print("take over ok")
+
+print("players sync tests passed")

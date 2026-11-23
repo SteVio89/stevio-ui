@@ -5,7 +5,7 @@
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\stevio-ui\Media\Icon
 ## X-License: MIT
-## SavedVariables: StevioUIState, StevioUIConfig, StevioUIExport, StevioUIDebug, StevioUIErrors, StevioUINotes
+## SavedVariables: StevioUIState, StevioUIConfig, StevioUIExport, StevioUIDebug, StevioUIErrors, StevioUINotes, StevioUIPlayers
 ## SavedVariablesPerCharacter: StevioUIChatHistory, StevioUIActionSets, StevioUIRollHistory
 ## X-Curse-Project-ID: 1739367
 
@@ -106,9 +106,15 @@ Modules\Notes\Config.lua
 Modules\Notes\Store.lua
 Modules\Notes\Widgets.lua
 Modules\Notes\Window.lua
-Modules\Notes\Popup.lua
 Modules\Notes\ItemBox.lua
 Modules\Notes\Notes.lua
+
+Modules\Players\Config.lua
+Modules\Players\Store.lua
+Modules\Players\Widgets.lua
+Modules\Players\Window.lua
+Modules\Players\Popup.lua
+Modules\Players\Players.lua
 
 Modules\Settings\Config.lua
 Modules\Settings\Profile.lua

@@ -1,8 +1,8 @@
 local _, ns = ...
 
--- The notes window: tabs for players, items and general notes, each a list
--- on the left and the selected entry on the right. Edits are saved as they
--- are typed.
+-- The notes window: tabs for items and general notes, each a list on the
+-- left and the selected entry on the right. Edits are saved as they are
+-- typed. Notes on players are in the players window (Modules/Players).
 
 local Window = {}
 ns.NotesWindow = Window
@@ -13,18 +13,10 @@ local config = ns.config.notes
 local colors = config.colors
 local T = ns.T
 
-local WARN_COLOR = "|cffff5050"
-
 local LIST_WIDTH = 270
-local SORTS = { "recent", "name", "rating" }
-local SORT_NAMES = {
-	recent = { "Last seen", "Zuletzt" },
-	name = { "Name", "Name" },
-	rating = { "Rating", "Bewertung" },
-}
 
 local frame
-local state = { tab = "players", search = "", sortBy = "recent" }
+local state = { tab = "items", search = "" }
 local tabs, panels = {}, {}
 
 local function Now()
@@ -44,188 +36,6 @@ local function ItemName(itemID)
 	local quality = C_Item.GetItemQualityByID(itemID)
 	local hex = quality and select(4, C_Item.GetItemQualityColor(quality))
 	return hex and ("|c%s%s|r"):format(hex, name) or name
-end
-
--- Players ----------------------------------------------------------------------
-
-local function PlayerInfo(player)
-	local class = player.class and LOCALIZED_CLASS_NAMES_MALE[player.class]
-	local parts = {}
-	if class then
-		parts[#parts + 1] = class
-	end
-	if player.guild then
-		parts[#parts + 1] = ("<%s>"):format(player.guild)
-	end
-	parts[#parts + 1] = T("first seen %s", "zuerst %s"):format(W.Date(player.firstSeen))
-	parts[#parts + 1] = T("last seen %s", "zuletzt %s"):format(W.Date(player.lastSeen))
-	return table.concat(parts, " · ")
-end
-
-local function SessionLabel(session)
-	local where
-	if session.open then
-		where = T("grouped now", "gerade in der Gruppe")
-	elseif session.instance then
-		where = session.where
-	elseif session.where then
-		where = session.where .. T(" · open world", " · offene Welt")
-	else
-		where = "?"
-	end
-	return ("%s  %s"):format(W.Date(session.start), where)
-end
-
-local function RefreshPlayerSummary()
-	local panel = panels.players
-	local player = state.selected and CurrentStore():Player(state.selected)
-	if player then
-		local text = W.SummaryText(player) or T("Not rated yet", "Noch nicht bewertet")
-		if player.blocked then
-			-- A second line: the note label below moves down with it.
-			text = text
-				.. "\n"
-				.. WARN_COLOR
-				.. T("Marked %s: %s", "Markiert %s: %s"):format(W.Date(player.blocked.time), W.BlockReason(player))
-				.. "|r"
-		end
-		panel.summary:SetText(text)
-		panel.unmark:SetShown(player.blocked ~= nil)
-	end
-end
-
-local function RenderPlayer()
-	local panel = panels.players
-	local player = state.selected and CurrentStore():Player(state.selected)
-	panel.content:SetShown(player ~= nil)
-	panel.empty:SetShown(player == nil)
-	if not player then
-		return
-	end
-	panel.name:SetText(W.ClassColored(player.name, player.class))
-	panel.info:SetText(PlayerInfo(player))
-	RefreshPlayerSummary()
-	panel.note:SetText(player.note)
-
-	local sessions = player.sessions
-	local count = #sessions
-	for index = 1, count do
-		local session = sessions[count - index + 1]
-		local row = panel.rows[index]
-		if not row then
-			row = W.SessionRow(panel.sessionContent, 190, function()
-				RefreshPlayerSummary()
-				Window.RefreshList()
-			end)
-			row:SetPoint("TOPLEFT", 0, -(index - 1) * 26)
-			row:SetPoint("RIGHT")
-			panel.rows[index] = row
-		end
-		row:Set(session, SessionLabel(session))
-		row:Show()
-	end
-	for index = count + 1, #panel.rows do
-		panel.rows[index]:Hide()
-	end
-	panel.sessionContent:SetHeight(math.max(count * 26, 1))
-	panel.noSessions:SetShown(count == 0)
-end
-
-local function CreatePlayersPanel(parent)
-	local panel = CreateFrame("Frame", nil, parent)
-	panel:SetAllPoints()
-	panel.rows = {}
-
-	panel.empty = ns.CreateFontString(panel)
-	panel.empty:SetPoint("CENTER")
-	panel.empty:SetTextColor(unpack(colors.dim))
-	panel.empty:SetText(
-		T(
-			"Players you group with show up here.\nPick one to rate them or add a note.",
-			"Spieler aus deinen Gruppen erscheinen hier.\nWähle einen aus, um ihn zu bewerten oder eine Notiz zu schreiben."
-		)
-	)
-	panel.empty:SetWordWrap(true)
-
-	local content = CreateFrame("Frame", nil, panel)
-	content:SetAllPoints()
-	panel.content = content
-
-	panel.name = ns.CreateFontString(content, 14)
-	panel.name:SetPoint("TOPLEFT", 0, 0)
-	panel.info = ns.CreateFontString(content)
-	panel.info:SetPoint("TOPLEFT", panel.name, "BOTTOMLEFT", 0, -4)
-	panel.info:SetTextColor(unpack(colors.dim))
-	panel.summary = ns.CreateFontString(content)
-	panel.summary:SetPoint("TOPLEFT", panel.info, "BOTTOMLEFT", 0, -6)
-	panel.summary:SetPoint("RIGHT")
-	panel.summary:SetJustifyH("LEFT")
-	panel.summary:SetWordWrap(true)
-
-	local forget = W.Button(content, T("Forget", "Vergessen"), 90)
-	forget:SetPoint("TOPRIGHT", 0, 0)
-	forget:SetScript("OnClick", function()
-		if IsShiftKeyDown() then
-			CurrentStore().db.players[state.selected] = nil
-			state.selected = nil
-			Window.Refresh()
-		else
-			ns.Print(
-				T("Shift-click Forget to delete this player.", "Umschalt-Klick auf Vergessen löscht diesen Spieler.")
-			)
-		end
-	end)
-
-	panel.unmark = W.Button(content, T("Unmark", "Entmarkieren"), 90)
-	panel.unmark:SetPoint("RIGHT", forget, "LEFT", -6, 0)
-	panel.unmark:SetScript("OnClick", function()
-		if IsShiftKeyDown() then
-			CurrentStore():Unblock(state.selected)
-			RefreshPlayerSummary()
-			Window.RefreshList()
-		else
-			ns.Print(
-				T(
-					"Shift-click Unmark to remove the blocked-guild mark.",
-					"Umschalt-Klick auf Entmarkieren entfernt die Gilden-Markierung."
-				)
-			)
-		end
-	end)
-
-	local noteLabel = ns.CreateFontString(content)
-	noteLabel:SetPoint("TOPLEFT", panel.summary, "BOTTOMLEFT", 0, -12)
-	noteLabel:SetText(T("Note", "Notiz"))
-	panel.note = W.TextArea(content, function(text)
-		CurrentStore():SetPlayerNote(state.selected, text, Now())
-		Window.RefreshList()
-	end)
-	panel.note:SetPoint("TOPLEFT", noteLabel, "BOTTOMLEFT", 0, -4)
-	panel.note:SetPoint("RIGHT")
-	panel.note:SetHeight(70)
-
-	local sessionsLabel = ns.CreateFontString(content)
-	sessionsLabel:SetPoint("TOPLEFT", panel.note, "BOTTOMLEFT", 0, -12)
-	sessionsLabel:SetText(
-		T("Groups together: role, rating, comment", "Gemeinsame Gruppen: Rolle, Bewertung, Kommentar")
-	)
-
-	local scroll = CreateFrame("ScrollFrame", nil, content, "UIPanelScrollFrameTemplate")
-	scroll:SetPoint("TOPLEFT", sessionsLabel, "BOTTOMLEFT", 0, -6)
-	scroll:SetPoint("BOTTOMRIGHT", -22, 0)
-	panel.sessionContent = CreateFrame("Frame", nil, scroll)
-	panel.sessionContent:SetSize(1, 1)
-	scroll:SetScrollChild(panel.sessionContent)
-	scroll:SetScript("OnSizeChanged", function(_, width)
-		panel.sessionContent:SetWidth(width)
-	end)
-	panel.noSessions = ns.CreateFontString(content)
-	panel.noSessions:SetPoint("TOPLEFT", scroll, "TOPLEFT", 2, -4)
-	panel.noSessions:SetTextColor(unpack(colors.dim))
-	panel.noSessions:SetText(T("No groups together yet.", "Noch keine gemeinsame Gruppe."))
-
-	panel.Render = RenderPlayer
-	return panel
 end
 
 -- Items ------------------------------------------------------------------------
@@ -348,18 +158,6 @@ end
 
 -- Lists ------------------------------------------------------------------------
 
-local function RenderPlayerRow(row, player)
-	local name = W.ClassColored(player.name, player.class)
-	if player.blocked then
-		name = WARN_COLOR .. "!|r " .. name
-	end
-	if player.note then
-		name = name .. " |cff999999·|r"
-	end
-	row.left:SetText(name)
-	row.right:SetText(W.Rating(Store.Summary(player).overall))
-end
-
 local function RenderItemRow(row, itemID)
 	frame.list.ShowIcon(row, C_Item.GetItemIconByID(itemID))
 	row.left:SetText(ItemName(itemID))
@@ -393,17 +191,10 @@ function Window.RefreshList()
 	if not frame or not frame:IsShown() then
 		return
 	end
-	local store = CurrentStore()
-	if state.tab == "players" then
-		frame.list:SetItems(
-			store:Players(state.search, state.sortBy),
-			RenderPlayerRow,
-			state.selected and store:Player(state.selected)
-		)
-	elseif state.tab == "items" then
+	if state.tab == "items" then
 		frame.list:SetItems(ItemsMatching(state.search), RenderItemRow, state.selected)
 	else
-		frame.list:SetItems(store:Notes(state.search), RenderNoteRow, state.selected)
+		frame.list:SetItems(CurrentStore():Notes(state.search), RenderNoteRow, state.selected)
 	end
 end
 
@@ -415,8 +206,6 @@ function Window.Refresh()
 		tab:SetEnabled(name ~= state.tab)
 		panels[name]:SetShown(name == state.tab)
 	end
-	frame.sort:SetShown(state.tab == "players")
-	frame.sort:SetText(T(unpack(SORT_NAMES[state.sortBy])))
 	frame.new:SetShown(state.tab == "notes")
 	frame.drop:SetShown(state.tab == "items")
 	Window.RefreshList()
@@ -424,7 +213,7 @@ function Window.Refresh()
 end
 
 local function Select(item)
-	state.selected = state.tab == "players" and item.name or item
+	state.selected = item
 	Window.Refresh()
 end
 
@@ -464,7 +253,6 @@ local function CreateWindow()
 	close:SetPoint("TOPRIGHT", 2, 2)
 
 	local tabSpecs = {
-		{ "players", T("Players", "Spieler") },
 		{ "items", T("Items", "Gegenstände") },
 		{ "notes", T("Notes", "Notizen") },
 	}
@@ -495,18 +283,6 @@ local function CreateWindow()
 		self.Instructions:SetShown(self:GetText() == "")
 	end)
 
-	frame.sort = W.Button(frame, "", 90)
-	frame.sort:SetPoint("LEFT", search, "RIGHT", 6, 0)
-	frame.sort:SetScript("OnClick", function()
-		for index, name in ipairs(SORTS) do
-			if name == state.sortBy then
-				state.sortBy = SORTS[index % #SORTS + 1]
-				break
-			end
-		end
-		Window.Refresh()
-	end)
-
 	frame.new = W.Button(frame, T("New", "Neu"), 90)
 	frame.new:SetPoint("LEFT", search, "RIGHT", 6, 0)
 	frame.new:SetScript("OnClick", function()
@@ -534,7 +310,6 @@ local function CreateWindow()
 	local detail = CreateFrame("Frame", nil, frame)
 	detail:SetPoint("TOPLEFT", frame.list, "TOPRIGHT", 16, 0)
 	detail:SetPoint("BOTTOMRIGHT", -12, 12)
-	panels.players = CreatePlayersPanel(detail)
 	panels.items = CreateItemsPanel(detail)
 	panels.notes = CreateNotesPanel(detail)
 
@@ -550,8 +325,8 @@ local function CreateWindow()
 	end)
 end
 
--- Opens the window on `tab` ("players", "items", "notes"), selecting `key`
--- (a player name, an item ID or a note) when given.
+-- Opens the window on `tab` ("items", "notes"), selecting `key` (an item ID
+-- or a note) when given.
 function Window.Open(tab, key)
 	if not frame then
 		CreateWindow()

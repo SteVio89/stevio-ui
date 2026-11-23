@@ -27,6 +27,7 @@ local TITLES = {
 	notch = { "Notch", "Notch" },
 	questRewards = { "Quest rewards", "Questbelohnungen" },
 	taxi = { "Flight list", "Flugliste" },
+	players = { "Players", "Spieler" },
 	notes = { "Notes", "Notizen" },
 	settings = { "Profile", "Profil" },
 }
@@ -42,7 +43,7 @@ for _, module in ipairs(Pages.MODULES) do
 	check(Pages.Title(module) == expected[2], "German title of " .. module[1])
 	count = count + 1
 end
-check(count == 17, "all module pages")
+check(count == 18, "all module pages")
 print("module titles ok")
 
 -- Every Layout.lua position is shown on exactly one module page.
