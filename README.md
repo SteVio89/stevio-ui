@@ -260,6 +260,7 @@ first login.
 | `/sui test 1-40` | Preview the group grid with that many players (e.g. 5, 10, 25, 40); `/sui test` alone turns it off |
 | `/sui loot` | Preview the loot ticker with a few items from your bags |
 | `/sui rolls` | Preview two roll cards (with an item from your bags) and the roll history with made-up entries |
+| `/sui roll [1-5]` | Simulate group loot rolls without a group: that many drops from your bags, made-up group members roll along, the buttons work but don't really roll; `/sui roll history` shows the simulated results in the history window (not saved) |
 | `/sui bars [name\|number\|next]` | List the action sets or switch to one |
 | `/sui bars missing` | List the actions the active set could not place |
 | `/sui bars forget` | Drop those actions from the active set |
@@ -276,7 +277,7 @@ first login.
 
 `/sui` alone lists all commands. `config`, `reset`, `export`, `apply` and
 `restore` only exist once you have accepted the first-login dialog. `test`,
-`loot`, `rolls`, `qj` and `notch` say so when their module is turned off.
+`loot`, `rolls`, `roll`, `qj` and `notch` say so when their module is turned off.
 
 ## Configuration
 

@@ -109,3 +109,11 @@ Blizzard's popup back if this ever causes taint.
 - `/sui loot` stays the ticker preview.
 - `/sui rolls` shows two made-up cards (one open, one decided) and the
   history with sample entries.
+- `/sui roll [1-5]` simulates whole rolls without a group (#82): that many
+  drops from the bags get playable cards (the buttons don't call
+  `RollOnLoot`), four made-up group members choose within 8 s, and once
+  everyone has chosen (or the 30 s timer ran out) the numbers and the winner
+  are in: the best choice wins (Need, then Transmog, then Greed), then the
+  highest number. The drops go through `Logic.Summary` like loot history
+  drops. They aren't saved; `/sui roll history` shows them in the history
+  window until it closes.

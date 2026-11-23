@@ -157,6 +157,13 @@ need a check in game.
   the loot ticker comes back when it closes.
 - `replaceBlizzardRolls = false` + `/reload`: Blizzard's popup is back and
   our card appears after rolling there.
+- `/sui roll 3` (#82): three cards with different bag items; the made-up
+  players' choices show up within a few seconds, a click on Need/Greed/Pass
+  shrinks the card (no real roll, no error), and the numbers and the winner
+  appear once everyone chose; not answering passes after 30 s. The cards
+  fade like real ones. `/sui roll history` lists the drops under
+  "Simulated drops"; closing it brings the real history back, and nothing
+  of it is in the saved history after a `/reload`.
 
 ### New design (#76, themes Dusk and Night violet)
 Go through each with `style.theme = "dusk"` and once more with `"violet"`
