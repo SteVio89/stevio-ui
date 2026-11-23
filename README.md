@@ -79,7 +79,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   sessions. The vehicle leave button stays.
 - **Notch island** – a black panel with round bottom corners that grows out of
   the notch when the cursor reaches the top of the screen (not while
-  mouselooking) and hides again shortly after it leaves: level and XP bar with
+  mouselooking, nor while loot roll cards hang below the notch) and hides again shortly after it leaves: level and XP bar with
   rested XP, the watched reputation, zone with coordinates, then a grid of
   gold, free bag slots, lowest durability (yellow/red when low), time, FPS and
   latency, online friends and guild members, and below the players, notes and
@@ -177,7 +177,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   that line. Loot the game hides from addons during a boss fight is listed
   once the fight is over.
 - **Loot rolls** – a card for every group loot roll you are offered, below the
-  notch (it slides down under the notch island while that is open), in place
+  notch (it slides down under the notch island if that was open already; while
+  cards show, the island doesn't come up), in place
   of Blizzard's Need/Greed/Pass popup: icon, name in quality colour with a
   stripe of that colour on the left, a timer bar and three buttons, Need ·
   Greed (or Transmog, when the item allows it) · Pass. A choice the game

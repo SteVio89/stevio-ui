@@ -249,6 +249,8 @@ function Rolls:OnEnable()
 	History.SetRecords(Saved())
 	SuppressBlizzard()
 	CreateNotchButton()
+	-- The island would push the cards down while the cursor reaches for them.
+	ns.NotchBlocked = Cards.Shown
 
 	ns.RegisterEvent("START_LOOT_ROLL", OnStartRoll)
 	ns.RegisterEvent("CANCEL_LOOT_ROLL", OnCancelRoll)

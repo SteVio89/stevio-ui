@@ -431,6 +431,11 @@ function Cards.All()
 	return cards
 end
 
+-- Whether any card shows below the notch.
+function Cards.Shown()
+	return holder ~= nil and holder:IsShown()
+end
+
 -- A roll the player is offered (START_LOOT_ROLL, or one still open after a
 -- reload): `duration` and `timeLeft` in seconds. With `answerElsewhere` the
 -- card waits hidden until the player answered in Blizzard's popup.

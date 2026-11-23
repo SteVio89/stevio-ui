@@ -479,6 +479,7 @@ local function CreateIsland()
 		local scale = UIParent:GetEffectiveScale()
 		input.x, input.y = x / scale, y / scale
 		input.cursorHidden = IsMouselooking()
+		input.blocked = ns.NotchBlocked ~= nil and ns.NotchBlocked()
 		input.notch = notchRect
 		input.island = nil
 		if island:IsShown() then
@@ -521,6 +522,10 @@ local function DumpGeometry()
 	}
 	ns.ShowDebugDump(table.concat(lines, "\n"))
 end
+
+-- ns.NotchBlocked, set by another module (the roll cards), returns true while
+-- the island must not come up: it would push that module's frames down
+-- under the cursor that is reaching for them.
 
 -- Where things hanging below the notch go (the roll cards): the horizontal
 -- center and the bottom edge of the notch, or of the island while it is open,
