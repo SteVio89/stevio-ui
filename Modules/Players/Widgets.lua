@@ -16,7 +16,7 @@ PW.STAR_TEXTURE = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1"
 local ROLE_NAMES = {
 	TANK = { "Tank", "Tank" },
 	HEALER = { "Healer", "Heiler" },
-	DAMAGER = { "DPS", "DPS" },
+	DAMAGER = { "DPS", "Schaden" },
 }
 
 function PW.RoleName(role)
@@ -50,6 +50,60 @@ function PW.SummaryText(player)
 		end
 	end
 	return table.concat(parts, " · ")
+end
+
+-- Times (#86) ---------------------------------------------------------------------
+
+-- Local midnight of the day of `now`.
+function PW.DayStart(now)
+	local day = date("*t", now)
+	day.hour, day.min, day.sec = 0, 0, 0
+	return time(day)
+end
+
+local WEEKDAYS = {
+	{ "Su", "So" },
+	{ "Mo", "Mo" },
+	{ "Tu", "Di" },
+	{ "We", "Mi" },
+	{ "Th", "Do" },
+	{ "Fr", "Fr" },
+	{ "Sa", "Sa" },
+}
+
+function PW.Weekday(time)
+	local names = WEEKDAYS[tonumber(date("%w", time)) + 1]
+	return T(names[1], names[2])
+end
+
+-- When something happened, as short as the list needs it: "18:12" today,
+-- the weekday within the week, else "12.11." (and the year when older).
+function PW.When(time, now)
+	if not time then
+		return ""
+	end
+	local age = Store.Age(time, PW.DayStart(now))
+	if age == "today" then
+		return date("%H:%M", time)
+	elseif age == "yesterday" or age == "week" then
+		return PW.Weekday(time)
+	elseif date("%Y", time) == date("%Y", now) then
+		return date("%d.%m.", time)
+	end
+	return date("%d.%m.%y", time)
+end
+
+-- Where a session was: "Deadmines, Stockade", "Westfall · open world" or
+-- "grouped now"; the second value is the open world part on its own.
+function PW.SessionPlace(session)
+	if session.open then
+		return T("grouped now", "gerade in der Gruppe")
+	elseif session.instance then
+		return session.where
+	elseif session.where then
+		return session.where .. T(" · open world", " · offene Welt")
+	end
+	return "?"
 end
 
 local CHOICE_NAMES = {

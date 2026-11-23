@@ -333,6 +333,16 @@ end
 -- Setup -----------------------------------------------------------------------
 
 local rootCategory
+local moduleCategories = {}
+
+-- Opens the options panel on a module's page (e.g. "players"), or on the
+-- general page when the module has none.
+function ns.OpenOptionsPage(key)
+	local category = moduleCategories[key] or rootCategory
+	if category then
+		Settings.OpenToCategory(category:GetID())
+	end
+end
 
 function ns.SetupOptionsPanel()
 	rootCategory = Settings.RegisterCanvasLayoutCategory(CreateGeneralPage(), "stevio-ui")
@@ -340,7 +350,8 @@ function ns.SetupOptionsPanel()
 		-- A safety net for future modules; today every module has a config.
 		if ns.config[module[1]] then
 			local page = Editor.CreatePage(ModuleTitle(module), ModuleSections(module))
-			Settings.RegisterCanvasLayoutSubcategory(rootCategory, page, ModuleTitle(module))
+			moduleCategories[module[1]] =
+				Settings.RegisterCanvasLayoutSubcategory(rootCategory, page, ModuleTitle(module))
 		end
 	end
 	Settings.RegisterCanvasLayoutSubcategory(rootCategory, CreateBindingsPage(), T("Keybindings", "Tastenbelegung"))

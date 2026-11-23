@@ -571,21 +571,27 @@ local function Matches(player, filter)
 end
 
 -- Players matching `filter` (part of the name, note, guild or a tag), sorted by `sortBy`:
--- "name", "rating" (best first, unrated last) or "recent" (the default).
-function Store:Players(filter, sortBy)
-	local list, ratings = {}, {}
+-- "name", "rating" (best first, unrated last), "time" (most time together
+-- up to `now` first) or "recent" (the default). `keep(player)`, when given,
+-- narrows the list further (Store.ListFilter).
+function Store:Players(filter, sortBy, now, keep)
+	local list, keys = {}, {}
 	for _, player in pairs(self.db.players) do
-		if Matches(player, filter) then
+		if Matches(player, filter) and (not keep or keep(player)) then
 			list[#list + 1] = player
-			local overall = Store.Summary(player).overall
-			ratings[player] = overall and overall.average or -1
+			if sortBy == "rating" then
+				local overall = Store.Summary(player).overall
+				keys[player] = overall and overall.average or -1
+			elseif sortBy == "time" then
+				keys[player] = Store.Stats(player, now or 0).seconds
+			elseif sortBy ~= "name" then
+				keys[player] = player.lastSeen or 0
+			end
 		end
 	end
 	table.sort(list, function(a, b)
-		if sortBy == "rating" and ratings[a] ~= ratings[b] then
-			return ratings[a] > ratings[b]
-		elseif sortBy ~= "name" and sortBy ~= "rating" and a.lastSeen ~= b.lastSeen then
-			return (a.lastSeen or 0) > (b.lastSeen or 0)
+		if sortBy ~= "name" and keys[a] ~= keys[b] then
+			return keys[a] > keys[b]
 		end
 		return a.name < b.name
 	end)

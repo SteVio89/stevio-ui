@@ -31,5 +31,20 @@ ns.config.players = {
 	-- whispers you, and a red line in their tooltip.
 	blockWarnings = true,
 
-	window = { width = 820, height = 540 },
+	-- The players window (#86); it is moved by dragging its title bar and
+	-- remembers where it was.
+	window = { width = 1150, height = 860 },
+	colors = {
+		-- Roll choices in the roll bars.
+		need = { 0.851, 0.349, 0.149 },
+		greed = { 0.224, 0.529, 0.898 },
+		transmog = { 0.098, 0.620, 0.439 },
+		pass = { 0.290, 0.267, 0.345 },
+		-- Verdicts "play again" and "avoid", and marked players.
+		like = { 0.30, 0.75, 0.45 },
+		avoid = { 0.90, 0.36, 0.36 },
+		-- Low ratings and the Need warning.
+		low = { 0.92, 0.62, 0.25 },
+		star = { 0.95, 0.77, 0.30 },
+	},
 }

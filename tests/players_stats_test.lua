@@ -134,4 +134,31 @@ check(Store.Age(today - 29 * DAY, today) == "month" and Store.Age(today - 30 * D
 check(Store.Age(nil, today) == "older", "never")
 print("ages ok")
 
+-- List filters and counts.
+store = Store.New(nil)
+local liked = store:Ensure("Liked", nil, 1)
+liked.verdict = "like"
+liked.sessions = { { start = 1, stop = 2, role = "HEALER", stars = 4 }, { start = 3, stop = 4 } }
+local avoided = store:Ensure("Avoided", nil, 1)
+avoided.verdict, avoided.note = "avoid", "no"
+avoided.sessions = { { start = 1, stop = 100, role = "TANK" } }
+store:Ensure("Marked", nil, 1).blocked = { guild = "X" }
+check(Store.LastRole(liked) == "HEALER" and Store.LastRole(store:Player("Marked")) == nil, "last role")
+local counts = store:ListCounts(nil, nil)
+check(counts.all == 3 and counts.rated == 1 and counts.like == 1 and counts.avoid == 1, "chip counts")
+check(counts.note == 1 and counts.marked == 1, "note and marked")
+check(store:ListCounts(nil, "TANK").all == 1 and store:ListCounts("lik", nil).all == 1, "role and search")
+local function names(list)
+	local result = {}
+	for index, player in ipairs(list) do
+		result[index] = player.name
+	end
+	return table.concat(result, ",")
+end
+check(names(store:Players(nil, "time", 0)) == "Avoided,Liked,Marked", "most time together first")
+check(names(store:Players(nil, "name", 0, function(player)
+	return Store.ListFilter(player, "avoid")
+end)) == "Avoided", "filtered list")
+print("list ok")
+
 print("players stats tests passed")

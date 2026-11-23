@@ -311,6 +311,55 @@ function Store:Overview(now, days, dayStart)
 	return overview
 end
 
+-- The list -------------------------------------------------------------------
+
+-- The latest session, nil without one.
+function Store.LastSession(player)
+	return player.sessions[#player.sessions]
+end
+
+-- The role of the latest session that has one.
+function Store.LastRole(player)
+	for index = #player.sessions, 1, -1 do
+		local role = player.sessions[index].role
+		if role then
+			return role
+		end
+	end
+	return nil
+end
+
+Store.LIST_FILTERS = { "all", "rated", "like", "avoid", "note", "marked" }
+
+-- Whether `player` belongs under the list's filter chip `filter` and role
+-- filter `role` (nil: any; else the role of their latest groups).
+function Store.ListFilter(player, filter, role)
+	if role and Store.LastRole(player) ~= role then
+		return false
+	end
+	if filter == "rated" then
+		return Store.HasRating(player)
+	elseif filter == "like" or filter == "avoid" then
+		return player.verdict == filter
+	elseif filter == "note" then
+		return player.note ~= nil
+	elseif filter == "marked" then
+		return player.blocked ~= nil
+	end
+	return true
+end
+
+-- How many players match `search` and `role` under each filter chip.
+function Store:ListCounts(search, role)
+	local counts = {}
+	for _, filter in ipairs(Store.LIST_FILTERS) do
+		counts[filter] = #self:Players(search, "name", 0, function(player)
+			return Store.ListFilter(player, filter, role)
+		end)
+	end
+	return counts
+end
+
 -- Where a time falls for the list's sections: "today", "yesterday", "week"
 -- (the last 7 days), "month" (the last 30 days) or "older".
 function Store.Age(time, dayStart)
