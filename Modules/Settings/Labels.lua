@@ -243,6 +243,7 @@ local labels = {
 	},
 	inputBackgroundColor = { "Input line background", "Hintergrund Eingabezeile" },
 	inputBorderColor = { "Input line border", "Rahmen Eingabezeile" },
+	inputGap = { "Gap above input line", "Abstand über Eingabezeile" },
 	instance = { "Instance", "Instanz" },
 	islandMargin = { "Island margin", "Inselrand" },
 	joinReminder = { "Reminder on join", "Hinweis beim Beitritt" },

@@ -367,7 +367,7 @@ local function CreateMessages(frame)
 	-- stored messages out of the view.
 	messages:SetMaxLines(config.historyLimit * 2)
 	messages:SetPoint("TOPLEFT", ui.header, "BOTTOMLEFT", 0, -7)
-	messages:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, 6)
+	messages:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, config.inputGap)
 	messages:EnableMouseWheel(true)
 	messages:SetScript("OnMouseWheel", function(self, delta)
 		for _ = 1, config.scrollStep do

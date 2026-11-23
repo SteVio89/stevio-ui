@@ -248,6 +248,11 @@ Go through each with `style.theme = "dusk"` and once more with `"violet"`
   ones stay within the chat's area, the oldest dropping out; a click and the
   hover hold still work on each wrapped line. Text in the input line
   (Ä, g, y, item links) isn't cut off at the box's top or bottom edge.
+- Chat input overlap (#88): with the chat open and nothing typed, no empty
+  Blizzard input bar shows under it; Enter (and a slash command handed over)
+  shows Blizzard's input box there, sending or Escape hides it again; the
+  last message line (g, y, item links, raid icons) keeps clear of the input
+  line's border.
 - Group cells in a real group (#80): class-colored health, name and power
   instead of plain white cells. If `/sui errors` lists an error from an aura
   container, the cells still paint; only that debuff or HoT group stays

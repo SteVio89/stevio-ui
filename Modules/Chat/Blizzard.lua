@@ -13,17 +13,20 @@ local tabs = {}
 local editBoxes = {}
 local applyingAlpha = false
 local applyingMouse = false
--- The C.hidden and showBlizzardChat that ApplyBlizzardVisibility last applied.
-local appliedHidden, appliedBlizzard
+-- The C.hidden, showBlizzardChat and active input box that
+-- ApplyBlizzardVisibility last applied.
+local appliedHidden, appliedBlizzard, appliedActive
 
 -- Blizzard's chat windows are never shown: the channel view replaces them.
 -- Only their input box is still used (Enter / slash commands) while typing;
--- it sits right under the channel view and is hidden together with it.
+-- it sits right under the channel view and shows only while it is typed into:
+-- with chat style "im" Blizzard keeps it shown when idle, and the empty box
+-- under the open chat read as a second input line (#88).
 -- While the channel view is being built, `showBlizzardChat` keeps them visible
 -- next to it for comparison.
 local function IsSuppressed(frame)
 	if editBoxes[frame] then
-		return C.hidden
+		return C.hidden or ACTIVE_CHAT_EDIT_BOX ~= frame
 	end
 	return not config.showBlizzardChat
 end
@@ -45,10 +48,10 @@ local function GuardAlpha(frame)
 end
 
 -- Whether `frame` should take mouse input: Blizzard's windows and tabs only
--- while they are shown for comparison, the input box while the chat is open.
+-- while they are shown for comparison, the input box while it is typed into.
 local function WantsMouse(frame)
 	if editBoxes[frame] then
-		return not C.hidden
+		return not IsSuppressed(frame)
 	end
 	return config.showBlizzardChat and true or false
 end
@@ -133,16 +136,16 @@ local function ScanChatFrames()
 	end
 end
 
--- Applies the current `C.hidden` to Blizzard's chat windows, tabs and input
--- boxes. Runs on every chat update, but only does the work when the visibility
--- changed (or with `force`, for newly managed windows): the alpha and mouse
--- hooks keep it in place in between.
+-- Applies the current `C.hidden` and active input box to Blizzard's chat
+-- windows, tabs and input boxes. Runs on every chat update, but only does the
+-- work when the visibility changed (or with `force`, for newly managed
+-- windows): the alpha and mouse hooks keep it in place in between.
 function C.ApplyBlizzardVisibility(force)
-	local blizzard = config.showBlizzardChat
-	if not force and appliedHidden == C.hidden and appliedBlizzard == blizzard then
+	local blizzard, active = config.showBlizzardChat, ACTIVE_CHAT_EDIT_BOX
+	if not force and appliedHidden == C.hidden and appliedBlizzard == blizzard and appliedActive == active then
 		return
 	end
-	appliedHidden, appliedBlizzard = C.hidden, blizzard
+	appliedHidden, appliedBlizzard, appliedActive = C.hidden, blizzard, active
 	for frame in pairs(chatFrames) do
 		ApplyAlpha(frame)
 		ApplyMouse(frame, "EnableMouse")
