@@ -173,4 +173,45 @@ check(Logic.HeaderText(history[1], formatDate, "?") == "Lucifron · d100", "head
 check(Logic.HeaderText(record, formatDate, "?") == "Ragnaros · Molten Core · d1000", "header with instance")
 check(Logic.HeaderText({ encounter = "", time = 5 }, formatDate, "Loot") == "Loot · d5", "unnamed fight")
 
+-- Simulated rolls (/sui roll).
+check(Logic.Winner({ Info("Ann", State.Greed, 99), Info("Cid", State.NeedMainSpec, 12) }).playerName == "Cid", "need wins")
+check(Logic.Winner({ Info("Ann", State.Greed, 40), Info("Dan", State.Greed, 70) }).playerName == "Dan", "highest roll")
+check(
+	Logic.Winner({ Info("Ann", State.Greed, 99), Info("Eve", State.Transmog, 5) }).playerName == "Eve",
+	"transmog before greed"
+)
+check(Logic.Winner({ Info("Ann", State.Pass), Info("Bob", State.NoRoll) }) == nil, "nobody rolled")
+
+local function Fixed(...)
+	local values, i = { ... }, 0
+	return function()
+		i = i + 1
+		return values[i]
+	end
+end
+check(Logic.SimulatedChoice(Fixed(2), false) == State.NeedMainSpec, "simulated need")
+check(Logic.SimulatedChoice(Fixed(5), false) == State.Greed, "simulated greed")
+check(Logic.SimulatedChoice(Fixed(5), true) == State.Transmog, "simulated transmog")
+check(Logic.SimulatedChoice(Fixed(9), true) == State.Pass, "simulated pass")
+
+local sim = {
+	link = link,
+	players = {
+		{ playerName = "Me", isSelf = true, state = State.Greed },
+		{ playerName = "Bob", playerClass = "MAGE", state = State.Greed },
+		{ playerName = "Ann", playerClass = "PRIEST" },
+	},
+}
+local running = Logic.Summary(Logic.SimulatedDrop(sim))
+check(running.pending and #running.rolls == 2 and running.mine.state == State.Greed, "simulated roll still open")
+Logic.DecideSimulated(sim, Fixed(50, 50, 80))
+check(sim.players[1].roll == 50 and sim.players[2].roll == 80, "a tie is rolled again")
+check(sim.players[3].state == State.Pass and sim.players[3].roll == nil, "no choice passes")
+local done = Logic.Summary(Logic.SimulatedDrop(sim))
+check(not done.pending and done.winner.name == "Bob" and done.rolls[1].name == "Bob", "simulated winner")
+check(done.mine.roll == 50, "own number")
+local passed = { link = link, players = { { playerName = "Me", isSelf = true, state = State.Pass } } }
+Logic.DecideSimulated(passed, Fixed())
+check(Logic.Summary(Logic.SimulatedDrop(passed)).allPassed, "all passed")
+
 print("roll logic tests passed")
