@@ -90,6 +90,10 @@ end
 -- missing health and the bars take them as they are, so nothing is compared.
 local function UpdatePrediction(cell)
 	local unit, calculator = cell.unit, cell.calculator
+	-- Missing if building the bars failed (see InitGroupCell).
+	if not calculator then
+		return
+	end
 	UnitGetDetailedHealPrediction(unit, "player", calculator)
 	local maxHealth = calculator:GetMaximumHealth()
 	local _, fromMe, fromOthers = calculator:GetIncomingHeals()
@@ -240,12 +244,13 @@ end
 local cells = {}
 local rosterRefreshPending = false
 
+-- Defined below, next to the attribute handler.
+local SyncUnit
+
 local function RefreshAllCells()
 	rosterRefreshPending = false
 	for _, cell in ipairs(cells) do
-		if cell.unit then
-			RefreshCell(cell)
-		end
+		SyncUnit(cell)
 	end
 end
 
@@ -297,6 +302,22 @@ local function OnAttributeChanged(cell, name, value)
 		SetUnit(cell, value)
 	elseif value then
 		RefreshCell(cell)
+	end
+end
+
+-- The unit the header gave the cell, read back from its attribute, so a cell
+-- that missed the attribute change (or wasn't listening yet) catches up.
+function SyncUnit(cell)
+	OnAttributeChanged(cell, "unit", cell:GetAttribute("unit"))
+end
+
+-- Shown again: a new unit, or the same one with whatever changed while hidden.
+local function OnShow(cell)
+	local unit = cell:GetAttribute("unit")
+	if unit ~= cell.unit then
+		SetUnit(cell, unit)
+	else
+		UpdateAll(cell)
 	end
 end
 
@@ -426,21 +447,24 @@ function ns.BuildGroupCell(cell)
 	cell.optionTable = { displayRoleIcon = true, textureMap = { DAMAGER = "" } }
 end
 
--- Called from the XML template's OnLoad; the cell size lives in Cell.xml
--- because the secure header may create cells in combat, where Lua can't resize them.
-function ns.InitGroupCell(cell)
-	-- A Button only reacts to the left button's up-click by default; the
-	-- type1/type2 attributes set by the header need both buttons. Cells are
-	-- precreated out of combat (see PrecreateCells), where this is allowed.
-	cell:RegisterForClicks("AnyUp")
-	ns.BuildGroupCell(cell)
-	CreatePrediction(cell)
+-- Adds a Blizzard aura container (see CreateAuraGroup) to the cell. Each is
+-- built protected: one that fails leaves only its own group empty, reported
+-- to /sui errors. Returns the container, or nil.
+local function AddAuraGroup(cell, options)
+	local ok, container = ns.SafeCall(CreateAuraGroup, cell, options)
+	if ok then
+		cell.auraContainers[#cell.auraContainers + 1] = container
+		return container
+	end
+end
+
+local function CreateAuraGroups(cell)
 	local Flow = AnchorUtil.FlowDirection
 	-- Two containers, as each takes one filter: the other debuffs continue left
 	-- of the dispellable ones (a container sizes itself to its icons), so
 	-- together they never exceed config.debuffsMax.
 	local dispellableMax = math.min(CELL_LAYOUT.dispellableMax, config.debuffsMax)
-	local dispellable = CreateAuraGroup(cell, {
+	local dispellable = AddAuraGroup(cell, {
 		key = "dispellable",
 		filter = config.dispellableFilter,
 		anchorPoint = "TOPRIGHT",
@@ -451,19 +475,20 @@ function ns.InitGroupCell(cell)
 		size = config.iconSize,
 		borderColor = config.dispelColor,
 	})
-	local other = CreateAuraGroup(cell, {
+	AddAuraGroup(cell, {
 		key = "other",
 		filter = config.otherFilter,
 		anchorPoint = "TOPRIGHT",
+		-- Where the dispellable ones would start, should their container be missing.
 		relativeTo = dispellable,
-		relativePoint = "TOPLEFT",
-		x = -ICON_SPACING,
-		y = 0,
+		relativePoint = dispellable and "TOPLEFT" or "TOPRIGHT",
+		x = dispellable and -ICON_SPACING or CELL_LAYOUT.debuffX,
+		y = dispellable and 0 or CELL_LAYOUT.debuffY,
 		growth = Flow.Left,
 		max = config.debuffsMax - dispellableMax,
 		size = config.iconSize,
 	})
-	local own = CreateAuraGroup(cell, {
+	AddAuraGroup(cell, {
 		key = "own",
 		filter = config.ownAuraFilter,
 		anchorPoint = "TOPLEFT",
@@ -473,9 +498,26 @@ function ns.InitGroupCell(cell)
 		max = config.ownAurasMax,
 		size = config.ownAuraSize,
 	})
-	cell.auraContainers = { dispellable, other, own }
+end
+
+-- Called from the XML template's OnLoad; the cell size lives in Cell.xml
+-- because the secure header may create cells in combat, where Lua can't resize them.
+function ns.InitGroupCell(cell)
+	-- A Button only reacts to the left button's up-click by default; the
+	-- type1/type2 attributes set by the header need both buttons. Cells are
+	-- precreated out of combat (see PrecreateCells), where this is allowed.
+	cell:RegisterForClicks("AnyUp")
+	ns.BuildGroupCell(cell)
+	-- The cell listens for its unit before the extras are built: should one of
+	-- them fail, it still paints health, name and power instead of staying an
+	-- empty block, and the error goes to /sui errors.
+	cell.auraContainers = {}
 	cells[#cells + 1] = cell
 	cell:SetScript("OnEvent", OnEvent)
 	cell:HookScript("OnAttributeChanged", OnAttributeChanged)
-	cell:HookScript("OnShow", UpdateAll)
+	cell:HookScript("OnShow", OnShow)
+	ns.SafeCall(CreatePrediction, cell)
+	CreateAuraGroups(cell)
+	-- In case the header handed out the unit before the hook was in place.
+	SyncUnit(cell)
 end
