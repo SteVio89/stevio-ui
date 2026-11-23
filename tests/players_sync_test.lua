@@ -20,6 +20,8 @@ _G.GetNormalizedRealmName = function()
 	return "Home"
 end
 _G.UNKNOWNOBJECT = "Unknown"
+_G.StaticPopupDialogs = {}
+_G.YES, _G.NO = "Yes", "No"
 _G.IsInGroup = function()
 	return inGroup
 end
@@ -89,7 +91,7 @@ local ns = {
 			popups[#popups + 1] = entries
 		end,
 	},
-	PlayersWindow = { Refresh = function() end },
+	PlayersWindow = { Refresh = function() end, Reset = function() end },
 	NotesWidgets = {
 		ClassColored = function(name)
 			return name
@@ -162,6 +164,22 @@ Fire("GROUP_ROSTER_UPDATE")
 bob.verdict = nil
 popups = {}
 print("verdict ok")
+
+-- Emptying the database while grouped: the group starts afresh.
+local saved86 = store.db
+inGroup, party = true, { { name = "Zed", role = "TANK" } }
+now = 2460
+Fire("GROUP_ROSTER_UPDATE")
+module.ResetDatabase()
+check(store.db == saved86 and store:Player("Bob") == nil, "everyone gone")
+check(store:Player("Zed") and store:Player("Zed").sessions[1].open, "current group recorded again")
+check(printed[#printed]:find("emptied"), "said so")
+inGroup, party, popups = false, {}, {}
+now = 2470
+Fire("GROUP_ROSTER_UPDATE")
+store:Forget("Zed")
+popups = {}
+print("reset ok")
 
 -- Logging out in a group, back a day later alone: the session ends at the
 -- logout, so the day offline isn't counted.

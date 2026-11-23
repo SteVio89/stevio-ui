@@ -427,6 +427,45 @@ local function CreateNotchButton()
 	ns.NotchButtons.AddOwn(button, "StevioUI_Players")
 end
 
+-- Reset ------------------------------------------------------------------------
+
+local RESET_DIALOG = "STEVIOUI_RESET_PLAYERS"
+
+-- Empties the player database. The current group starts afresh, as if
+-- everyone had just joined.
+function Players.ResetDatabase()
+	local count = Players.store:Reset()
+	ended = {}
+	Sync()
+	ns.PlayersWindow.Reset()
+	ns.Print(T("Player database emptied (%d players).", "Spieler-Datenbank geleert (%d Spieler)."):format(count))
+end
+
+StaticPopupDialogs[RESET_DIALOG] = {
+	text = "%s",
+	button1 = YES,
+	button2 = NO,
+	OnAccept = function()
+		Players.ResetDatabase()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+	showAlert = true,
+}
+
+-- Asks first: the database can't be brought back.
+function Players.ConfirmReset()
+	local count = #Players.store:Players()
+	StaticPopup_Show(
+		RESET_DIALOG,
+		T(
+			"Delete all %d players with every group, rating, note, verdict, tag and mark? This can't be undone.",
+			"Alle %d Spieler mit allen Gruppen, Bewertungen, Notizen, Urteilen, Tags und Markierungen löschen? Das lässt sich nicht rückgängig machen."
+		):format(count)
+	)
+end
+
 -- API for other modules --------------------------------------------------------
 
 -- Opens the player database on a player ("Name-Realm" or "Name"), e.g. from
@@ -513,14 +552,17 @@ function Players:OnEnable()
 	CreateNotchButton()
 end
 
--- /sui players toggles the window; /sui players <name> opens that player.
+-- /sui players toggles the window; /sui players <name> opens that player;
+-- /sui players reset empties the database (after asking).
 ns.RegisterModuleCommand("players", "players", function(input)
 	-- The whole input: WoW Forever's names have a space ("First Last").
 	local name = input:match("^%s*(.-)%s*$")
 	if name == "" then
 		name = nil
 	end
-	if name then
+	if name and name:lower() == "reset" then
+		Players.ConfirmReset()
+	elseif name then
 		ns.OpenPlayerNote(name)
 	else
 		ns.PlayersWindow.Toggle()

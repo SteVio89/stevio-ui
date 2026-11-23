@@ -301,6 +301,10 @@ for _, history in ipairs({ "all", "loot", "unrated" }) do
 end
 Window.Select("Player2-Realm")
 Window.Select("Player1-Realm")
+store:Reset()
+Window.Reset()
+check(Window.state.selected == nil and Window.state.search == "", "back to the overview after a reset")
+Window.Open("Player1-Realm")
 print("page ok")
 
 -- Arrow keys and typing.

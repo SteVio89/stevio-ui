@@ -438,11 +438,24 @@ local function CreateTitleBar()
 		frame:Hide()
 	end)
 	close:SetPoint("RIGHT", -PAD, 0)
-	local options = K.IconButton(bar, K.ICON_OPTIONS, 18, function()
-		frame:Hide()
-		if ns.OpenOptionsPage then
-			ns.OpenOptionsPage("players")
-		end
+	local options = K.IconButton(bar, K.ICON_OPTIONS, 18, function(self)
+		K.Menu(self, {
+			{
+				T("Options", "Optionen"),
+				function()
+					frame:Hide()
+					if ns.OpenOptionsPage then
+						ns.OpenOptionsPage("players")
+					end
+				end,
+			},
+			{
+				T("Empty the database …", "Datenbank leeren …"),
+				function()
+					ns.Players.ConfirmReset()
+				end,
+			},
+		})
 	end)
 	options.tooltip = T("Options", "Optionen")
 	options:SetPoint("RIGHT", close, "LEFT", -12, 0)
@@ -629,6 +642,18 @@ local function CreateWindow()
 	ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
 		frame:EnableKeyboard(frame:IsShown())
 	end)
+end
+
+-- After the database was emptied: back to the overview, filters cleared.
+function Window.Reset()
+	state.selected, state.search, state.filter, state.role = nil, "", "all", nil
+	if not frame then
+		return
+	end
+	frame.search:SetText("")
+	frame.list:ScrollTo(0)
+	frame.content:ScrollTo(0)
+	Window.Refresh()
 end
 
 -- Opens the window, selecting the player `name` when given.

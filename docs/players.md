@@ -127,7 +127,14 @@ the mark should stay when the player leaves the guild.
 
 `window.width`/`height` (1150 × 860) set its size; it is moved by its title
 bar and remembers where (`StevioUIPlayers.window`). The title bar counts the
-entries, rated and marked players; the gear opens the Players options page.
+entries, rated and marked players; the gear's menu opens the Players options
+page or empties the database.
+
+**Emptying the database:** `/sui players reset` or "Empty the database …" in
+the gear's menu asks first, then deletes every player with all groups,
+ratings, notes, verdicts, tags and marks, and the tag suggestions. The window
+position and the roll history stay. Members of the current group are
+recorded again at once, as if they had just joined.
 
 **List (left):** a search over name, guild, note and tags; filter chips with
 counts (All, Rated, Play again, Avoid, Note, Marked); sort by last seen,

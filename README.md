@@ -266,6 +266,7 @@ first login.
 | `/sui bars missing` | List the actions the active set could not place |
 | `/sui bars forget` | Drop those actions from the active set |
 | `/sui players [name]` | Toggle the players window, or open that player |
+| `/sui players reset` | Empty the player database (asks first) |
 | `/sui notes [item link]` | Toggle the notes window, or edit the note of that item |
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |

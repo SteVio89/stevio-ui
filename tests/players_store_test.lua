@@ -347,4 +347,13 @@ Store.MergeInto(into, { sessions = {}, verdict = "avoid", tags = { "nice", "Rude
 check(into.verdict == "avoid" and table.concat(into.tags, ",") == "Nice,Rude" and into.noteTime == 9, "merged")
 print("verdict and tags ok")
 
+-- Reset empties everything but the window position.
+store = Store.New({ players = {}, recentTags = { "x" }, window = { point = "TOP" }, loggedOut = 5 })
+store:Ensure("A", nil, 1)
+store:Ensure("B", nil, 1)
+check(store:Reset() == 2 and next(store.db.players) == nil, "players gone")
+check(#store.db.recentTags == 0 and store.db.loggedOut == nil and store.db.window.point == "TOP", "rest")
+check(store:Reset() == 0, "empty again")
+print("reset ok")
+
 print("players store tests passed")

@@ -197,6 +197,10 @@ need a check in game.
   Long boss lists wrap.
 - Tooltip line with verdict and tags; the red chat line when an avoided
   player joins; the verdict switch in the popup after a group.
+- `/sui players reset` and "Empty the database …" in the gear's menu: the
+  dialog (with the warning icon) names the number of players; Yes empties the
+  list and goes to the overview, No keeps everything. After a `/reload` the
+  database is still empty.
 
 Left out or simplified:
 - Tag suggestions are only tags used before; there is no built-in list.

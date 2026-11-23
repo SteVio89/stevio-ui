@@ -335,6 +335,18 @@ function Store:SetPlayerNote(name, text, now)
 	return player
 end
 
+-- Empties the database: every player, their sessions, ratings, notes,
+-- verdicts, tags and marks, and the tag suggestions. The window position
+-- stays. Returns how many players were removed.
+function Store:Reset()
+	local count = 0
+	for _ in pairs(self.db.players) do
+		count = count + 1
+	end
+	self.db.players, self.db.recentTags, self.db.loggedOut = {}, {}, nil
+	return count
+end
+
 -- Removes the player for good.
 function Store:Forget(name)
 	local key = self:Key(name)
