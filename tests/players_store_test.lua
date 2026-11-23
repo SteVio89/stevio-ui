@@ -7,11 +7,64 @@ local DAY = 24 * 60 * 60
 
 -- New fills in a missing or partial saved table.
 local store = Store.New(nil)
-check(store.db.version == 1 and next(store.db.players) == nil, "fresh table")
+check(store.db.version == 2 and next(store.db.players) == nil and not store.upgradedFrom, "fresh table")
 local saved = { players = { Bob = { name = "Bob", sessions = {} } } }
 store = Store.New(saved)
 check(store.db == saved and store:Player("Bob"), "existing table kept")
 print("new ok")
+
+-- #86: one spelling per player, duplicates merged at load.
+check(Store.NormalizeName("Lina-Sakuranbo") == "Lina-Sakuranbo", "full name kept")
+check(Store.NormalizeName("Lina Sakuranbo") == "Lina-Sakuranbo", "space")
+check(Store.NormalizeName(" Lina - Die Aldor ") == "Lina-DieAldor", "realm with a space")
+check(Store.NormalizeName("Lina (Azjol-Nerub)") == "Lina-AzjolNerub", "brackets and hyphen")
+check(Store.NormalizeName("Lina-Home", "Home") == "Lina" and Store.NormalizeName("Lina", "Home") == "Lina", "own realm")
+check(Store.NormalizeName("") == nil and Store.NormalizeName(nil) == nil, "no name")
+-- WoW Forever's "First Last" from the roster, loot history and chat (#42).
+local own = "CAMWOWEU4Realm10RP"
+check(Store.NormalizeName("Jubylee-Signatory", own) == "Jubylee-Signatory", "roster spelling")
+check(Store.NormalizeName("Jubylee Signatory", own) == "Jubylee-Signatory", "loot history spelling")
+check(Store.NormalizeName("Jubylee Signatory-" .. own, own) == "Jubylee-Signatory", "chat spelling")
+check(Store.NormalizeName("Bob-" .. own, own) == "Bob", "own realm dropped")
+check(Store.SendName("Jubylee-Signatory") == "Jubylee Signatory" and Store.SendName("Bob") == "Bob", "send name")
+
+saved = {
+	version = 1,
+	players = {
+		["Lina-Sakuranbo"] = {
+			name = "Lina-Sakuranbo",
+			class = "DRUID",
+			firstSeen = 200,
+			lastSeen = 900,
+			note = "nice",
+			sessions = { { start = 300, stop = 400, stars = 5 }, { start = 800, stop = 900 } },
+			rolls = { need = 1 },
+		},
+		["Lina Sakuranbo"] = {
+			name = "Lina Sakuranbo",
+			firstSeen = 100,
+			lastSeen = 1000,
+			guild = "Later Guild",
+			note = "greedy",
+			sessions = { { start = 500, stop = 600 } },
+			rolls = { need = 2, greed = 1 },
+			wins = { { link = "[B]", time = 550 } },
+			blocked = { guild = "Bad", pattern = "bad", time = 120 },
+		},
+		["Lina-Home"] = { name = "Lina-Home", sessions = {}, firstSeen = 1, lastSeen = 2 },
+	},
+}
+store = Store.New(saved, { ownRealm = "Home" })
+local lina = store:Player("Lina Sakuranbo")
+check(lina == saved.players["Lina-Sakuranbo"] and saved.players["Lina Sakuranbo"] == nil, "merged into one")
+check(#lina.sessions == 3 and lina.sessions[2].start == 500, "sessions merged in order")
+check(lina.rolls.need == 3 and lina.rolls.greed == 1 and #lina.wins == 1, "rolls and wins merged")
+check(lina.note == "nice\ngreedy" and lina.blocked.guild == "Bad", "note and mark merged")
+check(lina.firstSeen == 100 and lina.lastSeen == 1000 and lina.guild == "Later Guild", "times and guild")
+check(lina.class == "DRUID" and lina.name == "Lina-Sakuranbo", "class and name")
+check(saved.players.Lina and saved.players.Lina.name == "Lina" and not saved.players["Lina-Home"], "own realm renamed")
+check(store:Ensure("Lina (Sakuranbo)", nil, 5) == lina, "lookups normalize too")
+print("names ok")
 
 -- Sessions: open, place, close.
 store = Store.New(nil, { rejoinGrace = 300 })
@@ -215,8 +268,92 @@ check(stats.rolls.need == 2 and stats.rolls.transmog == 0, "rolls by choice")
 check(Store.Percent(2, 4) == 50 and Store.Percent(1, 3) == 33 and Store.Percent(0, 0) == 0, "percent")
 check(Store.FormatDuration(30) == "<1m" and Store.FormatDuration(45 * 60) == "45m", "short durations")
 check(Store.FormatDuration(3 * 3600 + 20 * 60) == "3h 20m", "hours")
+check(Store.FormatDuration(3 * 3600 + 5 * 60) == "3h 05m", "minutes padded")
+rogue.wins[1].choice, rogue.wins[2].choice = "need", "greed"
+check(Store.Stats(rogue, 5600).winsNeed == 1, "wins with Need")
 local empty = Store.Stats({ sessions = {} }, 0)
 check(empty.groups == 0 and empty.seconds == 0 and empty.wins == 0 and empty.rollCount == 0, "nothing yet")
 print("stats ok")
+
+-- #86 migration: version 1 tables move to 2 and keep everything.
+saved = {
+	version = 1,
+	players = {
+		Old = {
+			name = "Old",
+			note = "hi",
+			sessions = { { start = 1, stop = 2, stars = 4 } },
+			wins = { { link = "[A]", time = 5 }, { link = "[B]", time = 6, choice = "greed" } },
+		},
+	},
+}
+store = Store.New(saved)
+check(store.upgradedFrom == 1 and saved.version == 2 and saved.recentTags, "upgraded to 2")
+local old = store:Player("Old")
+check(old.note == "hi" and old.sessions[1].stars == 4, "data kept")
+local filled = store:FillWinChoices(function(name, win)
+	return name == "Old" and win.link == "[A]" and "need" or nil
+end)
+check(filled == 1 and old.wins[1].choice == "need" and old.wins[2].choice == "greed", "win choices filled")
+check(Store.New(saved).upgradedFrom == nil, "upgraded once")
+check(Store.New({ players = {} }).upgradedFrom == 1, "no version is version 1")
+print("migration ok")
+
+-- Verdict, note time, tags.
+store = Store.New(nil)
+store:SetVerdict("Vex", "avoid", 10)
+check(store:Player("Vex").verdict == "avoid", "verdict set")
+store:SetVerdict("Vex", "bogus", 11)
+check(store:Player("Vex").verdict == nil, "unknown verdict is neutral")
+store:SetPlayerNote("Vex", "rude", 20)
+check(store:Player("Vex").noteTime == 20, "note time")
+store:SetPlayerNote("Vex", " rude ", 30)
+check(store:Player("Vex").noteTime == 20, "unchanged note keeps its time")
+store:SetPlayerNote("Vex", "", 40)
+check(store:Player("Vex").noteTime == nil, "no note, no time")
+
+check(Store.CleanTag("  Rage-Quit  ") == "Rage-Quit" and Store.CleanTag("  ") == nil, "tag trimmed")
+check(Store.CleanTag("Need  on\tall") == "Need on all", "inner spaces collapsed")
+check(Store.CleanTag(("x"):rep(30)) == ("x"):rep(24), "cut to 24")
+check(Store.CleanTag(("ä"):rep(30)) == ("ä"):rep(24), "umlauts count as one character")
+check(store:AddTag("Vex", "Rage-Quit", 50) == "Rage-Quit", "tag added")
+check(store:AddTag("Vex", "rage-quit", 51) == nil, "duplicate in any case")
+store:AddTag("Vex", "Ninja", 52)
+store:AddTag("Ann", "Guter Heiler", 53)
+local vex = store:Player("Vex")
+check(table.concat(vex.tags, ",") == "Rage-Quit,Ninja", "tags in order")
+check(table.concat(store.db.recentTags, ",") == "Guter Heiler,Ninja,Rage-Quit", "most recent first")
+check(table.concat(store:TagSuggestions(vex, 5), ",") == "Guter Heiler", "suggestions skip own tags")
+store:AddTag("Ann", "ninja", 54)
+check(store.db.recentTags[1] == "ninja" and #store.db.recentTags == 3, "reused tag moves up once")
+check(names(store:Players("ninj")) == "Ann,Vex", "search finds tags")
+store:RemoveTag("Vex", "NINJA")
+store:RemoveTag("Vex", "rage-quit")
+check(vex.tags == nil, "tags removed")
+
+-- Verdict and tags keep players from the clean-up.
+store = Store.New(nil)
+now = 400 * DAY
+store:SetVerdict("Liked", "like", 0)
+store:AddTag("Tagged", "nice", 0)
+store:Ensure("Plain", nil, 0)
+check(store:Prune(now, 90) == 1 and store:Player("Liked") and store:Player("Tagged"), "verdict and tags stay")
+store:Forget("Liked")
+check(store:Player("Liked") == nil, "forgotten")
+
+-- Merging keeps verdict, tags and note time.
+local into = { name = "A", sessions = {}, verdict = "like", tags = { "Nice" }, noteTime = 5 }
+Store.MergeInto(into, { sessions = {}, verdict = "avoid", tags = { "nice", "Rude" }, noteTime = 9 })
+check(into.verdict == "avoid" and table.concat(into.tags, ",") == "Nice,Rude" and into.noteTime == 9, "merged")
+print("verdict and tags ok")
+
+-- Reset empties everything but the window position.
+store = Store.New({ players = {}, recentTags = { "x" }, window = { point = "TOP" }, loggedOut = 5 })
+store:Ensure("A", nil, 1)
+store:Ensure("B", nil, 1)
+check(store:Reset() == 2 and next(store.db.players) == nil, "players gone")
+check(#store.db.recentTags == 0 and store.db.loggedOut == nil and store.db.window.point == "TOP", "rest")
+check(store:Reset() == 0, "empty again")
+print("reset ok")
 
 print("players store tests passed")

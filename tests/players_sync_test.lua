@@ -16,7 +16,12 @@ end
 _G.Ambiguate = function(name)
 	return name
 end
+_G.GetNormalizedRealmName = function()
+	return "Home"
+end
 _G.UNKNOWNOBJECT = "Unknown"
+_G.StaticPopupDialogs = {}
+_G.YES, _G.NO = "Yes", "No"
 _G.IsInGroup = function()
 	return inGroup
 end
@@ -37,7 +42,9 @@ _G.UnitName = function(unit)
 		return "Me"
 	end
 	local member = Member(unit)
-	return member and member.name
+	if member then
+		return member.name, member.realm
+	end
 end
 _G.UnitIsPlayer = function(unit)
 	return UnitExists(unit)
@@ -84,7 +91,7 @@ local ns = {
 			popups[#popups + 1] = entries
 		end,
 	},
-	PlayersWindow = { Refresh = function() end },
+	PlayersWindow = { Refresh = function() end, Reset = function() end },
 	NotesWidgets = {
 		ClassColored = function(name)
 			return name
@@ -93,6 +100,9 @@ local ns = {
 	PlayerWidgets = {
 		SummaryText = function() end,
 		BlockReason = function() end,
+		VerdictText = function(player)
+			return player.verdict
+		end,
 	},
 }
 loadAddonFile("Modules/Players/Config.lua", ns)
@@ -131,6 +141,45 @@ Fire("GROUP_ROSTER_UPDATE")
 check(not bob.sessions[1].open and bob.sessions[1].stop == 1300, "session closed on leaving")
 check(#popups == 1 and popups[1][1].name == "Bob", "popup after leaving")
 print("roster ok")
+
+-- #86: a player you avoid joins: a red line, also without rating or note.
+bob.verdict = "avoid"
+printed = {}
+inGroup, party = true, { { name = "Bob", role = "HEALER" } }
+now = 1900
+Fire("GROUP_ROSTER_UPDATE")
+check(#printed == 1 and printed[1]:find("^|cffff5050In your group: Bob") and printed[1]:find("avoid"), "red line")
+bob.verdict = "like"
+inGroup, party, popups = false, {}, {}
+now = 1950
+Fire("GROUP_ROSTER_UPDATE")
+inGroup, party = true, { { name = "Bob", role = "HEALER" } }
+now = 1950 + 400 -- after the rejoin grace: a new session
+printed = {}
+Fire("GROUP_ROSTER_UPDATE")
+check(#printed == 1 and not printed[1]:find("|cffff5050", 1, true), "plain line for a liked player")
+inGroup, party, popups = false, {}, {}
+now = 1950 + 500
+Fire("GROUP_ROSTER_UPDATE")
+bob.verdict = nil
+popups = {}
+print("verdict ok")
+
+-- Emptying the database while grouped: the group starts afresh.
+local saved86 = store.db
+inGroup, party = true, { { name = "Zed", role = "TANK" } }
+now = 2460
+Fire("GROUP_ROSTER_UPDATE")
+module.ResetDatabase()
+check(store.db == saved86 and store:Player("Bob") == nil, "everyone gone")
+check(store:Player("Zed") and store:Player("Zed").sessions[1].open, "current group recorded again")
+check(printed[#printed]:find("emptied"), "said so")
+inGroup, party, popups = false, {}, {}
+now = 2470
+Fire("GROUP_ROSTER_UPDATE")
+store:Forget("Zed")
+popups = {}
+print("reset ok")
 
 -- Logging out in a group, back a day later alone: the session ends at the
 -- logout, so the day offline isn't counted.
@@ -193,10 +242,33 @@ ns.PlayersRecordLoot({
 })
 check(cid.rolls.need == 1 and #cid.wins == 1, "winner's roll and win")
 check(cid.wins[1].link == "[Choker of Enlightenment]" and cid.wins[1].encounter == "Lucifron", "win recorded")
+check(cid.wins[1].choice == "need", "won with Need")
 local dan = store:Player("Dan-Firemaw")
 check(dan and dan.rolls.greed == 1 and dan.class == "MAGE" and dan.wins == nil, "other roller under the full name")
 check(store:Player("You") == nil, "own roll left out")
 print("loot ok")
+
+-- #86: a player from another realm grouped (UnitName gives the realm apart)
+-- and then named by the loot history with a space: one entry.
+inGroup, party = true, { { name = "Lina", realm = "Sakuranbo", role = "HEALER" } }
+now = 100200
+Fire("GROUP_ROSTER_UPDATE")
+local lina = store:Player("Lina-Sakuranbo")
+check(lina and lina.sessions[1].open, "grouped under Name-Realm")
+ns.PlayersRecordLoot({
+	link = "[Robe]",
+	time = 100300,
+	winner = { name = "Lina", fullName = "Lina Sakuranbo", class = "DRUID", state = State.Greed },
+	rolls = { { name = "Lina", fullName = "Lina Sakuranbo", class = "DRUID", state = State.Greed } },
+})
+check(store.db.players["Lina Sakuranbo"] == nil, "no second entry with a space")
+check(lina.rolls.greed == 1 and #lina.wins == 1, "loot on the grouped entry")
+-- Players of your own realm are stored without it.
+ns.PlayersRecordLoot({ link = "[Ring]", time = 100400, winner = { name = "Cid", fullName = "Cid-Home" } })
+check(#cid.wins == 2 and store.db.players["Cid-Home"] == nil, "own realm left out")
+inGroup, party = false, {}
+Fire("GROUP_ROSTER_UPDATE")
+print("names ok")
 
 -- Players saved in the notes before #74 move over once.
 _G.StevioUINotes = {
@@ -219,5 +291,26 @@ module:OnEnable()
 local fay = module.store:Player("Fay")
 check(fay and not fay.sessions[1].open and fay.sessions[1].stop == 50, "open session ended at the old logout")
 print("take over ok")
+
+-- #86: wins saved by version 1 get their choice from the roll history.
+_G.StevioUINotes = nil
+_G.StevioUIRollHistory = {
+	records = {
+		{ link = "[Old]", time = 70, winner = { name = "Gus", fullName = "Gus Faraway", state = State.Transmog } },
+		{ link = "[Mine]", time = 80, winner = { name = "Me", isSelf = true, state = State.Greed } },
+	},
+}
+_G.StevioUIPlayers = {
+	version = 1,
+	players = {
+		["Gus-Faraway"] = { name = "Gus-Faraway", sessions = {}, wins = { { link = "[Old]", time = 70 } } },
+		["Gus Faraway"] = { name = "Gus Faraway", sessions = {}, wins = { { link = "[Other]", time = 71 } } },
+	},
+}
+module:OnEnable()
+local gus = module.store:Player("Gus-Faraway")
+check(StevioUIPlayers.version == 2 and #gus.wins == 2, "upgraded and merged")
+check(gus.wins[1].choice == "transmog" and gus.wins[2].choice == nil, "choice from the roll history")
+print("upgrade ok")
 
 print("players sync tests passed")

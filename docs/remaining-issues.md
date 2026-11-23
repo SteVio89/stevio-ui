@@ -167,6 +167,47 @@ need a check in game.
   "Simulated drops"; closing it brings the real history back, and nothing
   of it is in the saved history after a `/reload`.
 
+### Players window (#86)
+- First login after the update: the doubled players ("First-Last" and
+  "First Last") are one entry with all sessions, rolls, wins and the note;
+  `StevioUIPlayers.version` is 2. Old wins show their choice where the roll
+  history still had the drop.
+- Name spellings: a group member, the same player in the loot history and
+  "Player info" from the chat name menu all open the same entry. This rests on
+  the roster giving "First-Last" and chat "First Last-Realm" on WoW Forever
+  (worked out from #42 and the doubled entries, not seen directly). If
+  `GetNormalizedRealmName()` differs from the realm in chat names, chat lookups
+  make a third spelling.
+- Whisper opens the chat input to "First Last"; Invite invites them.
+- Window with an empty database and with a big one (200+ players): scrolling
+  the list stays smooth, search and chips update, the sections and times are
+  right, the selected row has the tint and the accent stripe, up/down and
+  typing work, Escape closes, movement keys work again once it is closed and
+  in combat. The window is moved by its title bar and is back there after a
+  `/reload`; the gear opens the Players options page.
+- Fonts: `‹›`, `„“`, `–`, `…` and `×` render (the standard font may lack one).
+- Circles (initials, dots) are round (`Interface\Masks\CircleMaskScalable`),
+  the star icon is readable at 10 px.
+- Overview in 7 days, 30 days and everything; the columns' tooltips; names
+  open the player; "Rate now" walks through the unrated groups of the week
+  and "Later" moves on.
+- Player page: verdict switch, tags (add, suggestions, remove), note editing
+  (the date updates, more lines push the history down), history filters,
+  role chip, stars, comments, item tooltips and shift-click linking, partners.
+  Long boss lists wrap.
+- Tooltip line with verdict and tags; the red chat line when an avoided
+  player joins; the verdict switch in the popup after a group.
+- `/sui players reset` and "Empty the database …" in the gear's menu: the
+  dialog (with the warning icon) names the number of players; Yes empties the
+  list and goes to the overview, No keeps everything. After a `/reload` the
+  database is still empty.
+
+Left out or simplified:
+- Tag suggestions are only tags used before; there is no built-in list.
+- THIS WEEK and THIS MONTH are the last 7 and 30 days, not calendar weeks.
+- The window keeps its configured size; there is no resize grip.
+- Suggestion chips are drawn with a plain border, not a dashed one.
+
 ### New design (#76, themes Dusk and Night violet)
 Go through each with `style.theme = "dusk"` and once more with `"violet"`
 (`/reload` after switching).

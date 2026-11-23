@@ -1,459 +1,659 @@
 local _, ns = ...
 
--- The player database's window: the players on the left, the selected one on
--- the right with rating, group stats, loot, note, and either the groups
--- together (role, stars, comment) or the items they won. Edits are saved as
--- they are typed.
+-- The players window (#86): a database to open in a quiet moment. The left
+-- side lists the players (search, filter chips, sort, role, sections by
+-- when they were last seen); the right side scrolls and shows either the
+-- overview (Overview.lua) or the selected player's page (Page.lua). Edits
+-- are saved as they are made.
 
 local Window = {}
 ns.PlayersWindow = Window
 
 local Store = ns.PlayersStore
-local W = ns.NotesWidgets
 local PW = ns.PlayerWidgets
+local K = ns.PlayersKit
 local config = ns.config.players
-local colors = ns.config.notes.colors
 local T = ns.T
 
-local WARN_COLOR = "|cffff5050"
-local DIM_COLOR = "|cff999999"
+local TITLE_HEIGHT = 52
+local LIST_WIDTH = 300
+local PAD = 16
+local ROW_HEIGHT = 46
+local HEADER_HEIGHT = 30
+local OVERVIEW_HEIGHT = 40
 
-local LIST_WIDTH = 250
-local ROW_HEIGHT = 26
-local SORTS = { "recent", "name", "rating" }
+local SORTS = { "recent", "rating", "time", "name" }
 local SORT_NAMES = {
 	recent = { "Last seen", "Zuletzt" },
-	name = { "Name", "Name" },
 	rating = { "Rating", "Bewertung" },
+	time = { "Time together", "Gemeinsame Zeit" },
+	name = { "Name", "Name" },
+}
+local FILTER_NAMES = {
+	all = { "All", "Alle" },
+	rated = { "Rated", "Bewertet" },
+	like = { "Play again", "Gerne wieder" },
+	avoid = { "Avoid", "Meiden" },
+	note = { "Note", "Notiz" },
+	marked = { "Marked", "Markiert" },
+}
+local AGE_NAMES = {
+	today = { "TODAY", "HEUTE" },
+	yesterday = { "YESTERDAY", "GESTERN" },
+	week = { "THIS WEEK", "DIESE WOCHE" },
+	month = { "THIS MONTH", "DIESEN MONAT" },
+	older = { "OLDER", "ÄLTER" },
 }
 
-local frame, panel
--- view: what the lower part of the page lists, "groups" or "loot".
-local state = { search = "", sortBy = "recent", view = "groups" }
+local frame
+-- selected: the player's name, nil for the overview. period: days of the
+-- overview (nil: everything). history: the page's history filter.
+local state = { search = "", sortBy = "recent", filter = "all", period = 30, history = "all" }
+Window.state = state
 
-local function Now()
+function Window.Now()
 	return time()
 end
 
-local function CurrentStore()
+function Window.Store()
 	return ns.Players.store
 end
 
 local function Selected()
-	return state.selected and CurrentStore():Player(state.selected)
-end
-
--- Texts -------------------------------------------------------------------------
-
-local function PlayerInfo(player)
-	local class = player.class and LOCALIZED_CLASS_NAMES_MALE[player.class]
-	local parts = {}
-	if class then
-		parts[#parts + 1] = class
-	end
-	if player.guild then
-		parts[#parts + 1] = ("<%s>"):format(player.guild)
-	end
-	parts[#parts + 1] = T("first seen %s", "zuerst %s"):format(W.Date(player.firstSeen))
-	parts[#parts + 1] = T("last seen %s", "zuletzt %s"):format(W.Date(player.lastSeen))
-	return table.concat(parts, " · ")
-end
-
-local function SessionPlace(session)
-	if session.open then
-		return T("grouped now", "gerade in der Gruppe")
-	elseif session.instance then
-		return session.where
-	elseif session.where then
-		return session.where .. T(" · open world", " · offene Welt")
-	end
-	return "?"
-end
-
--- "22.11.26  Molten Core · 2 items"
-local function SessionLabel(player, session)
-	local label = ("%s  %s"):format(W.Date(session.start), SessionPlace(session))
-	local wins = #CurrentStore():SessionWins(player, session)
-	if wins > 0 then
-		label = label .. DIM_COLOR .. T(" · %d items", " · %d Gegenst."):format(wins) .. "|r"
-	end
-	return label
-end
-
--- The hover lines of a session: place, time, bosses, wipes and items won.
-local function SessionTooltip(session)
-	local player = Selected()
-	if not player then
-		return nil
-	end
-	local lines = { SessionPlace(session) }
-	local stop = session.stop or (session.open and Now()) or session.start
-	lines[#lines + 1] = ("%s – %s · %s"):format(
-		date("%d.%m.%y %H:%M", session.start),
-		date("%H:%M", stop),
-		Store.FormatDuration(math.max(0, stop - session.start))
-	)
-	if session.kills and #session.kills > 0 then
-		lines[#lines + 1] = T("Bosses: %s", "Bosse: %s"):format(table.concat(session.kills, ", "))
-	end
-	if session.wipes and session.wipes > 0 then
-		lines[#lines + 1] = T("Wipes: %d", "Wipes: %d"):format(session.wipes)
-	end
-	for _, win in ipairs(CurrentStore():SessionWins(player, session)) do
-		lines[#lines + 1] = T("Won %s", "Gewonnen: %s"):format(win.link)
-	end
-	return lines
-end
-
--- "Ragnaros · Molten Core · 22.11.26"
-local function WinSource(win)
-	local parts = {}
-	if win.encounter then
-		parts[#parts + 1] = win.encounter
-	end
-	if win.instance and win.instance ~= win.encounter then
-		parts[#parts + 1] = win.instance
-	end
-	parts[#parts + 1] = W.Date(win.time)
-	return table.concat(parts, " · ")
-end
-
--- Player page ---------------------------------------------------------------------
-
-local function RefreshSummary()
-	local player = Selected()
-	if not player then
-		return
-	end
-	local lines = { PW.SummaryText(player) or T("Not rated yet", "Noch nicht bewertet") }
-	if player.blocked then
-		lines[#lines + 1] = WARN_COLOR
-			.. T("Marked %s: %s", "Markiert %s: %s"):format(W.Date(player.blocked.time), PW.BlockReason(player))
-			.. "|r"
-	end
-	local stats = Store.Stats(player, Now())
-	lines[#lines + 1] = PW.StatsText(stats)
-	local loot = PW.LootText(stats)
-	if loot then
-		lines[#lines + 1] = loot
-	end
-	-- More lines push the note label below down with them.
-	panel.summary:SetText(table.concat(lines, "\n"))
-	panel.unmark:SetShown(player.blocked ~= nil)
-end
-
-local function SessionRow(index)
-	local row = panel.sessionRows[index]
-	if not row then
-		row = PW.SessionRow(panel.listContent, 230, function()
-			RefreshSummary()
-			Window.RefreshList()
-		end)
-		row:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_HEIGHT)
-		row:SetPoint("RIGHT")
-		panel.sessionRows[index] = row
-	end
-	return row
-end
-
-local function WinRow(index)
-	local row = panel.winRows[index]
-	if not row then
-		row = CreateFrame("Button", nil, panel.listContent)
-		row:SetHeight(ROW_HEIGHT)
-		row:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_HEIGHT)
-		row:SetPoint("RIGHT")
-		local hover = row:CreateTexture(nil, "HIGHLIGHT")
-		hover:SetAllPoints()
-		hover:SetColorTexture(unpack(colors.hover))
-		row.icon = row:CreateTexture(nil, "ARTWORK")
-		row.icon:SetSize(ROW_HEIGHT - 6, ROW_HEIGHT - 6)
-		row.icon:SetPoint("LEFT", 2, 0)
-		ns.CropIcon(row.icon)
-		row.source = ns.CreateFontString(row, nil, "RIGHT")
-		row.source:SetPoint("RIGHT", -4, 0)
-		row.source:SetTextColor(unpack(colors.dim))
-		row.name = ns.CreateFontString(row)
-		row.name:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
-		row.name:SetPoint("RIGHT", row.source, "LEFT", -6, 0)
-		row.name:SetWordWrap(false)
-		row:SetScript("OnEnter", function(self)
-			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-			GameTooltip:SetHyperlink(self.win.link)
-			GameTooltip:Show()
-		end)
-		row:SetScript("OnLeave", GameTooltip_Hide)
-		-- Shift-click links the item, like everywhere else.
-		row:SetScript("OnClick", function(self)
-			HandleModifiedItemClick(self.win.link)
-		end)
-		panel.winRows[index] = row
-	end
-	return row
-end
-
-local function HideFrom(rows, first)
-	for index = first, #rows do
-		rows[index]:Hide()
-	end
-end
-
-local function RenderSessions(player)
-	local sessions = player.sessions
-	local count = #sessions
-	for index = 1, count do
-		local session = sessions[count - index + 1]
-		SessionRow(index):Set(session, SessionLabel(player, session), SessionTooltip)
-		panel.sessionRows[index]:Show()
-	end
-	HideFrom(panel.sessionRows, count + 1)
-	HideFrom(panel.winRows, 1)
-	panel.listEmpty:SetText(T("No groups together yet.", "Noch keine gemeinsame Gruppe."))
-	return count
-end
-
-local function RenderWins(player)
-	local wins = player.wins or {}
-	local count = #wins
-	for index = 1, count do
-		local win = wins[count - index + 1]
-		local row = WinRow(index)
-		row.win = win
-		row.icon:SetTexture(C_Item.GetItemIconByID(win.link) or 134400) -- question mark
-		row.name:SetText(win.link)
-		row.source:SetText(WinSource(win))
-		row:Show()
-	end
-	HideFrom(panel.winRows, count + 1)
-	HideFrom(panel.sessionRows, 1)
-	panel.listEmpty:SetText(
-		T("No items won in your groups yet.", "Noch keine Gegenstände in deinen Gruppen gewonnen.")
-	)
-	return count
-end
-
-local function RenderPlayer()
-	local player = Selected()
-	panel.content:SetShown(player ~= nil)
-	panel.empty:SetShown(player == nil)
-	if not player then
-		return
-	end
-	panel.name:SetText(W.ClassColored(player.name, player.class))
-	panel.info:SetText(PlayerInfo(player))
-	RefreshSummary()
-	panel.note:SetText(player.note)
-
-	local count
-	if state.view == "loot" then
-		count = RenderWins(player)
-	else
-		count = RenderSessions(player)
-	end
-	panel.groupsTab:SetEnabled(state.view ~= "groups")
-	panel.lootTab:SetEnabled(state.view ~= "loot")
-	panel.listContent:SetHeight(math.max(count * ROW_HEIGHT, 1))
-	panel.listEmpty:SetShown(count == 0)
-end
-
-local function ShowView(view)
-	state.view = view
-	RenderPlayer()
-end
-
-local function CreatePlayerPanel(parent)
-	panel = CreateFrame("Frame", nil, parent)
-	panel:SetAllPoints()
-	panel.sessionRows, panel.winRows = {}, {}
-
-	panel.empty = ns.CreateFontString(panel)
-	panel.empty:SetPoint("CENTER")
-	panel.empty:SetTextColor(unpack(colors.dim))
-	panel.empty:SetText(
-		T(
-			"Players you group with show up here.\nPick one to rate them or add a note.",
-			"Spieler aus deinen Gruppen erscheinen hier.\nWähle einen aus, um ihn zu bewerten oder eine Notiz zu schreiben."
-		)
-	)
-	panel.empty:SetWordWrap(true)
-
-	local content = CreateFrame("Frame", nil, panel)
-	content:SetAllPoints()
-	panel.content = content
-
-	panel.name = ns.CreateFontString(content, 14)
-	panel.name:SetPoint("TOPLEFT", 0, 0)
-	panel.info = ns.CreateFontString(content)
-	panel.info:SetPoint("TOPLEFT", panel.name, "BOTTOMLEFT", 0, -4)
-	panel.info:SetTextColor(unpack(colors.dim))
-	panel.summary = ns.CreateFontString(content)
-	panel.summary:SetPoint("TOPLEFT", panel.info, "BOTTOMLEFT", 0, -6)
-	panel.summary:SetPoint("RIGHT")
-	panel.summary:SetJustifyH("LEFT")
-	panel.summary:SetWordWrap(true)
-	panel.summary:SetSpacing(3)
-
-	local forget = W.Button(content, T("Forget", "Vergessen"), 90)
-	forget:SetPoint("TOPRIGHT", 0, 0)
-	forget:SetScript("OnClick", function()
-		if IsShiftKeyDown() then
-			CurrentStore().db.players[state.selected] = nil
-			state.selected = nil
-			Window.Refresh()
-		else
-			ns.Print(
-				T("Shift-click Forget to delete this player.", "Umschalt-Klick auf Vergessen löscht diesen Spieler.")
-			)
-		end
-	end)
-
-	panel.unmark = W.Button(content, T("Unmark", "Entmarkieren"), 90)
-	panel.unmark:SetPoint("RIGHT", forget, "LEFT", -6, 0)
-	panel.unmark:SetScript("OnClick", function()
-		if IsShiftKeyDown() then
-			CurrentStore():Unblock(state.selected)
-			RefreshSummary()
-			Window.RefreshList()
-		else
-			ns.Print(
-				T(
-					"Shift-click Unmark to remove the blocked-guild mark.",
-					"Umschalt-Klick auf Entmarkieren entfernt die Gilden-Markierung."
-				)
-			)
-		end
-	end)
-
-	local noteLabel = ns.CreateFontString(content)
-	noteLabel:SetPoint("TOPLEFT", panel.summary, "BOTTOMLEFT", 0, -12)
-	noteLabel:SetText(T("Note", "Notiz"))
-	panel.note = W.TextArea(content, function(text)
-		CurrentStore():SetPlayerNote(state.selected, text, Now())
-		Window.RefreshList()
-	end)
-	panel.note:SetPoint("TOPLEFT", noteLabel, "BOTTOMLEFT", 0, -4)
-	panel.note:SetPoint("RIGHT")
-	panel.note:SetHeight(60)
-
-	panel.groupsTab = W.Button(content, T("Groups together", "Gemeinsame Gruppen"), 150)
-	panel.groupsTab:SetPoint("TOPLEFT", panel.note, "BOTTOMLEFT", 0, -10)
-	panel.groupsTab:SetScript("OnClick", function()
-		ShowView("groups")
-	end)
-	panel.lootTab = W.Button(content, T("Items won", "Gewonnene Beute"), 150)
-	panel.lootTab:SetPoint("LEFT", panel.groupsTab, "RIGHT", 4, 0)
-	panel.lootTab:SetScript("OnClick", function()
-		ShowView("loot")
-	end)
-
-	local scroll = CreateFrame("ScrollFrame", nil, content, "UIPanelScrollFrameTemplate")
-	scroll:SetPoint("TOPLEFT", panel.groupsTab, "BOTTOMLEFT", 0, -6)
-	scroll:SetPoint("BOTTOMRIGHT", -22, 0)
-	panel.listContent = CreateFrame("Frame", nil, scroll)
-	panel.listContent:SetSize(1, 1)
-	scroll:SetScrollChild(panel.listContent)
-	scroll:SetScript("OnSizeChanged", function(_, width)
-		panel.listContent:SetWidth(width)
-	end)
-	panel.listEmpty = ns.CreateFontString(content)
-	panel.listEmpty:SetPoint("TOPLEFT", scroll, "TOPLEFT", 2, -4)
-	panel.listEmpty:SetTextColor(unpack(colors.dim))
+	return state.selected and Window.Store():Player(state.selected)
 end
 
 -- List ----------------------------------------------------------------------------
 
-local function RenderRow(row, player)
-	local name = W.ClassColored(player.name, player.class)
-	if player.blocked then
-		name = WARN_COLOR .. "!|r " .. name
+-- The rows the list shows: the overview entry, then the players, under
+-- section headers when sorted by last seen.
+local function ListItems()
+	local store, now = Window.Store(), Window.Now()
+	local players = store:Players(state.search, state.sortBy, now, function(player)
+		return Store.ListFilter(player, state.filter, state.role)
+	end)
+	local items = { { kind = "overview", height = OVERVIEW_HEIGHT } }
+	local dayStart, section = PW.DayStart(now), nil
+	for _, player in ipairs(players) do
+		if state.sortBy == "recent" then
+			local age = Store.Age(player.lastSeen, dayStart)
+			if age ~= section then
+				section = age
+				items[#items + 1] = { kind = "header", height = HEADER_HEIGHT, text = T(unpack(AGE_NAMES[age])) }
+			end
+		end
+		items[#items + 1] = { kind = "player", height = ROW_HEIGHT, player = player }
 	end
+	local y = 0
+	for _, item in ipairs(items) do
+		item.y = y
+		y = y + item.height
+	end
+	return items, y, players
+end
+
+local function RatingText(player)
+	local overall = Store.Summary(player).overall
+	if not overall then
+		return K.Hex("textFaint") .. "–|r"
+	end
+	local color = overall.average <= Store.ATTENTION_STARS and K.Hex("avoid") or K.Hex("textStrong")
+	return ("%s%s|r |T%s:11|t"):format(color, Store.FormatAverage(overall.average), K.ICON_STAR)
+end
+
+-- "Healer · Deadmines"
+local function RowInfo(player)
+	local parts = {}
+	local role = Store.LastRole(player)
+	if role then
+		parts[#parts + 1] = PW.RoleName(role)
+	end
+	local last = Store.LastSession(player)
+	if last then
+		local place = last.open and T("grouped now", "gerade in der Gruppe") or last.where
+		if place then
+			parts[#parts + 1] = place
+		end
+	elseif player.guild then
+		parts[#parts + 1] = ("<%s>"):format(player.guild)
+	end
+	return table.concat(parts, " · ")
+end
+
+local function CreatePlayerRow(parent)
+	local row = CreateFrame("Button", nil, parent)
+	row:SetHeight(ROW_HEIGHT)
+	row.selected = K.Texture(row, "BACKGROUND", K.RGB("selected"))
+	row.selected:SetAllPoints()
+	row.stripe = K.Texture(row, "ARTWORK", K.RGB("accent"))
+	row.stripe:SetPoint("TOPLEFT")
+	row.stripe:SetPoint("BOTTOMLEFT")
+	row.stripe:SetWidth(2)
+	local hover = K.Texture(row, "HIGHLIGHT", 1, 1, 1, 0.04)
+	hover:SetAllPoints()
+
+	row.avatar = K.Avatar(row, 28)
+	row.avatar:SetPoint("LEFT", 12, 0)
+	row.rating = K.Text(row, 11, "textStrong", "RIGHT")
+	row.rating:SetPoint("TOPRIGHT", -12, -10)
+	row.when = K.Text(row, 10, "textFaint", "RIGHT")
+	row.when:SetPoint("TOPRIGHT", row.rating, "BOTTOMRIGHT", 0, -4)
+	row.note = row:CreateTexture(nil, "ARTWORK")
+	row.note:SetSize(11, 11)
+	row.note:SetTexture(K.ICON_NOTE)
+	row.warning = row:CreateTexture(nil, "ARTWORK")
+	row.warning:SetSize(12, 12)
+	row.warning:SetTexture(K.ICON_WARNING)
+	row.name = K.Text(row, 12, "text")
+	row.name:SetPoint("TOPLEFT", row.avatar, "TOPRIGHT", 10, 3)
+	row.info = K.Text(row, 10, "textMuted")
+	row.info:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -4)
+	row.info:SetPoint("RIGHT", row.when, "LEFT", -8, 0)
+	row:SetScript("OnClick", function(self)
+		Window.Select(self.player.name)
+	end)
+	return row
+end
+
+local function RenderPlayerRow(row, player)
+	row.player = player
+	local selected = player.name == state.selected
+	row.selected:SetShown(selected)
+	row.stripe:SetShown(selected)
+	row.avatar:Set(player.name, player.class)
+	row.name:SetText(K.ColoredName(player.name, player.class))
+	row.info:SetText(RowInfo(player))
+	row.rating:SetText(RatingText(player))
+	row.when:SetText(PW.When(player.lastSeen, Window.Now()))
+	-- Icons before the rating, right to left: note, then the warning.
+	local anchor = row.rating
+	row.note:ClearAllPoints()
+	row.note:SetShown(player.note ~= nil)
 	if player.note then
-		name = name .. " " .. DIM_COLOR .. "·|r"
+		row.note:SetPoint("RIGHT", anchor, "LEFT", -4, 0)
+		anchor = row.note
 	end
-	row.left:SetText(name)
-	row.right:SetText(PW.Rating(Store.Summary(player).overall))
+	row.warning:ClearAllPoints()
+	row.warning:SetShown(player.blocked ~= nil)
+	if player.blocked then
+		row.warning:SetPoint("RIGHT", anchor, "LEFT", -4, 0)
+		anchor = row.warning
+	end
+	row.name:SetPoint("RIGHT", anchor, "LEFT", -6, 0)
+end
+
+local function CreateHeader(parent)
+	local header = CreateFrame("Frame", nil, parent)
+	header:SetHeight(HEADER_HEIGHT)
+	header.text = K.Text(header, 10, "textFaint")
+	header.text:SetPoint("BOTTOMLEFT", 14, 6)
+	return header
+end
+
+-- Three small bars: the overview's icon (the fonts have no chart glyph).
+local function ChartIcon(parent)
+	local icon = CreateFrame("Frame", nil, parent)
+	icon:SetSize(14, 12)
+	for index, height in ipairs({ 6, 12, 9 }) do
+		local bar = K.Texture(icon, "ARTWORK", K.RGB("text"))
+		bar:SetSize(3, height)
+		bar:SetPoint("BOTTOMLEFT", (index - 1) * 5, 0)
+	end
+	return icon
+end
+
+local function CreateOverviewRow(parent)
+	local row = CreateFrame("Button", nil, parent)
+	row:SetHeight(OVERVIEW_HEIGHT)
+	row.selected = K.Texture(row, "BACKGROUND", K.RGB("selected"))
+	row.selected:SetAllPoints()
+	row.stripe = K.Texture(row, "ARTWORK", K.RGB("accent"))
+	row.stripe:SetPoint("TOPLEFT")
+	row.stripe:SetPoint("BOTTOMLEFT")
+	row.stripe:SetWidth(2)
+	local hover = K.Texture(row, "HIGHLIGHT", 1, 1, 1, 0.04)
+	hover:SetAllPoints()
+	local icon = ChartIcon(row)
+	icon:SetPoint("LEFT", 14, 0)
+	local label = K.Text(row, 12, "textStrong")
+	label:SetPoint("LEFT", icon, "RIGHT", 10, 0)
+	label:SetText(T("Overview", "Übersicht"))
+	local aside = K.Text(row, 10, "textFaint", "RIGHT")
+	aside:SetPoint("RIGHT", -12, 0)
+	aside:SetText(T("Statistics", "Statistik"))
+	row:SetScript("OnClick", function()
+		Window.Select(nil)
+	end)
+	return row
+end
+
+-- Only the rows in view exist as frames, so a database of hundreds of
+-- players scrolls as smoothly as a short one.
+local function RenderVisibleRows()
+	local list = frame.list
+	local offset, height = list:GetVerticalScroll(), list:GetHeight()
+	local players, headers = 0, 0
+	for _, item in ipairs(list.items or {}) do
+		if item.y + item.height >= offset and item.y <= offset + height then
+			local row
+			if item.kind == "player" then
+				players = players + 1
+				row = list.playerRows:Get(players)
+				RenderPlayerRow(row, item.player)
+			elseif item.kind == "header" then
+				headers = headers + 1
+				row = list.headers:Get(headers)
+				row.text:SetText(item.text)
+			else
+				row = list.overviewRow
+				row:Show()
+				row.selected:SetShown(state.selected == nil)
+				row.stripe:SetShown(state.selected == nil)
+			end
+			row:ClearAllPoints()
+			row:SetPoint("TOPLEFT", list.child, "TOPLEFT", 0, -item.y)
+			row:SetPoint("RIGHT", list.child, "RIGHT")
+		elseif item.kind == "overview" then
+			list.overviewRow:Hide()
+		end
+	end
+	list.playerRows:HideFrom(players + 1)
+	list.headers:HideFrom(headers + 1)
+end
+
+local function RefreshChips()
+	local counts = Window.Store():ListCounts(state.search, state.role)
+	local x, y, width = 0, 0, LIST_WIDTH - 2 * PAD
+	for _, chip in ipairs(frame.chips) do
+		chip:SetChip(T(unpack(FILTER_NAMES[chip.filter])), counts[chip.filter], state.filter == chip.filter)
+		if x > 0 and x + chip:GetWidth() > width then
+			x, y = 0, y + 26
+		end
+		chip:ClearAllPoints()
+		chip:SetPoint("TOPLEFT", frame.chipArea, "TOPLEFT", x, -y)
+		x = x + chip:GetWidth() + 6
+	end
+	frame.chipArea:SetHeight(y + 22)
+end
+
+local function RefreshHeaderCounts()
+	local counts = Window.Store():ListCounts(nil, nil)
+	frame.counts:SetText(
+		T("%d entries · %d rated · %d marked", "%d Einträge · %d bewertet · %d markiert"):format(
+			counts.all,
+			counts.rated,
+			counts.marked
+		)
+	)
+end
+
+local function DropdownText(label, value)
+	return ("%s%s:|r %s"):format(K.Hex("textMuted"), label, value)
 end
 
 function Window.RefreshList()
 	if not frame or not frame:IsShown() then
 		return
 	end
-	frame.list:SetItems(CurrentStore():Players(state.search, state.sortBy), RenderRow, Selected())
+	RefreshChips()
+	RefreshHeaderCounts()
+	frame.sort.text:SetText(DropdownText(T("Sort", "Sortieren"), T(unpack(SORT_NAMES[state.sortBy]))))
+	frame.role.text:SetText(
+		DropdownText(T("Role", "Rolle"), state.role and PW.RoleName(state.role) or T("All", "Alle"))
+	)
+	local items, height, players = ListItems()
+	frame.list.items, frame.list.players = items, players
+	frame.list:SetContentHeight(height)
+	RenderVisibleRows()
 end
 
-function Window.Refresh()
+-- Content ---------------------------------------------------------------------------
+
+function Window.RenderContent()
 	if not frame or not frame:IsShown() then
 		return
 	end
-	frame.sort:SetText(T(unpack(SORT_NAMES[state.sortBy])))
-	Window.RefreshList()
-	RenderPlayer()
+	local player = Selected()
+	if state.selected and not player then
+		state.selected = nil
+	end
+	local content = frame.content
+	frame.overview:SetShown(player == nil)
+	frame.page:SetShown(player ~= nil)
+	local height
+	if player then
+		height = frame.page:Render(player)
+	else
+		height = frame.overview:Render()
+	end
+	content:SetContentHeight(height + PAD)
 end
 
-local function Select(player)
-	state.selected = player.name
+function Window.Refresh()
+	Window.RefreshList()
+	Window.RenderContent()
+end
+
+-- Selects a player by name (nil: the overview) and scrolls the content up.
+function Window.Select(name)
+	local changed = state.selected ~= name
+	state.selected = name
+	if changed then
+		frame.content:ScrollTo(0)
+	end
 	Window.Refresh()
 end
 
--- Window -------------------------------------------------------------------------
+-- The next or previous player in the list (arrow keys), keeping it in view.
+local function Step(delta)
+	local players = frame.list.players or {}
+	local index = 0
+	for position, player in ipairs(players) do
+		if player.name == state.selected then
+			index = position
+		end
+	end
+	local target = players[math.max(1, math.min(#players, index + delta))]
+	if not target then
+		return
+	end
+	Window.Select(target.name)
+	for _, item in ipairs(frame.list.items) do
+		if item.player == target then
+			local list = frame.list
+			local top, height = list:GetVerticalScroll(), list:GetHeight()
+			if item.y < top then
+				list:ScrollTo(item.y)
+			elseif item.y + item.height > top + height then
+				list:ScrollTo(item.y + item.height - height)
+			end
+		end
+	end
+end
+
+-- Window -----------------------------------------------------------------------------
+
+local function SavePosition()
+	local point, _, relativePoint, x, y = frame:GetPoint()
+	Window.Store().db.window = { point = point, relativePoint = relativePoint, x = x, y = y }
+end
+
+local function RestorePosition()
+	local saved = Window.Store().db.window
+	frame:ClearAllPoints()
+	if saved and saved.point then
+		frame:SetPoint(saved.point, UIParent, saved.relativePoint or saved.point, saved.x or 0, saved.y or 0)
+	else
+		frame:SetPoint("CENTER")
+	end
+end
+
+-- A text button with a small arrow that opens a menu.
+local function Dropdown(parent, entries)
+	local button = CreateFrame("Button", nil, parent)
+	button:SetHeight(18)
+	button.text = K.Text(button, 11, "textStrong")
+	button.text:SetPoint("LEFT")
+	local arrow = button:CreateTexture(nil, "ARTWORK")
+	arrow:SetSize(10, 10)
+	arrow:SetPoint("LEFT", button.text, "RIGHT", 2, -1)
+	arrow:SetTexture("Interface\\Buttons\\Arrow-Down-Up")
+	arrow:SetVertexColor(K.RGB("textMuted"))
+	button:SetScript("OnClick", function(self)
+		K.Menu(self, entries())
+	end)
+	hooksecurefunc(button.text, "SetText", function(self)
+		button:SetWidth(self:GetStringWidth() + 14)
+	end)
+	return button
+end
+
+local function CreateTitleBar()
+	local bar = CreateFrame("Frame", nil, frame)
+	bar:SetPoint("TOPLEFT")
+	bar:SetPoint("TOPRIGHT")
+	bar:SetHeight(TITLE_HEIGHT)
+	bar:EnableMouse(true)
+	bar:RegisterForDrag("LeftButton")
+	bar:SetScript("OnDragStart", function()
+		frame:StartMoving()
+	end)
+	bar:SetScript("OnDragStop", function()
+		frame:StopMovingOrSizing()
+		SavePosition()
+	end)
+
+	local icon = bar:CreateTexture(nil, "ARTWORK")
+	icon:SetSize(18, 18)
+	icon:SetPoint("LEFT", PAD + 4, 0)
+	icon:SetTexture("Interface\\Icons\\Achievement_GuildPerk_HaveGroup WillTravel")
+	ns.CropIcon(icon)
+	local title = K.Text(bar, 15, "textStrong")
+	title:SetPoint("LEFT", icon, "RIGHT", 10, 0)
+	title:SetText(T("Players", "Spieler"))
+	frame.counts = K.Text(bar, 11, "textMuted")
+	frame.counts:SetPoint("LEFT", title, "RIGHT", 12, -1)
+
+	local close = ns.CreateCloseButton(bar, 22, function()
+		frame:Hide()
+	end)
+	close:SetPoint("RIGHT", -PAD, 0)
+	local options = K.IconButton(bar, K.ICON_OPTIONS, 18, function(self)
+		K.Menu(self, {
+			{
+				T("Options", "Optionen"),
+				function()
+					frame:Hide()
+					if ns.OpenOptionsPage then
+						ns.OpenOptionsPage("players")
+					end
+				end,
+			},
+			{
+				T("Empty the database …", "Datenbank leeren …"),
+				function()
+					ns.Players.ConfirmReset()
+				end,
+			},
+		})
+	end)
+	options.tooltip = T("Options", "Optionen")
+	options:SetPoint("RIGHT", close, "LEFT", -12, 0)
+
+	local line = K.Texture(frame, "ARTWORK", 1, 1, 1, 0.06)
+	line:SetPoint("TOPLEFT", 0, -TITLE_HEIGHT)
+	line:SetPoint("TOPRIGHT", 0, -TITLE_HEIGHT)
+	line:SetHeight(1)
+end
+
+local function CreateListSide()
+	local side = CreateFrame("Frame", nil, frame)
+	side:SetPoint("TOPLEFT", 0, -TITLE_HEIGHT - 1)
+	side:SetPoint("BOTTOMLEFT")
+	side:SetWidth(LIST_WIDTH)
+	local divider = K.Texture(frame, "ARTWORK", 1, 1, 1, 0.06)
+	divider:SetPoint("TOPLEFT", side, "TOPRIGHT")
+	divider:SetPoint("BOTTOMLEFT", side, "BOTTOMRIGHT")
+	divider:SetWidth(1)
+
+	local search = K.Input(side, T("Name, guild, note or tag …", "Name, Gilde, Notiz oder Tag …"), function(text)
+		state.search = text
+		frame.list:ScrollTo(0)
+		Window.RefreshList()
+	end, 32)
+	search:SetPoint("TOPLEFT", PAD, -PAD)
+	search:SetPoint("TOPRIGHT", -PAD, -PAD)
+	local glass = search:CreateTexture(nil, "ARTWORK")
+	glass:SetSize(14, 14)
+	glass:SetPoint("LEFT", 10, 0)
+	glass:SetTexture(K.ICON_SEARCH)
+	search.edit:SetPoint("TOPLEFT", 30, 0)
+	search.edit:SetScript("OnArrowPressed", function(_, key)
+		if key == "UP" or key == "DOWN" then
+			Step(key == "UP" and -1 or 1)
+		end
+	end)
+	frame.search = search
+
+	frame.chipArea = CreateFrame("Frame", nil, side)
+	frame.chipArea:SetPoint("TOPLEFT", search, "BOTTOMLEFT", 0, -12)
+	frame.chipArea:SetPoint("RIGHT", -PAD, 0)
+	frame.chips = {}
+	for _, filter in ipairs(Store.LIST_FILTERS) do
+		local chip = K.Chip(frame.chipArea, 22)
+		chip.filter = filter
+		chip:SetScript("OnClick", function(self)
+			state.filter = self.filter
+			frame.list:ScrollTo(0)
+			Window.RefreshList()
+		end)
+		frame.chips[#frame.chips + 1] = chip
+	end
+
+	frame.sort = Dropdown(side, function()
+		local entries = {}
+		for _, sortBy in ipairs(SORTS) do
+			entries[#entries + 1] = {
+				T(unpack(SORT_NAMES[sortBy])),
+				function()
+					state.sortBy = sortBy
+					frame.list:ScrollTo(0)
+					Window.RefreshList()
+				end,
+			}
+		end
+		return entries
+	end)
+	frame.sort:SetPoint("TOPLEFT", frame.chipArea, "BOTTOMLEFT", 0, -10)
+	frame.role = Dropdown(side, function()
+		local entries = {
+			{
+				T("All", "Alle"),
+				function()
+					state.role = nil
+					Window.RefreshList()
+				end,
+			},
+		}
+		for _, role in ipairs(Store.ROLES) do
+			entries[#entries + 1] = {
+				PW.RoleName(role),
+				function()
+					state.role = role
+					Window.RefreshList()
+				end,
+			}
+		end
+		return entries
+	end)
+	frame.role:SetPoint("TOPRIGHT", frame.chipArea, "BOTTOMRIGHT", 0, -10)
+
+	local list = K.Scroll(side, ROW_HEIGHT)
+	list:SetPoint("TOPLEFT", frame.sort, "BOTTOMLEFT", -PAD + 8, -10)
+	list:SetPoint("BOTTOMRIGHT", -8, 8)
+	list.onScroll = RenderVisibleRows
+	list:HookScript("OnSizeChanged", function()
+		RenderVisibleRows()
+	end)
+	list.playerRows = K.Pool(function()
+		return CreatePlayerRow(list.child)
+	end)
+	list.headers = K.Pool(function()
+		return CreateHeader(list.child)
+	end)
+	list.overviewRow = CreateOverviewRow(list.child)
+	frame.list = list
+end
+
+local function CreateContentSide()
+	local content = K.Scroll(frame, 80)
+	content:SetPoint("TOPLEFT", LIST_WIDTH + 1 + 32, -TITLE_HEIGHT - 1 - 24)
+	content:SetPoint("BOTTOMRIGHT", -32, 16)
+	frame.content = content
+	local width = config.window.width - LIST_WIDTH - 1 - 64
+	frame.overview = ns.PlayersOverview.Create(content.child, width)
+	frame.overview:SetPoint("TOPLEFT")
+	frame.overview:SetPoint("TOPRIGHT")
+	frame.page = ns.PlayersPage.Create(content.child, width)
+	frame.page:SetPoint("TOPLEFT")
+	frame.page:SetPoint("TOPRIGHT")
+end
+
+-- Arrow keys step through the players; typing goes to the search. Keys are
+-- only taken out of combat, where letting them through can't be changed.
+local function OnKeyDown(self, key)
+	if InCombatLockdown() then
+		return
+	end
+	local handled = true
+	if key == "ESCAPE" then
+		self:Hide()
+	elseif key == "UP" or key == "DOWN" then
+		Step(key == "UP" and -1 or 1)
+	elseif
+		#key == 1
+		and key:match("[%w]")
+		and not IsControlKeyDown()
+		and not IsAltKeyDown()
+		and not IsMetaKeyDown()
+	then
+		local edit = frame.search.edit
+		edit:SetFocus()
+		edit:Insert(IsShiftKeyDown() and key:upper() or key:lower())
+	else
+		handled = false
+	end
+	self:SetPropagateKeyboardInput(not handled)
+end
 
 local function CreateWindow()
 	frame = CreateFrame("Frame", "StevioUI_Players", UIParent)
 	frame:SetSize(config.window.width, config.window.height)
-	frame:SetPoint("CENTER")
 	frame:SetFrameStrata("DIALOG")
 	frame:SetToplevel(true)
 	frame:EnableMouse(true)
 	frame:SetMovable(true)
 	frame:SetClampedToScreen(true)
-	frame:RegisterForDrag("LeftButton")
-	frame:SetScript("OnDragStart", frame.StartMoving)
-	frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 	ns.CreatePanel(frame, { color = ns.PanelColor() })
-	-- Lets Escape close the window like any Blizzard panel.
+	-- Escape closes the window like any Blizzard panel (also in combat,
+	-- where the window takes no keys).
 	tinsert(UISpecialFrames, frame:GetName())
-	frame:SetScript("OnShow", Window.Refresh)
+	RestorePosition()
 
-	local title = ns.CreateFontString(frame, 14)
-	title:SetPoint("TOPLEFT", 12, -10)
-	title:SetText(T("Players", "Spieler"))
+	CreateTitleBar()
+	CreateListSide()
+	CreateContentSide()
 
-	local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-	close:SetPoint("TOPRIGHT", 2, 2)
-
-	local search = W.Input(frame, LIST_WIDTH - 100, function(text)
-		state.search = text
-		Window.RefreshList()
-	end)
-	search:SetPoint("TOPLEFT", 18, -40)
-	search.Instructions = search:CreateFontString(nil, "ARTWORK", "GameFontDisable")
-	search.Instructions:SetPoint("LEFT", 2, 0)
-	search.Instructions:SetText(T("Search", "Suchen"))
-	search:HookScript("OnTextChanged", function(self)
-		self.Instructions:SetShown(self:GetText() == "")
-	end)
-
-	frame.sort = W.Button(frame, "", 90)
-	frame.sort:SetPoint("LEFT", search, "RIGHT", 6, 0)
-	frame.sort:SetScript("OnClick", function()
-		for index, name in ipairs(SORTS) do
-			if name == state.sortBy then
-				state.sortBy = SORTS[index % #SORTS + 1]
-				break
-			end
+	frame:SetScript("OnShow", function(self)
+		if not InCombatLockdown() then
+			self:EnableKeyboard(true)
 		end
 		Window.Refresh()
 	end)
+	frame:SetScript("OnHide", function(self)
+		if not InCombatLockdown() then
+			self:EnableKeyboard(false)
+		end
+	end)
+	frame:SetScript("OnKeyDown", OnKeyDown)
+	ns.RegisterEvent("PLAYER_REGEN_DISABLED", function()
+		frame:EnableKeyboard(false)
+	end)
+	ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
+		frame:EnableKeyboard(frame:IsShown())
+	end)
+end
 
-	frame.list = W.List(frame, 20, Select)
-	frame.list:SetPoint("TOPLEFT", 12, -66)
-	frame.list:SetPoint("BOTTOMLEFT", 12, 12)
-	frame.list:SetWidth(LIST_WIDTH)
-
-	local detail = CreateFrame("Frame", nil, frame)
-	detail:SetPoint("TOPLEFT", frame.list, "TOPRIGHT", 16, 0)
-	detail:SetPoint("BOTTOMRIGHT", -12, 12)
-	CreatePlayerPanel(detail)
+-- After the database was emptied: back to the overview, filters cleared.
+function Window.Reset()
+	state.selected, state.search, state.filter, state.role = nil, "", "all", nil
+	if not frame then
+		return
+	end
+	frame.search:SetText("")
+	frame.list:ScrollTo(0)
+	frame.content:ScrollTo(0)
+	Window.Refresh()
 end
 
 -- Opens the window, selecting the player `name` when given.
@@ -462,7 +662,7 @@ function Window.Open(name)
 		CreateWindow()
 	end
 	if name ~= nil then
-		state.selected = name
+		state.selected = Window.Store():Key(name)
 	end
 	if frame:IsShown() then
 		Window.Refresh()
