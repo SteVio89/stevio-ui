@@ -28,6 +28,9 @@ ns.config.style = {
 			textMuted = { 0.54, 0.56, 0.60 },
 			textFaint = { 0.42, 0.44, 0.49 },
 			accent = { 0.78, 0.65, 0.38 },
+			selected = { 1, 1, 1, 0.06 },
+			pill = { 1, 1, 1, 0.10 },
+			pillText = { 0.79, 0.80, 0.82 },
 		},
 		-- Violet tinted black, muted dark violet accent.
 		violet = {
@@ -41,6 +44,9 @@ ns.config.style = {
 			textMuted = { 0.56, 0.53, 0.63 },
 			textFaint = { 0.44, 0.41, 0.50 },
 			accent = { 0.52, 0.33, 0.79 },
+			selected = { 0.52, 0.33, 0.79, 0.18 },
+			pill = { 0.52, 0.33, 0.79, 0.30 },
+			pillText = { 0.89, 0.84, 0.96 },
 		},
 	},
 

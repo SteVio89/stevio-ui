@@ -70,25 +70,26 @@ ns.config.chat = {
 	widthFraction = 1 / 3,
 	height = 300,
 
-	backgroundColor = { 0, 0, 0, 1 },
-	-- The background is see-through, so the open chat doesn't sit on the
-	-- screen like a black block, and turns nearly solid while the cursor is
-	-- over the chat or it is typed into (#69); its opacity then and otherwise
-	-- (times backgroundColor's), and the seconds it takes from one to the other.
-	-- The text has an outline, so it stays readable either way.
+	-- The background (the theme's panel color) is see-through, so the open
+	-- chat doesn't sit on the screen like a black block, and turns nearly
+	-- solid while the cursor is over the chat or it is typed into (#69); its
+	-- opacity then and otherwise, and the seconds it takes from one to the
+	-- other. The text has a shadow, so it stays readable either way.
 	activeAlpha = 0.85,
 	openAlpha = 0.45,
 	fadeTime = 0.25,
-	selectedColor = { 1, 1, 1, 0.12 },
-	dividerColor = { 0.3, 0.3, 0.3, 1 },
+	-- Lines between the sidebar and the messages and under the header.
+	dividerColor = { 1, 1, 1, 0.06 },
 	-- Scroll position shown on the sidebar edge when the channels don't all fit.
 	scrollThumbColor = { 1, 1, 1, 0.35 },
-	deleteColor = { 0.8, 0.3, 0.3, 1 },
+	-- The ✕ that deletes a channel, shown on hover.
+	deleteColor = { 0.79, 0.42, 0.42, 1 },
+	-- The frame of the Copy button.
+	buttonBorderColor = { 1, 1, 1, 0.08 },
 	-- The input line is boxed so it doesn't read as part of the history; while
 	-- typing its border takes the color of the channel it writes to.
-	inputBackgroundColor = { 1, 1, 1, 0.08 },
-	inputBorderColor = { 0.35, 0.35, 0.35, 1 },
-	inputHintColor = { 0.5, 0.5, 0.5, 1 },
+	inputBackgroundColor = { 1, 1, 1, 0.04 },
+	inputBorderColor = { 1, 1, 1, 0.11 },
 
 	-- Debugging aid: keeps Blizzard's chat visible right of the channel view
 	-- (gap in pixels) to compare which messages arrive.
@@ -122,6 +123,8 @@ ns.config.chat = {
 	historyLimit = 200,
 	sidebarWidth = 130,
 	rowHeight = 22,
+	-- Section headings in the sidebar (chat channels by name, the log).
+	headerHeight = 18,
 	-- Font size of the messages, the input line and the copy view.
 	fontSize = 16,
 	-- Font size of the sidebar and the header above the messages.
