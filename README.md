@@ -216,7 +216,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   after they leave it, with a red warning when first seen, when they join your
   group and under each of their whispers, naming the guild and the pattern.
   Account-wide.
-- **Notes** – a window (button in the notch island, or `/sui notes`) with two
+- **Notes** – a window (`/sui notes`) with two
   tabs. *Items*: free text per item type, shown in its tooltip; Alt+right-click an
   item in your bags or bank (or drop it on the list) to write or remove it.
   *Notes*: plain notes. All notes are account-wide.
