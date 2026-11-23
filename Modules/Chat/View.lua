@@ -19,11 +19,31 @@ function C.ShowEntry(channel, previous, entry)
 	end
 	local line, r, g, b = C.FormatEntry(channel, entry, C.TypeColor)
 	C.ui.messages:AddMessage(line, r or 1, g or 1, b or 1)
+	if entry.time then
+		C.ui.lastTimed = entry
+	end
+end
+
+-- A line just stored in `channel` (a copy of `entry` when the open view is
+-- the heading it sits under), added to the open view when it shows there.
+function C.AppendEntry(channel, entry)
+	local selected = C.state.selected
+	if selected == channel.key then
+		C.ShowEntry(channel, ns.ChatHistory.PreviousTimed(channel.messages, #channel.messages), entry)
+	elseif C.IsGroupKey(selected) then
+		local group = C.Selected()
+		local label = group and group.labels[channel.key]
+		if label then
+			local copy = ns.ChatHistory.Mirror(entry, channel.key, label, channel.chatType)
+			C.ShowEntry(group, C.ui.lastTimed, copy)
+		end
+	end
 end
 
 function C.RenderMessages(channel)
 	local messages = C.ui.messages
 	messages:Clear()
+	C.ui.lastTimed = nil
 	if not channel then
 		return
 	end
@@ -116,12 +136,36 @@ local function CreateRow()
 	return row
 end
 
--- A section heading of the sidebar (not clickable).
+-- The text color of a heading: strong while its view is open, brighter under
+-- the cursor.
+local function UpdateHeadingColor(heading)
+	local palette = style.palette
+	local color = heading.selected and palette.textStrong
+		or heading:IsMouseOver() and palette.textMuted
+		or palette.textFaint
+	heading.text:SetTextColor(unpack(color))
+end
+
+-- A section heading of the sidebar; a click opens all channels under it (#78).
 local function CreateHeading()
-	local heading = ns.CreateFontString(C.ui.list, config.sidebarFontSize - 3, "LEFT")
+	local palette = style.palette
+	local heading = CreateFrame("Button", nil, C.ui.list)
 	heading:SetHeight(config.headerHeight)
-	heading:SetJustifyV("MIDDLE")
-	heading:SetTextColor(unpack(style.palette.textFaint))
+	heading.highlight = heading:CreateTexture(nil, "BACKGROUND")
+	heading.highlight:SetAllPoints()
+	heading.highlight:SetColorTexture(unpack(palette.selected))
+	heading.marker = heading:CreateTexture(nil, "ARTWORK")
+	heading.marker:SetSize(2, config.headerHeight - 4)
+	heading.marker:SetPoint("LEFT")
+	heading.marker:SetColorTexture(unpack(palette.accent))
+	heading.text = ns.CreateFontString(heading, config.sidebarFontSize - 3, "LEFT")
+	heading.text:SetPoint("LEFT", 8, 0)
+	heading.text:SetPoint("RIGHT", -4, 0)
+	heading:SetScript("OnEnter", UpdateHeadingColor)
+	heading:SetScript("OnLeave", UpdateHeadingColor)
+	heading:SetScript("OnClick", function(self)
+		C.Select(self.key)
+	end)
 	return heading
 end
 
@@ -203,11 +247,19 @@ function C.RefreshSidebar()
 			headingCount = headingCount + 1
 			local heading = ui.headings[headingCount] or CreateHeading()
 			ui.headings[headingCount] = heading
-			heading:SetText(entry.header:upper())
+			heading.key = entry.group
+			heading.selected = entry.group == C.state.selected
+			heading.text:SetText(entry.header:upper())
+			heading.highlight:SetShown(heading.selected)
+			heading.marker:SetShown(heading.selected)
+			UpdateHeadingColor(heading)
 			heading:ClearAllPoints()
-			heading:SetPoint("TOPLEFT", 8, -tops[index])
-			heading:SetPoint("TOPRIGHT", -4, -tops[index])
+			heading:SetPoint("TOPLEFT", 0, -tops[index])
+			heading:SetPoint("TOPRIGHT", 0, -tops[index])
 			heading:Show()
+			if heading.selected then
+				selectedIndex = index
+			end
 		else
 			rowCount = rowCount + 1
 			local row = ui.rows[rowCount] or CreateRow()
@@ -231,7 +283,8 @@ function C.RefreshSidebar()
 	local offset = ui.listScroll:GetVerticalScroll()
 	local viewHeight = ui.listScroll:GetHeight()
 	if selectedIndex and viewHeight > 0 and C.state.selected ~= ui.scrolledTo then
-		offset = C.ScrollToRow(offset, viewHeight, tops[selectedIndex], config.rowHeight)
+		local height = entries[selectedIndex].header and config.headerHeight or config.rowHeight
+		offset = C.ScrollToRow(offset, viewHeight, tops[selectedIndex], height)
 		ui.scrolledTo = C.state.selected
 	end
 	SetSidebarScroll(offset)
@@ -324,12 +377,17 @@ local function CreateMessages(frame)
 		end
 	end)
 	messages:SetHyperlinksEnabled(true)
-	-- A click on a channel tag in Main writes to that channel;
+	-- A click on a channel tag in Main writes to that channel, in a heading's
+	-- view it opens that channel;
 	-- a left click on a player's name opens the whisper channel with them,
 	-- a right click our menu for them (see C.ShowPlayerMenu);
 	-- other clicks (shift click, ...) and links stay Blizzard's.
 	messages:SetScript("OnHyperlinkClick", function(self, link, text, button)
 		local channelKey = ns.ChatHistory.LinkedChannel(link)
+		if channelKey and C.IsGroupKey(C.state.selected) then
+			C.Select(channelKey)
+			return
+		end
 		if channelKey then
 			C.PickMainTarget(channelKey)
 			return

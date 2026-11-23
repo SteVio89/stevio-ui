@@ -23,12 +23,6 @@ local lookups = {
 	ambiguate = Ambiguate,
 }
 
-local function Append(channel, entry)
-	if state.selected == channel.key then
-		C.ShowEntry(channel, History.PreviousTimed(channel.messages, #channel.messages), entry)
-	end
-end
-
 -- What a message of `def` arriving in channel `key` does. `mainKey` is Main's
 -- key when the channel is merged into it (else false), `selected` the open
 -- channel, `attended` and `hidden` the chat's state and `hasFocus()` whether
@@ -69,27 +63,33 @@ end
 -- and shows it according to `def` (see config.events).
 function C.Receive(def, key, opts, entry)
 	local main = C.IsMerged(def) and config.main
+	-- A channel shown in the open heading's view (#78) counts as open.
+	local viewed = state.selected
+	local group = C.IsGroupKey(viewed) and C.Selected()
+	if group and group.labels[key] then
+		viewed = key
+	end
 	local markUnread, show, action =
-		C.Delivery(def, key, main and main.key, state.selected, C.Attended(), C.hidden, InputHasFocus)
+		C.Delivery(def, key, main and main.key, viewed, C.Attended(), C.hidden, InputHasFocus)
 	-- The line as it shows in `show`, for the preview.
 	local shownChannel, shownEntry
 	if not entry then
 		C.store:AddUnreadOnly(key, opts, time(), main ~= false)
 	else
 		local channel = C.store:Add(key, opts, entry, markUnread, main ~= false)
-		Append(channel, entry)
+		C.AppendEntry(channel, entry)
 		shownChannel, shownEntry = channel, entry
 		if main then
 			local copy = History.Mirror(entry, key, C.Label(channel), channel.chatType)
 			shownChannel, shownEntry = C.store:Add(main.key, main, copy, false), copy
-			Append(shownChannel, copy)
+			C.AppendEntry(shownChannel, copy)
 		end
 	end
 	-- Lines whose contents are secret (chat lockdown) only light the badge.
 	if action == "preview" and shownEntry and config.preview.enabled then
 		C.ShowPreview(shownChannel, shownEntry)
 	elseif action == "open" then
-		if show ~= state.selected then
+		if show ~= viewed then
 			C.Peek(show)
 		end
 		C.StartAutoTimer(config.autoShowDuration)
