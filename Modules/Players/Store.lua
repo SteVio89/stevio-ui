@@ -16,23 +16,128 @@ Store.MAX_STARS = 5
 local DAY = 24 * 60 * 60
 
 -- Wraps the saved table `db` (created when nil) and fills in missing parts.
+-- options: rejoinGrace, ownRealm (see Store.NormalizeName; entries saved
+-- under another spelling of a name are merged into one).
 function Store.New(db, options)
 	db = db or {}
 	db.version = db.version or Store.VERSION
 	db.players = db.players or {}
 	options = options or {}
-	return setmetatable({ db = db, rejoinGrace = options.rejoinGrace or 0 }, Store)
+	local store = setmetatable({ db = db, rejoinGrace = options.rejoinGrace or 0, ownRealm = options.ownRealm }, Store)
+	store:MergeDuplicates()
+	return store
+end
+
+-- Names ----------------------------------------------------------------------
+
+-- The one spelling players are stored under: "Name" on your realm, else
+-- "Name-Realm" with the realm's spaces and hyphens removed, as
+-- Ambiguate(..., "none") gives chat names. Takes "Name-Realm", "Name Realm",
+-- "Name - Realm Name", "Name (Realm)" and "Name": character names have no
+-- spaces or hyphens, so whatever follows them is the realm. `ownRealm` is
+-- GetNormalizedRealmName() (nil: unknown, the realm is kept). Nil for no name.
+function Store.NormalizeName(name, ownRealm)
+	if type(name) ~= "string" then
+		return nil
+	end
+	local short, rest = name:match("^%s*([^%s%-%(%)]+)(.*)$")
+	if not short then
+		return nil
+	end
+	local realm = rest:gsub("[%s%-%(%)]", "")
+	if realm == "" or realm == ownRealm then
+		return short
+	end
+	return short .. "-" .. realm
+end
+
+function Store:Key(name)
+	return Store.NormalizeName(name, self.ownRealm)
+end
+
+local function SortBy(list, field)
+	table.sort(list, function(a, b)
+		return (a[field] or 0) < (b[field] or 0)
+	end)
+end
+
+-- Moves everything of `from` into `into` (two entries of the same player):
+-- sessions, rolls, wins, note, mark; first seen is the earlier, last seen
+-- the later of both.
+function Store.MergeInto(into, from)
+	for _, session in ipairs(from.sessions or {}) do
+		into.sessions[#into.sessions + 1] = session
+	end
+	SortBy(into.sessions, "start")
+	if from.rolls then
+		into.rolls = into.rolls or {}
+		for choice, count in pairs(from.rolls) do
+			into.rolls[choice] = (into.rolls[choice] or 0) + count
+		end
+	end
+	if from.wins then
+		into.wins = into.wins or {}
+		for _, win in ipairs(from.wins) do
+			into.wins[#into.wins + 1] = win
+		end
+		SortBy(into.wins, "time")
+	end
+	if from.note and from.note ~= into.note then
+		into.note = into.note and (into.note .. "\n" .. from.note) or from.note
+	end
+	if from.blocked and (not into.blocked or (from.blocked.time or 0) < (into.blocked.time or 0)) then
+		into.blocked = from.blocked
+	end
+	into.class = into.class or from.class
+	if from.guild and (not into.guild or (from.lastSeen or 0) > (into.lastSeen or 0)) then
+		into.guild = from.guild
+	end
+	into.firstSeen = math.min(into.firstSeen or from.firstSeen or 0, from.firstSeen or into.firstSeen or 0)
+	into.lastSeen = math.max(into.lastSeen or 0, from.lastSeen or 0)
+end
+
+-- Saves every player under Store.NormalizeName, merging entries that turn
+-- out to be the same player. Returns how many were merged away.
+function Store:MergeDuplicates()
+	local players = self.db.players
+	local names = {}
+	for name in pairs(players) do
+		names[#names + 1] = name
+	end
+	-- Fixed order, so the same entry survives on every machine.
+	table.sort(names)
+	local merged = 0
+	for _, name in ipairs(names) do
+		local key = self:Key(name)
+		local player = players[name]
+		if key and key ~= name then
+			players[name] = nil
+			local existing = players[key]
+			if existing then
+				Store.MergeInto(existing, player)
+				merged = merged + 1
+			else
+				player.name = key
+				players[key] = player
+			end
+		elseif key then
+			player.name = key
+		end
+	end
+	return merged
 end
 
 -- Players ------------------------------------------------------------------
 
 function Store:Player(name)
-	return self.db.players[name]
+	local key = self:Key(name)
+	return key and self.db.players[key]
 end
 
 -- The player's entry, created when missing. `class` (a class file name such
 -- as "PRIEST") is kept from the latest call that knows it.
 function Store:Ensure(name, class, now)
+	name = self:Key(name)
 	local player = self.db.players[name]
 	if not player then
 		player = { name = name, firstSeen = now, lastSeen = now, sessions = {} }
@@ -120,7 +225,7 @@ end
 
 -- Ends the open session with `name`; returns it (nil when there was none).
 function Store:Close(name, now)
-	local player = self.db.players[name]
+	local player = self:Player(name)
 	local session = player and OpenSession(player)
 	if not session then
 		return nil
@@ -261,7 +366,7 @@ function Store:SeeGuild(name, guild, class, patterns, now)
 	if guild == "" then
 		guild = nil
 	end
-	local player = self.db.players[name]
+	local player = self:Player(name)
 	local pattern = Store.MatchGuild(guild, patterns)
 	if pattern and not (player and player.blocked) then
 		player = self:Ensure(name, class, now)
@@ -277,7 +382,7 @@ end
 
 -- Removes the blocked mark of `name` (e.g. a false match).
 function Store:Unblock(name)
-	local player = self.db.players[name]
+	local player = self:Player(name)
 	if player then
 		player.blocked = nil
 	end

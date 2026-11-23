@@ -13,6 +13,52 @@ store = Store.New(saved)
 check(store.db == saved and store:Player("Bob"), "existing table kept")
 print("new ok")
 
+-- #86: one spelling per player, duplicates merged at load.
+check(Store.NormalizeName("Lina-Sakuranbo") == "Lina-Sakuranbo", "full name kept")
+check(Store.NormalizeName("Lina Sakuranbo") == "Lina-Sakuranbo", "space")
+check(Store.NormalizeName(" Lina - Die Aldor ") == "Lina-DieAldor", "realm with a space")
+check(Store.NormalizeName("Lina (Azjol-Nerub)") == "Lina-AzjolNerub", "brackets and hyphen")
+check(Store.NormalizeName("Lina-Home", "Home") == "Lina" and Store.NormalizeName("Lina", "Home") == "Lina", "own realm")
+check(Store.NormalizeName("") == nil and Store.NormalizeName(nil) == nil, "no name")
+
+saved = {
+	version = 1,
+	players = {
+		["Lina-Sakuranbo"] = {
+			name = "Lina-Sakuranbo",
+			class = "DRUID",
+			firstSeen = 200,
+			lastSeen = 900,
+			note = "nice",
+			sessions = { { start = 300, stop = 400, stars = 5 }, { start = 800, stop = 900 } },
+			rolls = { need = 1 },
+		},
+		["Lina Sakuranbo"] = {
+			name = "Lina Sakuranbo",
+			firstSeen = 100,
+			lastSeen = 1000,
+			guild = "Later Guild",
+			note = "greedy",
+			sessions = { { start = 500, stop = 600 } },
+			rolls = { need = 2, greed = 1 },
+			wins = { { link = "[B]", time = 550 } },
+			blocked = { guild = "Bad", pattern = "bad", time = 120 },
+		},
+		["Lina-Home"] = { name = "Lina-Home", sessions = {}, firstSeen = 1, lastSeen = 2 },
+	},
+}
+store = Store.New(saved, { ownRealm = "Home" })
+local lina = store:Player("Lina Sakuranbo")
+check(lina == saved.players["Lina-Sakuranbo"] and saved.players["Lina Sakuranbo"] == nil, "merged into one")
+check(#lina.sessions == 3 and lina.sessions[2].start == 500, "sessions merged in order")
+check(lina.rolls.need == 3 and lina.rolls.greed == 1 and #lina.wins == 1, "rolls and wins merged")
+check(lina.note == "nice\ngreedy" and lina.blocked.guild == "Bad", "note and mark merged")
+check(lina.firstSeen == 100 and lina.lastSeen == 1000 and lina.guild == "Later Guild", "times and guild")
+check(lina.class == "DRUID" and lina.name == "Lina-Sakuranbo", "class and name")
+check(saved.players.Lina and saved.players.Lina.name == "Lina" and not saved.players["Lina-Home"], "own realm renamed")
+check(store:Ensure("Lina (Sakuranbo)", nil, 5) == lina, "lookups normalize too")
+print("names ok")
+
 -- Sessions: open, place, close.
 store = Store.New(nil, { rejoinGrace = 300 })
 local session, isNew = store:Open("Bob", { class = "PRIEST", role = "HEALER", place = "Westfall" }, 1000)

@@ -16,6 +16,9 @@ end
 _G.Ambiguate = function(name)
 	return name
 end
+_G.GetNormalizedRealmName = function()
+	return "Home"
+end
 _G.UNKNOWNOBJECT = "Unknown"
 _G.IsInGroup = function()
 	return inGroup
@@ -37,7 +40,9 @@ _G.UnitName = function(unit)
 		return "Me"
 	end
 	local member = Member(unit)
-	return member and member.name
+	if member then
+		return member.name, member.realm
+	end
 end
 _G.UnitIsPlayer = function(unit)
 	return UnitExists(unit)
@@ -197,6 +202,28 @@ local dan = store:Player("Dan-Firemaw")
 check(dan and dan.rolls.greed == 1 and dan.class == "MAGE" and dan.wins == nil, "other roller under the full name")
 check(store:Player("You") == nil, "own roll left out")
 print("loot ok")
+
+-- #86: a player from another realm grouped (UnitName gives the realm apart)
+-- and then named by the loot history with a space: one entry.
+inGroup, party = true, { { name = "Lina", realm = "Sakuranbo", role = "HEALER" } }
+now = 100200
+Fire("GROUP_ROSTER_UPDATE")
+local lina = store:Player("Lina-Sakuranbo")
+check(lina and lina.sessions[1].open, "grouped under Name-Realm")
+ns.PlayersRecordLoot({
+	link = "[Robe]",
+	time = 100300,
+	winner = { name = "Lina", fullName = "Lina Sakuranbo", class = "DRUID", state = State.Greed },
+	rolls = { { name = "Lina", fullName = "Lina Sakuranbo", class = "DRUID", state = State.Greed } },
+})
+check(store.db.players["Lina Sakuranbo"] == nil, "no second entry with a space")
+check(lina.rolls.greed == 1 and #lina.wins == 1, "loot on the grouped entry")
+-- Players of your own realm are stored without it.
+ns.PlayersRecordLoot({ link = "[Ring]", time = 100400, winner = { name = "Cid", fullName = "Cid-Home" } })
+check(#cid.wins == 2 and store.db.players["Cid-Home"] == nil, "own realm left out")
+inGroup, party = false, {}
+Fire("GROUP_ROSTER_UPDATE")
+print("names ok")
 
 -- Players saved in the notes before #74 move over once.
 _G.StevioUINotes = {

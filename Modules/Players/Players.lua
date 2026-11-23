@@ -21,9 +21,23 @@ local WARN_COLOR = "|cffff5050"
 -- Sessions that ended while in the current group, for the popup on leaving it.
 local ended = {}
 
--- The name players are stored under: "Name" on your realm, else "Name-Realm",
--- as Ambiguate(..., "none") gives it for chat names too. Nil while the name
--- isn't known yet or is secret.
+-- The name players are stored under (Store.NormalizeName): "Name" on your
+-- realm, else "Name-Realm". Every name from the game goes through here, so
+-- one player never gets two entries.
+local function Key(fullName)
+	if not fullName or issecretvalue(fullName) then
+		return nil
+	end
+	local store = Players.store
+	if not store.ownRealm then
+		-- Not known yet at login on a slow start.
+		local realm = GetNormalizedRealmName()
+		store.ownRealm = not issecretvalue(realm) and realm ~= "" and realm or nil
+	end
+	return store:Key(fullName)
+end
+
+-- Nil while the name isn't known yet or is secret.
 local function UnitKey(unit)
 	local name, realm = UnitName(unit)
 	if issecretvalue(name) or issecretvalue(realm) or not name or name == "" or name == UNKNOWNOBJECT then
@@ -32,7 +46,7 @@ local function UnitKey(unit)
 	if realm and realm ~= "" then
 		name = name .. "-" .. realm
 	end
-	return Ambiguate(name, "none")
+	return Key(name)
 end
 
 -- Where you are: an instance (dungeon, raid, battleground, ...) by name, or
@@ -118,7 +132,7 @@ function ns.BlockedWhisperWarning(fullName)
 	if not Players.active or not config.blockWarnings or not fullName or issecretvalue(fullName) then
 		return nil
 	end
-	local player = Players.store:Player(Ambiguate(fullName, "none"))
+	local player = Players.store:Player(Key(fullName))
 	if not player or not player.blocked then
 		return nil
 	end
@@ -317,9 +331,10 @@ local function Choice(state)
 	return CHOICE_OF_STATE[state]
 end
 
+-- The loot history spells names of other realms its own way; Key() turns
+-- them into the spelling the sessions use (#86).
 local function RollKey(roll)
-	local name = roll.fullName or roll.name
-	return name and name ~= "" and Ambiguate(name, "none") or nil
+	return Key(roll.fullName or roll.name)
 end
 
 -- A decided group loot roll from the roll history (Modules/Rolls), passed
@@ -383,7 +398,10 @@ function ns.OpenPlayerNote(fullName)
 	if not Players.active then
 		return false
 	end
-	local name = Ambiguate(fullName, "none")
+	local name = Key(fullName)
+	if not name then
+		return false
+	end
 	Players.store:Ensure(name, nil, time())
 	ns.PlayersWindow.Open(name)
 	return true
@@ -411,7 +429,11 @@ end
 
 function Players:OnEnable()
 	TakeOverNotes()
-	self.store = Store.New(StevioUIPlayers, { rejoinGrace = config.rejoinGrace })
+	local ownRealm = GetNormalizedRealmName()
+	if issecretvalue(ownRealm) or ownRealm == "" then
+		ownRealm = nil
+	end
+	self.store = Store.New(StevioUIPlayers, { rejoinGrace = config.rejoinGrace, ownRealm = ownRealm })
 	StevioUIPlayers = self.store.db
 	-- Sessions still open at the last logout ended then, not now: the time
 	-- offline isn't spent in their place. After a /reload in the same group
