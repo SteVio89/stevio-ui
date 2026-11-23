@@ -312,7 +312,9 @@ local function CreateInput(frame)
 	local input = CreateFrame("EditBox", nil, frame)
 	C.ApplyFont(input)
 	input:SetAutoFocus(false)
-	input:SetHeight(math.max(config.rowHeight, config.fontSize + 6))
+	-- Room above and below the text, so tall letters (Ä, É), descenders and
+	-- the text's shadow aren't cut off at the box's edge (#79).
+	input:SetHeight(math.max(config.rowHeight, config.fontSize + 10))
 	input:SetPoint("BOTTOMLEFT", ui.sidebar, "BOTTOMRIGHT", 6, 4)
 	input:SetPoint("BOTTOMRIGHT", -6, 4)
 	input:SetTextInsets(4, 4, 0, 0)
