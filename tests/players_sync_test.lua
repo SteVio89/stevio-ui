@@ -198,6 +198,7 @@ ns.PlayersRecordLoot({
 })
 check(cid.rolls.need == 1 and #cid.wins == 1, "winner's roll and win")
 check(cid.wins[1].link == "[Choker of Enlightenment]" and cid.wins[1].encounter == "Lucifron", "win recorded")
+check(cid.wins[1].choice == "need", "won with Need")
 local dan = store:Player("Dan-Firemaw")
 check(dan and dan.rolls.greed == 1 and dan.class == "MAGE" and dan.wins == nil, "other roller under the full name")
 check(store:Player("You") == nil, "own roll left out")
@@ -246,5 +247,26 @@ module:OnEnable()
 local fay = module.store:Player("Fay")
 check(fay and not fay.sessions[1].open and fay.sessions[1].stop == 50, "open session ended at the old logout")
 print("take over ok")
+
+-- #86: wins saved by version 1 get their choice from the roll history.
+_G.StevioUINotes = nil
+_G.StevioUIRollHistory = {
+	records = {
+		{ link = "[Old]", time = 70, winner = { name = "Gus", fullName = "Gus Faraway", state = State.Transmog } },
+		{ link = "[Mine]", time = 80, winner = { name = "Me", isSelf = true, state = State.Greed } },
+	},
+}
+_G.StevioUIPlayers = {
+	version = 1,
+	players = {
+		["Gus-Faraway"] = { name = "Gus-Faraway", sessions = {}, wins = { { link = "[Old]", time = 70 } } },
+		["Gus Faraway"] = { name = "Gus Faraway", sessions = {}, wins = { { link = "[Other]", time = 71 } } },
+	},
+}
+module:OnEnable()
+local gus = module.store:Player("Gus-Faraway")
+check(StevioUIPlayers.version == 2 and #gus.wins == 2, "upgraded and merged")
+check(gus.wins[1].choice == "transmog" and gus.wins[2].choice == nil, "choice from the roll history")
+print("upgrade ok")
 
 print("players sync tests passed")

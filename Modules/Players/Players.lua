@@ -337,6 +337,32 @@ local function RollKey(roll)
 	return Key(roll.fullName or roll.name)
 end
 
+-- The choice a drop was won with; nil for a pass (all passed) or unknown.
+local function WinChoice(state)
+	local choice = state and Choice(state)
+	return choice ~= "pass" and choice or nil
+end
+
+-- Wins saved before #86 get their choice from the roll history, as long as
+-- it still has the drop (same item and time).
+local function FillWinChoices(store)
+	local history = StevioUIRollHistory and StevioUIRollHistory.records
+	if type(history) ~= "table" then
+		return
+	end
+	local byDrop = {}
+	for _, record in ipairs(history) do
+		local winner = record.winner
+		local name = winner and not winner.isSelf and RollKey(winner)
+		if name and record.link and record.time then
+			byDrop[name .. "\0" .. record.link .. "\0" .. record.time] = WinChoice(winner.state)
+		end
+	end
+	store:FillWinChoices(function(name, win)
+		return win.link and win.time and byDrop[name .. "\0" .. win.link .. "\0" .. win.time] or nil
+	end)
+end
+
 -- A decided group loot roll from the roll history (Modules/Rolls), passed
 -- once per drop: every other player's choice and the winner's item.
 function ns.PlayersRecordLoot(record)
@@ -358,6 +384,7 @@ function ns.PlayersRecordLoot(record)
 			encounter = record.encounter ~= "" and record.encounter or nil,
 			instance = record.instance,
 			time = record.time or now,
+			choice = WinChoice(winner.state),
 		}, now)
 	end
 	ns.PlayersWindow.Refresh()
@@ -435,6 +462,9 @@ function Players:OnEnable()
 	end
 	self.store = Store.New(StevioUIPlayers, { rejoinGrace = config.rejoinGrace, ownRealm = ownRealm })
 	StevioUIPlayers = self.store.db
+	if self.store.upgradedFrom and self.store.upgradedFrom < 2 then
+		FillWinChoices(self.store)
+	end
 	-- Sessions still open at the last logout ended then, not now: the time
 	-- offline isn't spent in their place. After a /reload in the same group
 	-- they continue (rejoinGrace). Without a recorded logout (a crash) they

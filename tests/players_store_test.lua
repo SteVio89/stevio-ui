@@ -7,7 +7,7 @@ local DAY = 24 * 60 * 60
 
 -- New fills in a missing or partial saved table.
 local store = Store.New(nil)
-check(store.db.version == 1 and next(store.db.players) == nil, "fresh table")
+check(store.db.version == 2 and next(store.db.players) == nil and not store.upgradedFrom, "fresh table")
 local saved = { players = { Bob = { name = "Bob", sessions = {} } } }
 store = Store.New(saved)
 check(store.db == saved and store:Player("Bob"), "existing table kept")
@@ -261,8 +261,83 @@ check(stats.rolls.need == 2 and stats.rolls.transmog == 0, "rolls by choice")
 check(Store.Percent(2, 4) == 50 and Store.Percent(1, 3) == 33 and Store.Percent(0, 0) == 0, "percent")
 check(Store.FormatDuration(30) == "<1m" and Store.FormatDuration(45 * 60) == "45m", "short durations")
 check(Store.FormatDuration(3 * 3600 + 20 * 60) == "3h 20m", "hours")
+check(Store.FormatDuration(3 * 3600 + 5 * 60) == "3h 05m", "minutes padded")
+rogue.wins[1].choice, rogue.wins[2].choice = "need", "greed"
+check(Store.Stats(rogue, 5600).winsNeed == 1, "wins with Need")
 local empty = Store.Stats({ sessions = {} }, 0)
 check(empty.groups == 0 and empty.seconds == 0 and empty.wins == 0 and empty.rollCount == 0, "nothing yet")
 print("stats ok")
+
+-- #86 migration: version 1 tables move to 2 and keep everything.
+saved = {
+	version = 1,
+	players = {
+		Old = {
+			name = "Old",
+			note = "hi",
+			sessions = { { start = 1, stop = 2, stars = 4 } },
+			wins = { { link = "[A]", time = 5 }, { link = "[B]", time = 6, choice = "greed" } },
+		},
+	},
+}
+store = Store.New(saved)
+check(store.upgradedFrom == 1 and saved.version == 2 and saved.recentTags, "upgraded to 2")
+local old = store:Player("Old")
+check(old.note == "hi" and old.sessions[1].stars == 4, "data kept")
+local filled = store:FillWinChoices(function(name, win)
+	return name == "Old" and win.link == "[A]" and "need" or nil
+end)
+check(filled == 1 and old.wins[1].choice == "need" and old.wins[2].choice == "greed", "win choices filled")
+check(Store.New(saved).upgradedFrom == nil, "upgraded once")
+check(Store.New({ players = {} }).upgradedFrom == 1, "no version is version 1")
+print("migration ok")
+
+-- Verdict, note time, tags.
+store = Store.New(nil)
+store:SetVerdict("Vex", "avoid", 10)
+check(store:Player("Vex").verdict == "avoid", "verdict set")
+store:SetVerdict("Vex", "bogus", 11)
+check(store:Player("Vex").verdict == nil, "unknown verdict is neutral")
+store:SetPlayerNote("Vex", "rude", 20)
+check(store:Player("Vex").noteTime == 20, "note time")
+store:SetPlayerNote("Vex", " rude ", 30)
+check(store:Player("Vex").noteTime == 20, "unchanged note keeps its time")
+store:SetPlayerNote("Vex", "", 40)
+check(store:Player("Vex").noteTime == nil, "no note, no time")
+
+check(Store.CleanTag("  Rage-Quit  ") == "Rage-Quit" and Store.CleanTag("  ") == nil, "tag trimmed")
+check(Store.CleanTag("Need  on\tall") == "Need on all", "inner spaces collapsed")
+check(Store.CleanTag(("x"):rep(30)) == ("x"):rep(24), "cut to 24")
+check(Store.CleanTag(("ä"):rep(30)) == ("ä"):rep(24), "umlauts count as one character")
+check(store:AddTag("Vex", "Rage-Quit", 50) == "Rage-Quit", "tag added")
+check(store:AddTag("Vex", "rage-quit", 51) == nil, "duplicate in any case")
+store:AddTag("Vex", "Ninja", 52)
+store:AddTag("Ann", "Guter Heiler", 53)
+local vex = store:Player("Vex")
+check(table.concat(vex.tags, ",") == "Rage-Quit,Ninja", "tags in order")
+check(table.concat(store.db.recentTags, ",") == "Guter Heiler,Ninja,Rage-Quit", "most recent first")
+check(table.concat(store:TagSuggestions(vex, 5), ",") == "Guter Heiler", "suggestions skip own tags")
+store:AddTag("Ann", "ninja", 54)
+check(store.db.recentTags[1] == "ninja" and #store.db.recentTags == 3, "reused tag moves up once")
+check(names(store:Players("ninj")) == "Ann,Vex", "search finds tags")
+store:RemoveTag("Vex", "NINJA")
+store:RemoveTag("Vex", "rage-quit")
+check(vex.tags == nil, "tags removed")
+
+-- Verdict and tags keep players from the clean-up.
+store = Store.New(nil)
+now = 400 * DAY
+store:SetVerdict("Liked", "like", 0)
+store:AddTag("Tagged", "nice", 0)
+store:Ensure("Plain", nil, 0)
+check(store:Prune(now, 90) == 1 and store:Player("Liked") and store:Player("Tagged"), "verdict and tags stay")
+store:Forget("Liked")
+check(store:Player("Liked") == nil, "forgotten")
+
+-- Merging keeps verdict, tags and note time.
+local into = { name = "A", sessions = {}, verdict = "like", tags = { "Nice" }, noteTime = 5 }
+Store.MergeInto(into, { sessions = {}, verdict = "avoid", tags = { "nice", "Rude" }, noteTime = 9 })
+check(into.verdict == "avoid" and table.concat(into.tags, ",") == "Nice,Rude" and into.noteTime == 9, "merged")
+print("verdict and tags ok")
 
 print("players store tests passed")

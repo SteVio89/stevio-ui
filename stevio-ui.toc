@@ -113,6 +113,7 @@ Modules\Notes\Notes.lua
 
 Modules\Players\Config.lua
 Modules\Players\Store.lua
+Modules\Players\Stats.lua
 Modules\Players\Widgets.lua
 Modules\Players\Window.lua
 Modules\Players\Popup.lua
