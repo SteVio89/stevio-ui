@@ -128,7 +128,9 @@ the mark should stay when the player leaves the guild.
 `window.width`/`height` (1150 × 860) set its size; it is moved by its title
 bar and remembers where (`StevioUIPlayers.window`). The title bar counts the
 entries, rated and marked players; the gear's menu opens the Players options
-page or empties the database.
+page or empties the database. The dice button beside the gear opens the roll
+history (it replaced the dice button in the notch island in #87) and only
+shows while the rolls module is on.
 
 **Emptying the database:** `/sui players reset` or "Empty the database …" in
 the gear's menu asks first, then deletes every player with all groups,
@@ -191,6 +193,8 @@ overlap the player's), each opening their page.
 - Tooltip lines appear on player tooltips (rating, loot, note, marked).
 - The popup after leaving a group, the notch button and "Player info" in the
   chat name menu.
+- The dice button in the window's title bar opens and closes the roll history;
+  it is gone with `rolls.enabled = false`.
 - The redesigned window (#86): see docs/remaining-issues.md, "Players window".
 - Blocked guilds: `GetGuildInfo()` gives the guild for group members, target,
   mouseover and nameplates (and isn't secret outside instances); the red lines

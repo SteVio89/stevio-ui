@@ -252,7 +252,7 @@ local function RowSpecs()
 		{ update = UpdateGrid, grid = true, groupStart = true },
 		{ update = UpdateButtonsSeparator, separator = true, groupStart = true },
 	}
-	-- Always there for stevio-ui's own buttons (notes); other addons' buttons
+	-- Always there for stevio-ui's own button (players); other addons' buttons
 	-- only join with minimapButtons. Without any buttons the row stays hidden.
 	rowSpecs[#rowSpecs + 1] = { update = UpdateButtons, buttons = true, groupStart = true }
 	return rowSpecs

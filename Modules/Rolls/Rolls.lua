@@ -168,30 +168,6 @@ local function SuppressBlizzard()
 	end
 end
 
-local function CreateNotchButton()
-	if not ns.NotchButtons then
-		return
-	end
-	-- Parked in a hidden frame until the notch island adopts it.
-	local parking = CreateFrame("Frame")
-	parking:Hide()
-	local size = ns.config.notch.buttonSize
-	local button = CreateFrame("Button", "StevioUI_RollsButton", parking)
-	button:SetSize(size, size)
-	local icon = button:CreateTexture(nil, "ARTWORK")
-	icon:SetAllPoints()
-	icon:SetTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Up")
-	button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
-	button:SetScript("OnClick", History.Toggle)
-	button:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-		GameTooltip:SetText(T("Loot rolls", "Beutewürfe"))
-		GameTooltip:Show()
-	end)
-	button:SetScript("OnLeave", GameTooltip_Hide)
-	ns.NotchButtons.AddOwn(button, "StevioUI_RollHistory")
-end
-
 -- /sui rolls: two made-up cards with an item from the bags and the history
 -- with made-up entries, to check the look.
 local function Preview()
@@ -248,7 +224,8 @@ function Rolls:OnEnable()
 	Cards.Setup()
 	History.SetRecords(Saved())
 	SuppressBlizzard()
-	CreateNotchButton()
+	-- The players window's dice button opens the history (no notch button).
+	ns.OpenRollHistory = History.Toggle
 	-- The island would push the cards down while the cursor reaches for them.
 	ns.NotchBlocked = Cards.Shown
 

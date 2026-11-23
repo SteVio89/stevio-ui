@@ -1,7 +1,7 @@
 # Notes (#44)
 
-A notes window for item notes and general notes, opened by a button in the
-notch island (or `/sui notes`). All notes are account-wide (`StevioUINotes`).
+A notes window for item notes and general notes, opened with `/sui notes`
+(its notch button was removed in #87). All notes are account-wide (`StevioUINotes`).
 Notes on players moved to the player database in #74, see `docs/players.md`.
 
 ## Items
@@ -20,4 +20,3 @@ A plain list of free texts; the first line is the title.
 - Alt+right-click on bag and bank items opens the item note box and does not
   use the item.
 - The note line appears in item tooltips.
-- The notch button.

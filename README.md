@@ -188,7 +188,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   yours, filled in from the loot history; after a pass it is dimmed. It fades
   out 15 seconds after the winner is known (not while the cursor is on it);
   ✕ closes it earlier. Hover shows the item, shift-click links it. The dice
-  button in the notch island opens the roll history in the loot ticker's
+  button in the players window's title bar opens the roll history in the loot ticker's
   place: every decided roll, newest first, under a header per boss
   (boss · instance · date); a click on a drop lists everyone's choice and
   number. It has a search (item, boss or player), a "Mine" filter (drops you
@@ -216,7 +216,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   after they leave it, with a red warning when first seen, when they join your
   group and under each of their whispers, naming the guild and the pattern.
   Account-wide.
-- **Notes** – a window (button in the notch island, or `/sui notes`) with two
+- **Notes** – a window (`/sui notes`) with two
   tabs. *Items*: free text per item type, shown in its tooltip; Alt+right-click an
   item in your bags or bank (or drop it on the list) to write or remove it.
   *Notes*: plain notes. All notes are account-wide.

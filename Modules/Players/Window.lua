@@ -459,6 +459,15 @@ local function CreateTitleBar()
 	end)
 	options.tooltip = T("Options", "Optionen")
 	options:SetPoint("RIGHT", close, "LEFT", -12, 0)
+	-- The roll history, set by the rolls module while it is on.
+	local rolls = K.IconButton(bar, K.ICON_DICE, 18, function()
+		if ns.OpenRollHistory then
+			ns.OpenRollHistory()
+		end
+	end)
+	rolls.tooltip = T("Loot rolls", "Beutewürfe")
+	rolls:SetPoint("RIGHT", options, "LEFT", -10, 0)
+	frame.rollsButton = rolls
 
 	local line = K.Texture(frame, "ARTWORK", 1, 1, 1, 0.06)
 	line:SetPoint("TOPLEFT", 0, -TITLE_HEIGHT)
@@ -628,6 +637,7 @@ local function CreateWindow()
 		if not InCombatLockdown() then
 			self:EnableKeyboard(true)
 		end
+		self.rollsButton:SetShown(ns.OpenRollHistory ~= nil)
 		Window.Refresh()
 	end)
 	frame:SetScript("OnHide", function(self)
