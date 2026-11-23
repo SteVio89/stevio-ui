@@ -301,10 +301,6 @@ for _, history in ipairs({ "all", "loot", "unrated" }) do
 end
 Window.Select("Player2-Realm")
 Window.Select("Player1-Realm")
-store:Reset()
-Window.Reset()
-check(Window.state.selected == nil and Window.state.search == "", "back to the overview after a reset")
-Window.Open("Player1-Realm")
 print("page ok")
 
 -- Arrow keys and typing.
@@ -328,5 +324,11 @@ for _ = 1, #groups do
 end
 check(not StevioUI_PlayersPopup.shown, "closed after the last group")
 print("popup ok")
+
+-- After emptying the database the window shows the overview of nothing.
+store:Reset()
+Window.Reset()
+check(Window.state.selected == nil and Window.state.search == "", "back to the overview after a reset")
+print("reset ok")
 
 print("players window tests passed")
