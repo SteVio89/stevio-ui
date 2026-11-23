@@ -120,7 +120,7 @@ the mark should stay when the player leaves the guild.
   the whisper channel (also for whispers read after a chat lockdown). The
   tooltip shows "Marked: ..." and the list shows a red "!".
 - **Unmark:** "Remove mark" in the red bar on the player's page removes a
-  false match (a plain click now, the bar asks for nothing else); being seen
+  false match (a plain click now; it used to need Shift); being seen
   in a matching guild again marks them again.
 
 ## The window (#86)
