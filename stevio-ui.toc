@@ -116,6 +116,7 @@ Modules\Players\Store.lua
 Modules\Players\Stats.lua
 Modules\Players\Widgets.lua
 Modules\Players\Kit.lua
+Modules\Players\Overview.lua
 Modules\Players\Window.lua
 Modules\Players\Popup.lua
 Modules\Players\Players.lua
