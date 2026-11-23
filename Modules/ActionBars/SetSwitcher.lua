@@ -196,13 +196,36 @@ local function ReportMissing(always)
 	)
 end
 
+local DOT_SIZE, DOT_GAP = 4, 3
+
 local function UpdateButton()
 	if not button then
 		return
 	end
 	button:SetShown(#config.sets > 1)
-	button.text:SetText(CurrentName())
+	button.text:SetText(CurrentName():upper())
 	button:SetAlpha(InCombatLockdown() and 0.4 or 1)
+
+	-- One dot per set, the active one in the accent.
+	local palette = style.palette
+	local count = #config.sets
+	local dots = button.dots
+	for index = 1, math.max(count, #dots) do
+		local dot = dots[index]
+		if not dot then
+			dot = button:CreateTexture(nil, "ARTWORK")
+			dot:SetSize(DOT_SIZE, DOT_SIZE)
+			dots[index] = dot
+		end
+		dot:SetShown(index <= count)
+		dot:ClearAllPoints()
+		dot:SetPoint("TOP", button, "CENTER", (index - (count + 1) / 2) * (DOT_SIZE + DOT_GAP), -4)
+		if index == state.current then
+			dot:SetColorTexture(unpack(palette.accent))
+		else
+			dot:SetColorTexture(1, 1, 1, 0.2)
+		end
+	end
 end
 
 local function SwitchTo(index)
@@ -279,11 +302,13 @@ local function CreateButton()
 	local b = CreateFrame("Button", "StevioUI_ActionSetButton", UIParent)
 	b:SetSize(config.setButtonWidth, config.setButtonHeight)
 	ns.SetPoint(b, ns.layout.actionSets)
-	ns.CreateBackground(b)
-	ns.CreateBorder(b)
-	b.text = ns.CreateFontString(b, style.fontSize, "CENTER")
-	b.text:SetPoint("LEFT", 2, 0)
-	b.text:SetPoint("RIGHT", -2, 0)
+	ns.CreatePanel(b)
+	-- The name above the middle, the set dots below it (UpdateButton).
+	b.text = ns.CreateFontString(b, 10, "CENTER")
+	b.text:SetTextColor(unpack(style.palette.text))
+	b.text:SetPoint("BOTTOMLEFT", b, "LEFT", 2, 0)
+	b.text:SetPoint("BOTTOMRIGHT", b, "RIGHT", -2, 0)
+	b.dots = {}
 	b:SetHighlightTexture(style.texture)
 	b:GetHighlightTexture():SetVertexColor(1, 1, 1, config.highlightAlpha)
 	b:RegisterForClicks("LeftButtonUp", "RightButtonUp")

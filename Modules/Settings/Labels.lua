@@ -89,7 +89,6 @@ local labels = {
 	chat = { "Chat", "Chat" },
 	chatBadge = { "Chat badge", "Chat-Randmarke" },
 	chatType = { "Chat type (colour)", "Chattyp (Farbe)" },
-	checkedColor = { "Active highlight", "Aktiv-Markierung" },
 	cityChannels = {
 		"One channel everywhere",
 		"Ein Kanal überall",
@@ -438,6 +437,7 @@ local labels = {
 	targetAuras = { "Own debuffs on target", "Eigene Debuffs am Ziel" },
 	targetColor = { "Target border", "Ziel-Rahmen" },
 	taxi = { "Flight list", "Flugliste" },
+	text = { "Text", "Text" },
 	textEmote = { "Text emote", "Text-Emote" },
 	textMuted = {
 		"Muted text",

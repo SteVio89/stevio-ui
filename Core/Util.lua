@@ -92,12 +92,13 @@ function ns.CreateBorder(frame, sublevel, size)
 end
 
 -- Like CreateBorder, but the edges sit inside the frame: state edges (accent,
--- aggro, dispel) on top of the content without moving it.
-function ns.CreateInsetBorder(frame, sublevel, size)
+-- aggro, dispel) on top of the content without moving it. `layer` defaults
+-- to OVERLAY.
+function ns.CreateInsetBorder(frame, sublevel, size, layer)
 	local px = ns.PixelSize(frame) * (size or 1)
 	local border = setmetatable({}, Border)
 	for i = 1, 4 do
-		border[i] = frame:CreateTexture(nil, "OVERLAY", nil, sublevel or 5)
+		border[i] = frame:CreateTexture(nil, layer or "OVERLAY", nil, sublevel or 5)
 	end
 	local top, bottom, left, right = border[1], border[2], border[3], border[4]
 

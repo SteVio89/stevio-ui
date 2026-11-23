@@ -11,7 +11,7 @@ ns.config.actionBars = {
 	iconCrop = 0.08,
 	highlightAlpha = 0.2,
 	pushedAlpha = 0.35,
-	checkedColor = { 1, 0.85, 0.3, 0.35 },
+	-- Checked buttons (active stance) use the theme's accent.
 
 	-- Action sets switched with the button left of the bars, /sui bars or a key
 	-- (out of combat only). Every set has the same slots and keybindings, only
