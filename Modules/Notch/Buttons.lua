@@ -55,7 +55,7 @@ end
 local container, containerButtonSize
 -- Adopted buttons in a stable order; each sits centred in its own slot frame.
 local adopted, slots = {}, {}
--- stevio-ui's own buttons (notes), waiting for the island to exist.
+-- stevio-ui's own buttons (players), waiting for the island to exist.
 local own, pendingOwn = {}, {}
 local libDBIconHooked = false
 

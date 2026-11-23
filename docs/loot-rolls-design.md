@@ -89,7 +89,8 @@ Blizzard's popup back if this ever causes taint.
   height); the ticker is hidden while it is open and comes back on close.
 - Background like the Notes window (`0.05` at 95 %); rows like the ticker
   (20 px icons, 14 pt font).
-- Opened from a new button in the notch island; Esc closes it.
+- Opened from the dice button in the players window's title bar (until #87 a
+  button in the notch island); Esc closes it.
 - One scrolling list, newest first, with a header per encounter
   (boss · instance · date). One row per drop: icon, item, winner and their
   roll. Clicking a drop expands everyone's choice and number.

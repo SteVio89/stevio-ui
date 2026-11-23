@@ -188,7 +188,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   yours, filled in from the loot history; after a pass it is dimmed. It fades
   out 15 seconds after the winner is known (not while the cursor is on it);
   ✕ closes it earlier. Hover shows the item, shift-click links it. The dice
-  button in the notch island opens the roll history in the loot ticker's
+  button in the players window's title bar opens the roll history in the loot ticker's
   place: every decided roll, newest first, under a header per boss
   (boss · instance · date); a click on a drop lists everyone's choice and
   number. It has a search (item, boss or player), a "Mine" filter (drops you
