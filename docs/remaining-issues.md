@@ -202,6 +202,10 @@ Go through each with `style.theme = "dusk"` and once more with `"violet"`
   instead of plain white cells. If `/sui errors` lists an error from an aura
   container, the cells still paint; only that debuff or HoT group stays
   empty (the error points at the actual aura problem).
+- Group cells in a real group (#81): class-colored health, name and power
+  instead of black cells, also right after joining, after a `/reload` in the
+  group and after someone leaves or joins. If they stay black, `/sui errors`
+  should now list why (heal bars or an aura container failing to build).
 - Notch island: round corners (Media/Corner.tga), no shadow or light rim, grid with and
   without rested XP and reputation, many addon buttons muted until hovered,
   accent edge on the notes/players/rolls button while its window is open;
