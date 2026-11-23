@@ -330,6 +330,38 @@ function ns.SetFont(text, size, outline)
 	end
 end
 
+-- A small square button with a ✕, grey and white while hovered. The ✕ is two
+-- crossed lines (like the chat's delete button): the game fonts lack the glyph.
+function ns.CreateCloseButton(parent, size, onClick)
+	local button = CreateFrame("Button", nil, parent)
+	button:SetSize(size, size)
+	local lines = {}
+	local function SetColor(value)
+		for _, line in ipairs(lines) do
+			line:SetColorTexture(value, value, value, 1)
+		end
+	end
+	local px = ns.PixelSize(parent)
+	for _, angle in ipairs({ 45, -45 }) do
+		local line = button:CreateTexture(nil, "ARTWORK")
+		line:SetSize(math.floor(size * 0.5), 1.5 * px)
+		line:SetPoint("CENTER")
+		line:SetRotation(math.rad(angle))
+		lines[#lines + 1] = line
+	end
+	SetColor(0.7)
+	button:SetHighlightTexture(style.texture)
+	button:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.1)
+	button:SetScript("OnEnter", function()
+		SetColor(1)
+	end)
+	button:SetScript("OnLeave", function()
+		SetColor(0.7)
+	end)
+	button:SetScript("OnClick", onClick)
+	return button
+end
+
 function ns.CreateFontString(parent, size, justify, outline)
 	local text = parent:CreateFontString(nil, "OVERLAY")
 	ns.SetFont(text, size, outline)
