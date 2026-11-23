@@ -9,17 +9,17 @@ local C = ns.ChatInternal
 -- a background, the newest at the bottom. A line under the cursor stays; a
 -- click opens the chat on its channel. Which lines show is decided in
 -- Receive.lua (C.Delivery).
+-- A long message wraps onto as many lines as it needs (#79); the oldest
+-- preview lines drop out once they no longer fit where the chat sits.
 
 local PADDING = 4
+-- Space above and below a preview line's text.
+local SPACING = 3
 
 -- The lines shown, oldest first: { key, line, r, g, b, age }.
 local items = {}
 local container
 local rows = {}
-
-local function RowHeight()
-	return config.fontSize + 6
-end
 
 local function OpenAt(key)
 	C.ClearPreview()
@@ -31,10 +31,10 @@ end
 
 local function CreateRow(index)
 	local row = CreateFrame("Button", nil, container)
-	row:SetHeight(RowHeight())
-	row:SetPoint("TOPLEFT", 0, -(index - 1) * RowHeight())
 	row.text = ns.CreateFontString(row, config.fontSize, "LEFT")
-	row.text:SetPoint("LEFT", PADDING, 0)
+	row.text:SetWordWrap(true)
+	row.text:SetNonSpaceWrap(true)
+	row.text:SetPoint("TOPLEFT", PADDING, -SPACING)
 	row:SetScript("OnClick", function(self)
 		OpenAt(self.key)
 	end)
@@ -42,18 +42,43 @@ local function CreateRow(index)
 	return row
 end
 
+-- Fills `row` with `item` and sizes it to its text: as wide as the text, at
+-- most the chat's width, and as high as the lines the text wraps onto.
+local function Fill(row, item, maxWidth)
+	row.key = item.key
+	-- Measured unbounded first; a longer line wraps at the chat's width.
+	row.text:SetWidth(0)
+	row.text:SetText(item.line)
+	row.text:SetTextColor(item.r, item.g, item.b)
+	local width = math.min(row.text:GetUnboundedStringWidth(), maxWidth)
+	row.text:SetWidth(width)
+	row:SetSize(width + 2 * PADDING, row.text:GetStringHeight() + 2 * SPACING)
+end
+
 local function Render()
 	local maxWidth = C.ChatWidth() - 2 * PADDING
+	local heights = {}
 	for index, item in ipairs(items) do
 		local row = rows[index] or CreateRow(index)
-		row.key = item.key
-		-- Measured unbounded first; a long line is cut to the chat's width.
-		row.text:SetWidth(0)
-		row.text:SetText(item.line)
-		row.text:SetTextColor(item.r, item.g, item.b)
-		local width = math.min(row.text:GetStringWidth(), maxWidth)
-		row.text:SetWidth(width)
-		row:SetWidth(width + 2 * PADDING)
+		Fill(row, item, maxWidth)
+		heights[index] = row:GetHeight()
+	end
+	-- The oldest lines that no longer fit where the chat sits drop out.
+	local overflow = C.PreviewOverflow(heights, container:GetHeight())
+	if overflow > 0 then
+		for _ = 1, overflow do
+			table.remove(items, 1)
+		end
+		for index, item in ipairs(items) do
+			Fill(rows[index], item, maxWidth)
+		end
+	end
+	local top = 0
+	for index, item in ipairs(items) do
+		local row = rows[index]
+		row:ClearAllPoints()
+		row:SetPoint("TOPLEFT", 0, -top)
+		top = top + row:GetHeight()
 		row:SetAlpha(C.PreviewAlpha(item.age, preview.holdTime, preview.fadeOutTime))
 		row:Show()
 	end
@@ -121,7 +146,9 @@ end
 function C.CreatePreview()
 	container = CreateFrame("Frame", "StevioUI_ChatPreview", UIParent)
 	container:SetPoint("TOPLEFT", C.ui.frame, "TOPLEFT")
-	container:SetSize(C.ChatWidth(), math.max(1, preview.maxRows) * RowHeight())
+	-- As big as the chat; a single message taller than that is cut off.
+	container:SetSize(C.ChatWidth(), config.height)
+	container:SetClipsChildren(true)
 	container:SetFrameStrata("MEDIUM")
 	container:Hide()
 	container:SetScript("OnUpdate", OnUpdate)

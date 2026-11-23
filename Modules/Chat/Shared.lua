@@ -245,6 +245,20 @@ function C.PushPreview(items, item, maxRows)
 	return items
 end
 
+-- How many of the preview lines with heights `heights` (oldest first) to
+-- drop from the front so the rest fit into `available`. The newest line is
+-- always kept, even when it alone is taller.
+function C.PreviewOverflow(heights, available)
+	local total = 0
+	for index = #heights, 1, -1 do
+		total = total + heights[index]
+		if total > available and index < #heights then
+			return index
+		end
+	end
+	return 0
+end
+
 -- The sidebar's sections ----------------------------------------------------
 
 -- Chat channels (grouped by name) and the read-only log channels each come

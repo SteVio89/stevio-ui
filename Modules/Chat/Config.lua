@@ -108,7 +108,9 @@ ns.config.chat = {
 
 	-- New lines of Main and the other channels that aren't `quiet` don't pop
 	-- up the hidden chat (#69): they show for a moment as lines of text where
-	-- the chat sits, the newest at the bottom, up to maxRows of them. Each
+	-- the chat sits, the newest at the bottom, up to maxRows messages of them.
+	-- A long message wraps onto as many lines as it needs; older messages
+	-- drop out once they don't fit into the chat's height. Each
 	-- stays holdTime seconds (longer under the cursor), then fades out in
 	-- fadeOutTime; a click opens the chat on its channel. Off, they only
 	-- light the badge.

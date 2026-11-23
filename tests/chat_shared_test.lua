@@ -52,6 +52,11 @@ for i = 1, 4 do
 end
 check(#items == 3 and items[1] == 2 and items[3] == 4, "oldest preview line drops out")
 check(#C.PushPreview({}, 1, 0) == 0, "no rows: no preview lines")
+check(C.PreviewOverflow({ 22, 22, 22 }, 300) == 0, "preview lines that fit all stay")
+check(C.PreviewOverflow({ 22, 120, 200 }, 300) == 2, "older lines beyond the chat's height drop out")
+check(C.PreviewOverflow({ 22, 100, 200 }, 300) == 1, "a line that just fits stays")
+check(C.PreviewOverflow({ 22, 400 }, 300) == 1, "a line taller than the chat stays alone")
+check(C.PreviewOverflow({}, 300) == 0, "no preview lines")
 print("background and preview ok")
 
 -- Main: unread of its members, reading it, the channel it writes to.
