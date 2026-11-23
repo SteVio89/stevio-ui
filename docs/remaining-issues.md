@@ -186,8 +186,9 @@ Go through each with `style.theme = "dusk"` and once more with `"violet"`
   colors are unchanged, violet).
 - Chat: headings and zone groups, pills, `✕` only on hover (also while the
   cursor moves onto the `✕`), accent marker, scrolling with many channels,
-  date line.
-- Notch island: round corners (Media/Corner.tga), shadow, grid with and
+  date line; headings and channels evenly spaced; no light line inside the
+  chat's or the mark bar's black border.
+- Notch island: round corners (Media/Corner.tga), no shadow or light rim, grid with and
   without rested XP and reputation, many addon buttons muted until hovered,
   accent edge on the notes/players/rolls button while its window is open;
   also without a notch (fallback).
