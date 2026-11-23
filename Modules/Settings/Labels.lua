@@ -243,6 +243,7 @@ local labels = {
 	},
 	inputBackgroundColor = { "Input line background", "Hintergrund Eingabezeile" },
 	inputBorderColor = { "Input line border", "Rahmen Eingabezeile" },
+	inputClipGap = { "Message clip above input line", "Nachrichtenkante über Eingabezeile" },
 	inputGap = { "Gap above input line", "Abstand über Eingabezeile" },
 	instance = { "Instance", "Instanz" },
 	islandMargin = { "Island margin", "Inselrand" },
