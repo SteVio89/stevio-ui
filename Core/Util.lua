@@ -237,11 +237,14 @@ function ns.CreateBarShade(bar, half)
 end
 
 -- The part of a bar the fill doesn't cover (missing health), tinted with the
--- bar's color (ns.SetTrackColor) instead of grey.
+-- bar's color (ns.SetTrackColor) instead of grey. Clear until then: the
+-- texture is plain white, so a bar that never got its color would otherwise
+-- be a white block.
 function ns.CreateTintedTrack(bar)
 	local track = bar:CreateTexture(nil, "BACKGROUND")
 	track:SetAllPoints()
 	track:SetTexture(style.texture)
+	track:SetVertexColor(0, 0, 0, 0)
 	return track
 end
 
