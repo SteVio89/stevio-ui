@@ -99,6 +99,7 @@ Modules\Rolls\Logic.lua
 Modules\Rolls\Cards.lua
 Modules\Rolls\History.lua
 Modules\Rolls\Rolls.lua
+Modules\Rolls\Simulate.lua
 
 Modules\Taxi\Config.lua
 Modules\Taxi\Taxi.lua
