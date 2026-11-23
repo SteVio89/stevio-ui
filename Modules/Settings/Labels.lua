@@ -484,6 +484,12 @@ local labels = {
 	textStrong = { "Strong text", "Text betont", "Names and important values.", "Namen und wichtige Werte." },
 	texture = { "Texture", "Textur" },
 	theme = { "Theme", "Farbschema", "dusk or violet; needs /reload.", "dusk oder violet; braucht /reload." },
+	themedBackdrop = {
+		"Themed background",
+		"Hintergrund im Farbschema",
+		"The theme's panel color and a black border instead of Blizzard's colors.",
+		"Panelfarbe des Farbschemas und schwarzer Rand statt Blizzards Farben.",
+	},
 	themes = { "Themes", "Farbschemata" },
 	timerHeight = { "Timer bar height", "Höhe Zeitleiste" },
 	tint = { "Line color (chat type)", "Zeilenfarbe (Chattyp)" },

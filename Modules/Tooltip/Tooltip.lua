@@ -16,7 +16,22 @@ local function MarkBarHeight()
 	return ns.layout.marks.y + marks.buttonSize + 2 * marks.padding
 end
 
+-- Blizzard sets its colors on every backdrop change; the hook follows each one.
+local function ThemeBackdrop(tooltip)
+	if tooltip ~= GameTooltip or not tooltip.NineSlice then
+		return
+	end
+	local style = ns.config.style
+	tooltip.NineSlice:SetCenterColor(unpack(style.palette.panel))
+	tooltip.NineSlice:SetBorderColor(unpack(style.borderColor))
+end
+
 function Tooltip:OnEnable()
+	if config.themedBackdrop then
+		hooksecurefunc("SharedTooltip_SetBackdropStyle", ThemeBackdrop)
+		ThemeBackdrop(GameTooltip)
+	end
+
 	local mapLayout = ns.layout.minimap
 	ns.SetEditModeSystem(Enum.EditModeSystem.HudTooltip, nil, {
 		point = "BOTTOMRIGHT",
