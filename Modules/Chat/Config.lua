@@ -94,6 +94,10 @@ ns.config.chat = {
 	-- descenders, its shadow and inline icons reach below the line, so a
 	-- small gap let them touch the input's border (#88).
 	inputGap = 12,
+	-- Where the messages stop being drawn (pixels above the input line): below
+	-- the last line, so its descenders show instead of being cut off (#89),
+	-- but above the input's border. Must be smaller than inputGap.
+	inputClipGap = 2,
 
 	-- Debugging aid: keeps Blizzard's chat visible right of the channel view
 	-- (gap in pixels) to compare which messages arrive.

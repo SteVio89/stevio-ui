@@ -368,6 +368,14 @@ local function CreateMessages(frame)
 	messages:SetMaxLines(config.historyLimit * 2)
 	messages:SetPoint("TOPLEFT", ui.header, "BOTTOMLEFT", 0, -7)
 	messages:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, config.inputGap)
+	-- Blizzard's message frame clips its lines to its own bounds, and the last
+	-- line sits right on its bottom edge, so that line's descenders (g, y),
+	-- shadow and inline icons were cut off (#89). Its line container reaches
+	-- down to just above the input line instead; the lines stay where they are.
+	local lines = messages.FontStringContainer
+	lines:ClearAllPoints()
+	lines:SetPoint("TOPLEFT", messages)
+	lines:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, config.inputClipGap)
 	messages:EnableMouseWheel(true)
 	messages:SetScript("OnMouseWheel", function(self, delta)
 		for _ = 1, config.scrollStep do
