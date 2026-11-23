@@ -22,6 +22,14 @@ function ns.ResolveTheme(styleConfig, palette)
 	return palette
 end
 
+-- "|cffRRGGBB" for colored parts of a text, e.g. a muted separator.
+function ns.Hex(color)
+	local function Byte(value)
+		return math.floor(value * 255 + 0.5)
+	end
+	return ("|cff%02x%02x%02x"):format(Byte(color[1]), Byte(color[2]), Byte(color[3]))
+end
+
 function ns.ApplyTheme()
 	style.palette = ns.ResolveTheme(style, style.palette)
 	style.backgroundColor = style.palette.panel

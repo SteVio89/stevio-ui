@@ -126,6 +126,18 @@ local labels = {
 		"Anteil (0-1), ab dem gelb angezeigt wird.",
 	},
 	dusk = { "Dusk", "Dusk" },
+	edgeInner = {
+		"Inner frame",
+		"Innenrahmen",
+		"Faint line along the inside of a panel.",
+		"Feine Linie innen am Panelrand.",
+	},
+	edgeTop = {
+		"Glass edge (top)",
+		"Glaskante (oben)",
+		"Light line along the inside of a panel's top edge.",
+		"Helle Linie innen an der Oberkante eines Panels.",
+	},
 	editBoxGap = { "Input box gap", "Abstand Eingabezeile" },
 	emote = { "Emote", "Emote" },
 	enabled = { "Enabled", "Aktiv" },
@@ -373,6 +385,7 @@ local labels = {
 		"Names of the switchable action sets (same slots and keys, different actions). Fewer than two hide the button.",
 		"Namen der umschaltbaren Aktionsleisten-Sets (gleiche Plätze und Tasten, andere Aktionen). Weniger als zwei blenden den Knopf aus.",
 	},
+	shadow = { "Shadow", "Schatten" },
 	sharedBars = {
 		"Shared bars",
 		"Gemeinsame Leisten",

@@ -41,4 +41,9 @@ check(resolved.accent == 1, "unknown theme falls back to dusk")
 check(resolved.extra == nil, "old keys are cleared")
 print("resolve ok")
 
+-- Hex: color codes for text, rounded to the nearest byte.
+check(ns.Hex({ 1, 0, 0 }) == "|cffff0000", "red")
+check(ns.Hex({ 0.54, 0.56, 0.60, 0.5 }) == "|cff8a8f99", "muted, alpha ignored")
+print("hex ok")
+
 print("theme tests passed")
