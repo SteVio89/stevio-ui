@@ -13,6 +13,9 @@ local config = ns.config.rolls
 local style = ns.config.style
 local T = ns.T
 
+-- Width of the scroll bar beside the list, with its gap, when it is needed.
+local SCROLL_BAR_SPACE = 14
+
 local frame, scrollBox, search, mineButton
 local filter = { search = "", mineOnly = false }
 local expanded = {}
