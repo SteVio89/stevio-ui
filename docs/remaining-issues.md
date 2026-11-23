@@ -145,8 +145,10 @@ need a check in game.
   drop when the boss drops two of the same item.
 - Not answering: the card turns into a dimmed "passed" card when the timer
   runs out.
-- Hovering the notch while cards are open: the cards slide below the island
-  and back.
+- Hovering the notch while cards are open (#84): the island stays down and
+  the cards stay put, also for `/sui roll` cards; it comes up again once the
+  last card has faded. With the island already open when a roll starts, the
+  cards slide below it and back up when it closes.
 - Which parts of `GetLootRollItemInfo` are secret during a fight (the card
   then shows what it can, buttons still work), and whether trash rolls
   appear in the loot history at all (without it the answered card shows no
