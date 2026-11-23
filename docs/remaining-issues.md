@@ -198,6 +198,10 @@ Go through each with `style.theme = "dusk"` and once more with `"violet"`
   ones stay within the chat's area, the oldest dropping out; a click and the
   hover hold still work on each wrapped line. Text in the input line
   (Ä, g, y, item links) isn't cut off at the box's top or bottom edge.
+- Group cells in a real group (#80): class-colored health, name and power
+  instead of plain white cells. If `/sui errors` lists an error from an aura
+  container, the cells still paint; only that debuff or HoT group stays
+  empty (the error points at the actual aura problem).
 - Notch island: round corners (Media/Corner.tga), no shadow or light rim, grid with and
   without rested XP and reputation, many addon buttons muted until hovered,
   accent edge on the notes/players/rolls button while its window is open;

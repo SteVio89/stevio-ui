@@ -218,14 +218,22 @@ local globalEvents = {
 	PLAYER_ROLES_ASSIGNED = UpdateRole,
 }
 
+-- Blizzard's aura containers reread and lay out their auras right inside
+-- SetUnit and UpdateAllAuras. They come last and each runs protected, so an
+-- error in one (reported to /sui errors) costs only that aura group, never
+-- the cell's own colors and events, nor the other groups.
+local function UpdateAuraContainers(cell, method, ...)
+	for _, container in ipairs(cell.auraContainers) do
+		ns.SafeCall(container[method], container, ...)
+	end
+end
+
 -- A cell whose token may now stand for another player. Blizzard's aura
 -- containers only reread on a new token (SetUnit ignores the same one), so
 -- they are told to, like the target auras on a target change.
 local function RefreshCell(cell)
 	UpdateAll(cell)
-	for _, container in ipairs(cell.auraContainers) do
-		container:UpdateAllAuras()
-	end
+	UpdateAuraContainers(cell, "UpdateAllAuras")
 end
 
 -- Every cell the headers created.
@@ -268,9 +276,6 @@ local function SetUnit(cell, unit)
 		cell.nameText:SetText("")
 		return
 	end
-	for _, container in ipairs(cell.auraContainers) do
-		container:SetUnit(unit)
-	end
 	for event in pairs(unitEvents) do
 		cell:RegisterUnitEvent(event, unit)
 	end
@@ -278,6 +283,7 @@ local function SetUnit(cell, unit)
 		cell:RegisterEvent(event)
 	end
 	UpdateAll(cell)
+	UpdateAuraContainers(cell, "SetUnit", unit)
 end
 
 -- Unit tokens belong to roster positions, not players: after someone leaves,
