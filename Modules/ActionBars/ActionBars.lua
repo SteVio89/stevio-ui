@@ -74,14 +74,6 @@ local function StyleButton(button)
 	-- A fixed white inner frame rather than a palette color: it looks the same on every icon.
 	ns.CreateInsetBorder(button, 2):SetColor(1, 1, 1, 0.10)
 
-	-- Darkens the bottom so the keybinding and the count stay readable.
-	local vignette = button:CreateTexture(nil, "ARTWORK", nil, 7)
-	vignette:SetTexture(style.texture)
-	vignette:SetPoint("BOTTOMLEFT")
-	vignette:SetPoint("BOTTOMRIGHT")
-	vignette:SetHeight(button:GetHeight() * 0.45)
-	vignette:SetGradient("VERTICAL", CreateColor(0, 0, 0, 0.55), CreateColor(0, 0, 0, 0))
-
 	local hover = ns.CreateInsetBorder(button, 3)
 	hover:SetColor(1, 1, 1, 0.4)
 	hover:SetShown(false)
@@ -115,11 +107,6 @@ local function StyleButton(button)
 			hotKey:SetFont(font, size - 2, flags)
 		end
 	end
-
-	-- The vignette sizes with the button, which Edit Mode sets later.
-	button:HookScript("OnSizeChanged", function(self)
-		vignette:SetHeight(self:GetHeight() * 0.45)
-	end)
 end
 
 local function StyleBar(bar)

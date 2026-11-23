@@ -428,8 +428,9 @@ local function CreateIsland()
 	island = CreateFrame("Frame", "StevioUI_NotchIsland", UIParent)
 	island:SetFrameStrata("FULLSCREEN_DIALOG")
 	island:Hide()
+	-- No shadow: its straight strips leave a light rim and gaps at the round
+	-- corners (#77); the island is as plain as the notch itself.
 	CreateBackground()
-	ns.CreateShadow(island, 6, { bottom = true, left = true, right = true })
 
 	local palette = style.palette
 	strong, normal = ns.Hex(palette.textStrong), ns.Hex(palette.text)

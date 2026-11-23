@@ -123,8 +123,9 @@ ns.config.chat = {
 	historyLimit = 200,
 	sidebarWidth = 130,
 	rowHeight = 22,
-	-- Section headings in the sidebar (chat channels by name, the log).
-	headerHeight = 18,
+	-- Section headings in the sidebar (chat channels by name, the log); as
+	-- high as a row and centered like it, so all lines are evenly spaced.
+	headerHeight = 22,
 	-- Font size of the messages, the input line and the copy view.
 	fontSize = 16,
 	-- Font size of the sidebar and the header above the messages.

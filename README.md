@@ -23,8 +23,8 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Look** – two color themes with the same shapes, picked with `theme` in the
   style options (`/reload` after a change): **Night violet** (`violet`, the
   default: violet tinted black, a muted dark violet accent) and **Dusk**
-  (`dusk`: blue-grey tinted black, old gold accent). Panels have a black border, a faint glass edge and a
-  soft shadow, text a drop shadow instead of an outline, bars a light shade
+  (`dusk`: blue-grey tinted black, old gold accent). Panels have a black border, a faint glass edge (not
+  on the chat and the mark bar) and a soft shadow, text a drop shadow instead of an outline, bars a light shade
   from top to bottom and a background tinted in their own color. The accent
   only marks active things: the shown chat channel, the active action set,
   checked buttons and stances, the cast bar, the target's raid symbol and the
