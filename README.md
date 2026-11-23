@@ -144,8 +144,10 @@ until it is needed, and as much as possible can be done from the keyboard.
   screen edge, whose three segments light up on new whispers, group (party,
   raid, instance) or guild messages. A new message doesn't pop up the hidden
   chat: it shows for a few seconds as a line of text where the chat sits,
-  without a background (up to three, the newest at the bottom; a line under
-  the cursor stays, a click opens the chat on its channel; `preview`). Only
+  without a background (up to three, the newest at the bottom; a long message
+  wraps, and older ones drop out once they no longer fit where the chat sits;
+  a line under the cursor stays, a click opens the chat on its channel;
+  `preview`). Only
   `/sui` replies open the chat, on System, until it hides again; then it goes
   back to the channel shown before, unless you opened the chat or picked a
   channel meanwhile. The open chat's background is see-through and turns
