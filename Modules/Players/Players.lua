@@ -372,7 +372,7 @@ local function CreateNotchButton()
 		GameTooltip:Show()
 	end)
 	button:SetScript("OnLeave", GameTooltip_Hide)
-	ns.NotchButtons.AddOwn(button)
+	ns.NotchButtons.AddOwn(button, "StevioUI_Players")
 end
 
 -- API for other modules --------------------------------------------------------

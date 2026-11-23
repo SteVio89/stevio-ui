@@ -37,9 +37,54 @@ function Layout.DurabilityLevel(lowest, warn, critical)
 	return "value"
 end
 
--- "Zone – Subzone", or just the zone when the subzone is empty or the same.
-function Layout.ZoneLabel(zone, subZone)
-	return (subZone ~= "" and subZone ~= zone) and (zone .. " – " .. subZone) or zone
+-- The subzone worth showing next to the zone: nil when it is empty or the same.
+function Layout.SubZone(zone, subZone)
+	if subZone == "" or subZone == zone then
+		return nil
+	end
+	return subZone
+end
+
+-- The value grid: `count` cells in `columns` columns across `width`, each
+-- `rowHeight` high with `rowGap` between rows. Returns each cell's left, top
+-- and width, and the grid's height.
+function Layout.GridCells(count, width, columns, rowHeight, rowGap)
+	local cellWidth = width / columns
+	local cells = {}
+	for index = 1, count do
+		local column = (index - 1) % columns
+		local line = math.floor((index - 1) / columns)
+		cells[index] = { x = column * cellWidth, y = line * (rowHeight + rowGap), width = cellWidth }
+	end
+	local lines = math.ceil(count / columns)
+	return cells, lines > 0 and (lines * rowHeight + (lines - 1) * rowGap) or 0
+end
+
+-- A colored square after each unit of money, as an inline texture.
+local function Coin(color, size)
+	return ("|TInterface\\Buttons\\WHITE8X8:%d:%d:0:0:8:8:0:8:0:8:%d:%d:%d|t"):format(
+		size,
+		size,
+		math.floor(color[1] * 255 + 0.5),
+		math.floor(color[2] * 255 + 0.5),
+		math.floor(color[3] * 255 + 0.5)
+	)
+end
+
+-- "21■ 86■ 87■": gold, silver and copper, each followed by a square in its
+-- color (`colors`: gold, silver, copper), leading empty units left out.
+function Layout.MoneyText(copper, colors, size)
+	local gold = math.floor(copper / 10000)
+	local silver = math.floor(copper / 100) % 100
+	local parts = {}
+	if gold > 0 then
+		parts[#parts + 1] = gold .. Coin(colors.gold, size)
+	end
+	if gold > 0 or silver > 0 then
+		parts[#parts + 1] = silver .. Coin(colors.silver, size)
+	end
+	parts[#parts + 1] = (copper % 100) .. Coin(colors.copper, size)
+	return table.concat(parts, " ")
 end
 
 -- The notch in UIParent units: left and right edge, height, and how far the

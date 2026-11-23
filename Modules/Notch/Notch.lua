@@ -2,6 +2,7 @@ local _, ns = ...
 
 local config = ns.config.notch
 local colors = config.colors
+local style = ns.config.style
 
 local Notch = ns.RegisterModule("notch", {})
 
@@ -10,31 +11,31 @@ local Notch = ns.RegisterModule("notch", {})
 
 local L = ns.isGerman
 		and {
-			level = "Stufe %d",
+			level = "Stufe",
 			rested = "Erholt",
 			gold = "Gold",
 			bags = "Taschen",
-			bagsValue = "%d / %d frei",
+			free = "frei",
 			durability = "Haltbarkeit",
 			time = "Uhrzeit",
 			system = "System",
-			online = "Online",
-			friends = "Freunde %d",
-			guild = "Gilde %d",
+			friends = "Freunde",
+			friendsGuild = "Freunde · Gilde",
 		}
 	or {
-		level = "Level %d",
+		level = "Level",
 		rested = "Rested",
 		gold = "Gold",
 		bags = "Bags",
-		bagsValue = "%d / %d free",
+		free = "free",
 		durability = "Durability",
 		time = "Time",
 		system = "System",
-		online = "Online",
-		friends = "Friends %d",
-		guild = "Guild %d",
+		friends = "Friends",
+		friendsGuild = "Friends · Guild",
 	}
+
+local CORNER_TEXTURE = "Interface\\AddOns\\stevio-ui\\Media\\Corner"
 
 local Zone = ns.NotchZone
 local Buttons = ns.NotchButtons
@@ -46,34 +47,38 @@ local notchHeight = 0
 local notchRect
 local rows = {}
 
-local function SetBar(row, min, max, value, overlayValue, r, g, b)
+-- Color codes of the theme's text colors, set when the island is created.
+local strong, normal, muted, faint
+
+local function SetBar(row, min, max, value, overlayValue)
 	row.bar:SetMinMaxValues(min, max)
 	row.bar:SetValue(value)
-	row.bar:SetStatusBarColor(r, g, b)
 	row.overlay:SetMinMaxValues(min, max)
 	row.overlay:SetValue(overlayValue)
-	row.overlay:SetStatusBarColor(r, g, b, config.restedAlpha)
 end
 
 local function HasXP()
 	return not GameRulesUtil.IsPlayerAtEffectiveMaxLevel() and not IsXPUserDisabled() and UnitXPMax("player") > 0
 end
 
+-- "Level 36" and "57 % · 40,861 / 71,600" above a bar fading from the
+-- theme's xpFrom to xpTo, with rested XP as an overlay beyond the fill.
 local function UpdateXP(row)
 	if not HasXP() then
 		return false
 	end
 	local current, max = UnitXP("player"), UnitXPMax("player")
 	local rested = GetXPExhaustion() or 0
-	local color = GetRestState() == 1 and colors.xpRested or colors.xp
-	row.label:SetFormattedText(L.level, UnitLevel("player"))
+	row.label:SetText(("%s%s|r %s%d|r"):format(muted, L.level, strong, UnitLevel("player")))
 	row.value:SetFormattedText(
-		"%d %% · %s / %s",
+		"%s%d %%|r %s· %s / %s|r",
+		normal,
 		floor(current / max * 100),
+		muted,
 		BreakUpLargeNumbers(current),
 		BreakUpLargeNumbers(max)
 	)
-	SetBar(row, 0, max, current, math.min(current + rested, max), unpack(color))
+	SetBar(row, 0, max, current, math.min(current + rested, max))
 	return true
 end
 
@@ -98,8 +103,9 @@ local function UpdateReputation(row)
 	-- The top standing has no next threshold; show it as a full bar.
 	if max > min then
 		row.value:SetFormattedText(
-			"%s · %s / %s",
+			"%s %s· %s / %s|r",
 			standing,
+			muted,
 			BreakUpLargeNumbers(value - min),
 			BreakUpLargeNumbers(max - min)
 		)
@@ -108,52 +114,20 @@ local function UpdateReputation(row)
 		min, max, value = 0, 1, 1
 	end
 	local color = FACTION_BAR_COLORS[data.reaction] or FACTION_BAR_COLORS[#FACTION_BAR_COLORS]
-	SetBar(row, min, max, value, 0, color:GetRGB())
+	row.bar:SetStatusBarColor(color:GetRGB())
+	SetBar(row, min, max, value, 0)
 	return true
 end
 
-local function UpdateGold(row)
-	row.label:SetText(L.gold)
-	row.value:SetText(GetMoneyString(GetMoney(), true))
-	return true
-end
-
-local function UpdateBags(row)
-	local free, total = 0, 0
-	for bag = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
-		local numFree, family = C_Container.GetContainerNumFreeSlots(bag)
-		-- Quivers and other special bags only take their own item types.
-		if family == 0 then
-			free = free + numFree
-			total = total + C_Container.GetContainerNumSlots(bag)
-		end
-	end
-	row.label:SetText(L.bags)
-	row.value:SetFormattedText(L.bagsValue, free, total)
-	return true
-end
-
-local function UpdateDurability(row)
-	local lowest
-	for slot = INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
-		local current, max = GetInventoryItemDurability(slot)
-		if current and max > 0 then
-			lowest = math.min(lowest or 1, current / max)
-		end
-	end
-	if not lowest then
-		return false
-	end
-	local color = colors[Layout.DurabilityLevel(lowest, config.durabilityWarn, config.durabilityCritical)]
-	row.label:SetText(L.durability)
-	row.value:SetFormattedText("%d %%", floor(lowest * 100))
-	row.value:SetTextColor(unpack(color))
-	return true
-end
-
+-- "Zone · Subzone" on the left, the coordinates on the right.
 local function UpdateZone(row)
-	local zone, subZone = GetZoneText(), GetSubZoneText()
-	row.label:SetText(Layout.ZoneLabel(zone, subZone))
+	local zone = GetZoneText()
+	local subZone = Layout.SubZone(zone, GetSubZoneText())
+	local text = strong .. zone .. "|r"
+	if subZone then
+		text = ("%s %s·|r %s%s|r"):format(text, faint, muted, subZone)
+	end
+	row.label:SetText(text)
 	-- Instances have no player position.
 	local mapID = C_Map.GetBestMapForUnit("player")
 	local position = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
@@ -166,28 +140,86 @@ local function UpdateZone(row)
 	return true
 end
 
-local function UpdateTime(row)
-	row.label:SetText(L.time)
-	row.value:SetText(date("%H:%M"))
-	return true
+-- The value grid: label above, value below, one function per cell.
+local function GoldCell(cell)
+	cell.label:SetText(L.gold)
+	cell.value:SetText(Layout.MoneyText(GetMoney(), config.coinColors, config.coinSize))
 end
 
-local function UpdateSystem(row)
+local function BagsCell(cell)
+	local free, total = 0, 0
+	for bag = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
+		local numFree, family = C_Container.GetContainerNumFreeSlots(bag)
+		-- Quivers and other special bags only take their own item types.
+		if family == 0 then
+			free = free + numFree
+			total = total + C_Container.GetContainerNumSlots(bag)
+		end
+	end
+	cell.label:SetText(L.bags)
+	cell.value:SetFormattedText("%d %s/ %d %s|r", free, muted, total, L.free)
+end
+
+local function DurabilityCell(cell)
+	local lowest
+	for slot = INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
+		local current, max = GetInventoryItemDurability(slot)
+		if current and max > 0 then
+			lowest = math.min(lowest or 1, current / max)
+		end
+	end
+	cell.label:SetText(L.durability)
+	if not lowest then
+		cell.value:SetText("–")
+		cell.value:SetTextColor(unpack(style.palette.textStrong))
+		return
+	end
+	local level = Layout.DurabilityLevel(lowest, config.durabilityWarn, config.durabilityCritical)
+	cell.value:SetFormattedText("%d %%", floor(lowest * 100))
+	cell.value:SetTextColor(unpack(level == "value" and style.palette.textStrong or colors[level]))
+end
+
+local function TimeCell(cell)
+	cell.label:SetText(L.time)
+	cell.value:SetText(date("%H:%M"))
+end
+
+local function SystemCell(cell)
 	local _, _, home, world = GetNetStats()
-	row.label:SetText(L.system)
-	row.value:SetFormattedText("%d fps · %d / %d ms", floor(GetFramerate() + 0.5), home, world)
-	return true
+	cell.label:SetText(L.system)
+	cell.value:SetFormattedText("%d fps %s· %d / %d ms|r", floor(GetFramerate() + 0.5), muted, home, world)
 end
 
-local function UpdateOnline(row)
+local function OnlineCell(cell)
 	local _, bnetOnline = BNGetNumFriends()
-	local text = L.friends:format((C_FriendList.GetNumOnlineFriends() or 0) + (bnetOnline or 0))
+	local friends = (C_FriendList.GetNumOnlineFriends() or 0) + (bnetOnline or 0)
 	if IsInGuild() then
 		local _, guildOnline = GetNumGuildMembers()
-		text = text .. " · " .. L.guild:format(guildOnline or 0)
+		cell.label:SetText(L.friendsGuild)
+		cell.value:SetFormattedText("%d %s·|r %d", friends, faint, guildOnline or 0)
+	else
+		cell.label:SetText(L.friends)
+		cell.value:SetText(friends)
 	end
-	row.label:SetText(L.online)
-	row.value:SetText(text)
+end
+
+local GRID_CELLS = { GoldCell, BagsCell, DurabilityCell, TimeCell, SystemCell, OnlineCell }
+
+local function UpdateGrid(row)
+	local cells, height = Layout.GridCells(
+		#GRID_CELLS,
+		island:GetWidth() - 2 * config.padding,
+		config.gridColumns,
+		config.gridRowHeight,
+		config.gridRowGap
+	)
+	for index, update in ipairs(GRID_CELLS) do
+		local cell, place = row.cells[index], cells[index]
+		cell:SetPoint("TOPLEFT", row, "TOPLEFT", place.x, -place.y)
+		cell:SetWidth(place.width - 6)
+		update(cell)
+	end
+	row:SetHeight(height)
 	return true
 end
 
@@ -200,19 +232,25 @@ local function UpdateButtons(row)
 	return true
 end
 
+local function UpdateSeparator()
+	return true
+end
+
+-- The line above the buttons only shows with them.
+local function UpdateButtonsSeparator()
+	return Buttons.HasShown()
+end
+
 -- Built when the island is created, so saved overrides are applied already.
 local function RowSpecs()
 	local rowSpecs = {
-		{ update = UpdateXP, bar = true },
+		{ update = UpdateXP, bar = true, gradient = true },
 		{ update = UpdateRested },
 		{ update = UpdateReputation, bar = true },
-		{ update = UpdateGold },
-		{ update = UpdateBags },
-		{ update = UpdateDurability },
-		{ update = UpdateZone, groupStart = true },
-		{ update = UpdateTime },
-		{ update = UpdateSystem },
-		{ update = UpdateOnline },
+		{ update = UpdateZone },
+		{ update = UpdateSeparator, separator = true, groupStart = true },
+		{ update = UpdateGrid, grid = true, groupStart = true },
+		{ update = UpdateButtonsSeparator, separator = true, groupStart = true },
 	}
 	-- Always there for stevio-ui's own buttons (notes); other addons' buttons
 	-- only join with minimapButtons. Without any buttons the row stays hidden.
@@ -220,22 +258,49 @@ local function RowSpecs()
 	return rowSpecs
 end
 
+local function CreateGridCells(row)
+	row.cells = {}
+	for index = 1, #GRID_CELLS do
+		local cell = CreateFrame("Frame", nil, row)
+		cell:SetHeight(config.gridRowHeight)
+		cell.label = ns.CreateFontString(cell, style.fontSize - 1.5)
+		cell.label:SetPoint("TOPLEFT")
+		cell.label:SetPoint("RIGHT")
+		cell.label:SetTextColor(unpack(style.palette.textFaint))
+		cell.value = ns.CreateFontString(cell)
+		cell.value:SetPoint("BOTTOMLEFT")
+		cell.value:SetPoint("RIGHT")
+		cell.value:SetTextColor(unpack(style.palette.textStrong))
+		row.cells[index] = cell
+	end
+end
+
 local function CreateRow(spec)
+	local palette = style.palette
 	local row = CreateFrame("Frame", nil, island)
 	row.spec = spec
 	if spec.buttons then
 		Buttons.Setup(row, config.buttonSize)
+		return row
+	elseif spec.grid then
+		CreateGridCells(row)
+		return row
+	elseif spec.separator then
+		local line = row:CreateTexture(nil, "ARTWORK")
+		line:SetAllPoints()
+		line:SetColorTexture(unpack(config.separatorColor))
+		row:SetHeight(ns.PixelSize(row))
 		return row
 	end
 
 	-- The value sizes to its text; the label takes the rest and truncates.
 	row.value = ns.CreateFontString(row, nil, "RIGHT")
 	row.value:SetPoint("TOPRIGHT")
-	row.value:SetTextColor(unpack(colors.value))
+	row.value:SetTextColor(unpack(palette.textMuted))
 	row.label = ns.CreateFontString(row)
 	row.label:SetPoint("TOPLEFT")
 	row.label:SetPoint("RIGHT", row.value, "LEFT", -8, 0)
-	row.label:SetTextColor(unpack(colors.label))
+	row.label:SetTextColor(unpack(palette.textMuted))
 
 	local height = config.rowHeight
 	if spec.bar then
@@ -244,13 +309,21 @@ local function CreateRow(spec)
 		row.overlay:SetPoint("BOTTOMLEFT")
 		row.overlay:SetPoint("BOTTOMRIGHT")
 		row.overlay:SetHeight(config.barHeight)
+		row.overlay:SetStatusBarColor(colors.xpRested[1], colors.xpRested[2], colors.xpRested[3], config.restedAlpha)
 		local background = row.overlay:CreateTexture(nil, "BACKGROUND")
 		background:SetAllPoints()
-		background:SetColorTexture(unpack(colors.barBackground))
+		background:SetColorTexture(unpack(palette.track))
 
 		row.bar = ns.CreateStatusBar(row)
 		row.bar:SetAllPoints(row.overlay)
 		row.bar:SetFrameLevel(row.overlay:GetFrameLevel() + 1)
+		-- XP values are never secret, and the fill keeps its gradient as it
+		-- shrinks and grows (SetStatusBarColor would replace it).
+		if spec.gradient then
+			row.bar
+				:GetStatusBarTexture()
+				:SetGradient("HORIZONTAL", CreateColor(unpack(palette.xpFrom)), CreateColor(unpack(palette.xpTo)))
+		end
 
 		height = height + config.barGap + config.barHeight
 	end
@@ -321,14 +394,46 @@ local function UpdateGeometry()
 	end
 end
 
+-- Black like the notch it grows out of, with round bottom corners: the
+-- middle and a strip between the corners are plain, the corners a quarter
+-- disc (Media/Corner.tga, round edge at its bottom left).
+local function CreateBackground()
+	local radius = config.cornerRadius
+	local color = colors.background
+	local function Plain()
+		local texture = island:CreateTexture(nil, "BACKGROUND")
+		texture:SetColorTexture(unpack(color))
+		return texture
+	end
+	local body = Plain()
+	body:SetPoint("TOPLEFT")
+	body:SetPoint("BOTTOMRIGHT", 0, radius)
+	local strip = Plain()
+	strip:SetPoint("TOPLEFT", body, "BOTTOMLEFT", radius, 0)
+	strip:SetPoint("BOTTOMRIGHT", -radius, 0)
+	for _, side in ipairs({ "LEFT", "RIGHT" }) do
+		local corner = island:CreateTexture(nil, "BACKGROUND")
+		corner:SetTexture(CORNER_TEXTURE)
+		corner:SetVertexColor(unpack(color))
+		corner:SetSize(radius, radius)
+		corner:SetPoint("BOTTOM" .. side)
+		if side == "RIGHT" then
+			corner:SetTexCoord(1, 0, 0, 1)
+		end
+	end
+end
+
 local function CreateIsland()
 	-- No mouse on the island itself, so clicks and camera drags pass through.
 	island = CreateFrame("Frame", "StevioUI_NotchIsland", UIParent)
 	island:SetFrameStrata("FULLSCREEN_DIALOG")
 	island:Hide()
-	local background = island:CreateTexture(nil, "BACKGROUND")
-	background:SetAllPoints()
-	background:SetColorTexture(unpack(colors.background))
+	CreateBackground()
+	ns.CreateShadow(island, 6, { bottom = true, left = true, right = true })
+
+	local palette = style.palette
+	strong, normal = ns.Hex(palette.textStrong), ns.Hex(palette.text)
+	muted, faint = ns.Hex(palette.textMuted), ns.Hex(palette.textFaint)
 
 	for _, spec in ipairs(RowSpecs()) do
 		rows[#rows + 1] = CreateRow(spec)

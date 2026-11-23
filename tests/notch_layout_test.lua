@@ -27,9 +27,35 @@ check(Layout.DurabilityLevel(0.3, 0.5, 0.2) == "warn", "warn")
 check(Layout.DurabilityLevel(0.2, 0.5, 0.2) == "critical", "critical at the boundary")
 check(Layout.DurabilityLevel(0, 0.5, 0.2) == "critical", "broken")
 
-check(Layout.ZoneLabel("Stormwind", "Trade District") == "Stormwind – Trade District", "zone and subzone")
-check(Layout.ZoneLabel("Stormwind", "") == "Stormwind", "no subzone")
-check(Layout.ZoneLabel("Stormwind", "Stormwind") == "Stormwind", "subzone same as zone")
+check(Layout.SubZone("Stormwind", "Trade District") == "Trade District", "zone and subzone")
+check(Layout.SubZone("Stormwind", "") == nil, "no subzone")
+check(Layout.SubZone("Stormwind", "Stormwind") == nil, "subzone same as zone")
+
+-- Grid: three columns across 300, rows 30 high with a gap of 6.
+local cells, gridHeight = Layout.GridCells(6, 300, 3, 30, 6)
+check(cells[1].x == 0 and cells[1].y == 0 and cells[1].width == 100, "first cell")
+check(cells[3].x == 200 and cells[3].y == 0, "third cell ends the first row")
+check(cells[4].x == 0 and cells[4].y == 36, "fourth cell starts the second row")
+check(gridHeight == 66, "two rows and one gap")
+cells, gridHeight = Layout.GridCells(4, 300, 3, 30, 6)
+check(cells[4].y == 36 and gridHeight == 66, "a partly filled row counts")
+cells, gridHeight = Layout.GridCells(0, 300, 3, 30, 6)
+check(#cells == 0 and gridHeight == 0, "no cells")
+
+-- Money: units with colored squares, leading empty ones left out.
+local coins = { gold = { 1, 0, 0 }, silver = { 0, 1, 0 }, copper = { 0, 0, 1 } }
+local function Plain(text)
+	return (
+		text:gsub("|T[^|]*:(%d+):(%d+):%d+|t", function(r, g)
+			return r == "255" and "g" or g == "255" and "s" or "c"
+		end)
+	)
+end
+check(Plain(Layout.MoneyText(218687, coins, 6)) == "21g 86s 87c", "gold, silver and copper")
+check(Plain(Layout.MoneyText(8607, coins, 6)) == "86s 7c", "no gold")
+check(Plain(Layout.MoneyText(5, coins, 6)) == "5c", "copper only")
+check(Plain(Layout.MoneyText(100000, coins, 6)) == "10g 0s 0c", "empty units after gold stay")
+check(Layout.MoneyText(5, coins, 6):find("WHITE8X8:6:6:", 1, true), "square size")
 
 -- Notch: physical pixels scaled to UIParent units (here 0.5).
 local fallback = { width = 200, height = 32 }
