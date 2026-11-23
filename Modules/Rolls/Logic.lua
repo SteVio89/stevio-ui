@@ -341,3 +341,73 @@ function Logic.HeaderText(record, formatDate, unknown)
 	parts[#parts + 1] = formatDate(record.fightTime or record.time)
 	return table.concat(parts, " · ")
 end
+
+-- Simulation (/sui roll) ------------------------------------------------------
+
+-- The winner among loot history roll infos once the numbers are in: the best
+-- choice wins (Need before Transmog before Greed, as the states are ordered),
+-- then the highest number. Nil when everyone passed.
+function Logic.Winner(infos)
+	local best
+	for _, info in ipairs(infos) do
+		if info.roll and info.state ~= State.Pass and info.state ~= State.NoRoll then
+			if not best or info.state < best.state or (info.state == best.state and info.roll > best.roll) then
+				best = info
+			end
+		end
+	end
+	return best
+end
+
+-- What a made-up group member picks: Need, Greed (Transmog when the item
+-- allows it) or Pass. `random(m, n)` is math.random or a stand-in.
+function Logic.SimulatedChoice(random, canTransmog)
+	local pick = random(1, 10)
+	if pick <= 3 then
+		return State.NeedMainSpec
+	elseif pick <= 7 then
+		return canTransmog and State.Transmog or State.Greed
+	end
+	return State.Pass
+end
+
+-- Ends a simulated roll (`sim`: link and players, each with the state they
+-- chose or nil): who hasn't chosen passes, every other player rolls 1-100
+-- (no two the same, the game rolls again on a tie) and the best one wins.
+function Logic.DecideSimulated(sim, random)
+	local taken = {}
+	for _, player in ipairs(sim.players) do
+		player.state = player.state or State.Pass
+		if player.state ~= State.Pass then
+			local roll
+			repeat
+				roll = random(1, 100)
+			until not taken[roll]
+			taken[roll] = true
+			player.roll = roll
+		end
+	end
+	sim.winner = Logic.Winner(sim.players)
+	sim.decided = true
+end
+
+-- A simulated roll as C_LootHistory.GetSortedInfoForDrop would give it, for
+-- Logic.Summary: players who haven't chosen yet have no roll state.
+function Logic.SimulatedDrop(sim)
+	local infos = {}
+	for i, player in ipairs(sim.players) do
+		infos[i] = {
+			playerName = player.playerName,
+			playerClass = player.playerClass,
+			isSelf = player.isSelf,
+			state = player.state or State.NoRoll,
+			roll = player.roll,
+		}
+	end
+	return {
+		itemHyperlink = sim.link,
+		winner = sim.winner,
+		allPassed = sim.decided and not sim.winner or nil,
+		rollInfos = infos,
+	}
+end

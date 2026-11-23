@@ -503,6 +503,14 @@ function Cards.UpdateDrop(dropKey, summary)
 	Cards.Layout()
 end
 
+-- A card that doesn't come from the game (made up by /sui roll); with
+-- `preview` set its buttons don't really roll.
+function Cards.Add(card)
+	cards[#cards + 1] = card
+	Cards.Layout()
+	return card
+end
+
 -- Two made-up cards (one open, one won by "Bob") to check the look.
 function Cards.Preview(link)
 	local now = GetTime()
