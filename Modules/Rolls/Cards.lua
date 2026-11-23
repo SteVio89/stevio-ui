@@ -186,22 +186,14 @@ local function CreateCardFrame()
 	frame.icon:SetPoint("TOPLEFT", left, -padding)
 	ns.CropIcon(frame.icon)
 
-	frame.close = CreateFrame("Button", nil, frame)
-	frame.close:SetSize(config.iconSize, config.iconSize)
-	frame.close:SetPoint("TOPRIGHT", -padding + 4, -padding)
-	frame.close.label = ns.CreateFontString(frame.close, config.fontSize, "CENTER")
-	frame.close.label:SetAllPoints()
-	frame.close.label:SetText("✕")
-	frame.close.label:SetTextColor(0.7, 0.7, 0.7)
-	frame.close:SetHighlightTexture(style.texture)
-	frame.close:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.1)
-	frame.close:SetScript("OnClick", function(self)
+	frame.close = ns.CreateCloseButton(frame, config.iconSize, function(self)
 		local card = self:GetParent().card
 		if card then
 			Remove(card)
 			Cards.Layout()
 		end
 	end)
+	frame.close:SetPoint("TOPRIGHT", -padding + 4, -padding)
 
 	frame.name = ns.CreateFontString(frame, config.fontSize)
 	frame.name:SetPoint("LEFT", frame.icon, "RIGHT", 6, 0)

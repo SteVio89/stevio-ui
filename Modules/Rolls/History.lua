@@ -219,7 +219,7 @@ local function CreateWindow()
 	title:SetPoint("TOPLEFT", 8, -9)
 	title:SetText(T("Loot rolls", "Beutewürfe"))
 
-	local close = TextButton(frame, "✕", function()
+	local close = ns.CreateCloseButton(frame, 20, function()
 		frame:Hide()
 	end)
 	close:SetPoint("TOPRIGHT", -4, -5)
