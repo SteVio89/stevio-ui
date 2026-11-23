@@ -111,7 +111,8 @@ function Marks:OnEnable()
 		count * config.buttonSize + (count - 1) * config.buttonGap + 2 * config.padding,
 		config.buttonSize + 2 * config.padding
 	)
-	ns.CreatePanel(bar)
+	-- No glass edge: its light line reads as a second border (#77).
+	ns.CreatePanel(bar, { edge = false })
 	ns.SetPoint(bar, ns.layout.marks, Minimap)
 
 	for position, symbol in ipairs(Symbols.LIST) do

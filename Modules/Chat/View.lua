@@ -120,7 +120,7 @@ end
 local function CreateHeading()
 	local heading = ns.CreateFontString(C.ui.list, config.sidebarFontSize - 3, "LEFT")
 	heading:SetHeight(config.headerHeight)
-	heading:SetJustifyV("BOTTOM")
+	heading:SetJustifyV("MIDDLE")
 	heading:SetTextColor(unpack(style.palette.textFaint))
 	return heading
 end
@@ -388,8 +388,8 @@ function C.CreateChannelView()
 	-- The panel color without its alpha: the background's opacity is its own (below).
 	local panel = style.palette.panel
 	ui.background = ns.CreateBackground(frame, { panel[1], panel[2], panel[3], 1 }, -7)
+	-- No glass edge: its light line reads as a second border (#77).
 	ns.CreateBorder(frame)
-	ns.CreateInnerEdge(frame)
 	ns.CreateShadow(frame)
 	C.GREY = ns.Hex(style.palette.textFaint)
 	ui.frame = frame

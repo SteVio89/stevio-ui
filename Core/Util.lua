@@ -197,7 +197,7 @@ end
 
 -- The common panel: background (palette.panel unless `opts.color`), black
 -- border, glass edge and shadow. `opts`: color, background (false for none),
--- shadow (false for none), shadowSize, shadowSides.
+-- edge (false for none), shadow (false for none), shadowSize, shadowSides.
 function ns.CreatePanel(frame, opts)
 	opts = opts or {}
 	local panel = {}
@@ -205,7 +205,9 @@ function ns.CreatePanel(frame, opts)
 		panel.background = ns.CreateBackground(frame, opts.color)
 	end
 	panel.border = ns.CreateBorder(frame)
-	panel.edge = ns.CreateInnerEdge(frame)
+	if opts.edge ~= false then
+		panel.edge = ns.CreateInnerEdge(frame)
+	end
 	if opts.shadow ~= false then
 		panel.shadow = ns.CreateShadow(frame, opts.shadowSize, opts.shadowSides)
 	end
