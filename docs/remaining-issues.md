@@ -253,6 +253,10 @@ Go through each with `style.theme = "dusk"` and once more with `"violet"`
   shows Blizzard's input box there, sending or Escape hides it again; the
   last message line (g, y, item links, raid icons) keeps clear of the input
   line's border.
+- Chat last line (#89): the descenders of the newest message line (g, y in
+  "Helga ... gn8"), its shadow and raid icons show in full instead of being
+  cut off at the bottom, and still stop above the input line's border; the
+  oldest line at the top is still cut off at the header line.
 - Group cells in a real group (#80): class-colored health, name and power
   instead of plain white cells. If `/sui errors` lists an error from an aura
   container, the cells still paint; only that debuff or HoT group stays
