@@ -7,6 +7,12 @@ local _, ns = ...
 
 local labels = {
 	absorbColor = { "Absorb shields", "Absorbschilde" },
+	accent = {
+		"Accent",
+		"Akzent",
+		"The one accent color, only for active states.",
+		"Die einzige Akzentfarbe, nur für aktive Zustände.",
+	},
 	activeColor = { "Marked symbol", "Markiertes Symbol" },
 	activeAlpha = {
 		"Opacity when read",
@@ -433,12 +439,19 @@ local labels = {
 	targetColor = { "Target border", "Ziel-Rahmen" },
 	taxi = { "Flight list", "Flugliste" },
 	textEmote = { "Text emote", "Text-Emote" },
+	textMuted = {
+		"Muted text",
+		"Text gedämpft",
+		"Labels, levels and side notes.",
+		"Beschriftungen, Stufen und Nebeninfos.",
+	},
 	textShadow = {
 		"Text shadow",
 		"Textschatten",
 		"Text gets a drop shadow instead of an outline.",
 		"Text bekommt einen Schatten statt einer Kontur.",
 	},
+	textStrong = { "Strong text", "Text betont", "Names and important values.", "Namen und wichtige Werte." },
 	texture = { "Texture", "Textur" },
 	theme = { "Theme", "Farbschema", "dusk or violet; needs /reload.", "dusk oder violet; braucht /reload." },
 	themes = { "Themes", "Farbschemata" },

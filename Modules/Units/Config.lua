@@ -44,12 +44,12 @@ ns.config.units = {
 	-- Target of target has no change event, so it's polled.
 	pollInterval = 0.2,
 
-	-- Spell name on the left, remaining seconds on the right.
+	-- Spell name on the left, remaining seconds on the right; the bar is in
+	-- the theme's accent unless the cast can't be interrupted.
 	castBar = {
 		height = 14,
 		fontSize = 10,
 		gap = 6,
-		color = { 1, 0.8, 0.2 },
 		notInterruptibleColor = { 0.6, 0.6, 0.6 },
 		-- The focus frame's own, smaller cast bar.
 		focusHeight = 10,

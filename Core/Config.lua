@@ -22,6 +22,9 @@ ns.config.style = {
 			edgeTop = { 1, 1, 1, 0.07 },
 			edgeInner = { 1, 1, 1, 0.03 },
 			shadow = { 0, 0, 0, 0.45 },
+			textStrong = { 0.95, 0.94, 0.92 },
+			textMuted = { 0.54, 0.56, 0.60 },
+			accent = { 0.78, 0.65, 0.38 },
 		},
 		-- Violet tinted black, muted dark violet accent.
 		violet = {
@@ -29,6 +32,9 @@ ns.config.style = {
 			edgeTop = { 0.77, 0.63, 1, 0.12 },
 			edgeInner = { 0.77, 0.63, 1, 0.04 },
 			shadow = { 0, 0, 0, 0.45 },
+			textStrong = { 0.96, 0.94, 0.98 },
+			textMuted = { 0.56, 0.53, 0.63 },
+			accent = { 0.52, 0.33, 0.79 },
 		},
 	},
 

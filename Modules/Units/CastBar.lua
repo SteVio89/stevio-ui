@@ -132,18 +132,20 @@ end
 -- `options`: height and fontSize (default: the castBar config).
 function ns.CreateCastBar(unit, sizeFrame, anchor, align, options)
 	options = options or {}
-	castColor = castColor or CreateColor(unpack(config.color))
+	-- Casts are the one bar in the theme's accent.
+	castColor = castColor or CreateColor(unpack(ns.config.style.palette.accent))
 	notInterruptibleColor = notInterruptibleColor or CreateColor(unpack(config.notInterruptibleColor))
 	local castBar = ns.CreateStatusBar(UIParent)
 	castBar.unit = unit
 	castBar:SetSize(sizeFrame:GetWidth(), options.height or config.height)
 	castBar:SetPoint("TOP" .. align, anchor, "BOTTOM" .. align, 0, -config.gap)
-	ns.CreateBackground(castBar)
-	ns.CreateBorder(castBar)
+	ns.CreatePanel(castBar)
+	ns.CreateBarShade(castBar)
 
 	local fontSize = options.fontSize or config.fontSize
 	castBar.time = ns.CreateFontString(castBar, fontSize, "RIGHT")
 	castBar.time:SetPoint("RIGHT", -3, 0)
+	castBar.time:SetAlpha(0.8)
 	castBar.spellName = ns.CreateFontString(castBar, fontSize, "LEFT")
 	castBar.spellName:SetPoint("LEFT", 3, 0)
 	castBar.spellName:SetPoint("RIGHT", castBar.time, "LEFT", -4, 0)
