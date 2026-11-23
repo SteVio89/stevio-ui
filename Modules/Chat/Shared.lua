@@ -136,8 +136,14 @@ function C.Label(channel)
 	return channel.label
 end
 
+-- The open channel: a stored one, or the view of a sidebar heading's
+-- channels (C.GroupChannel).
 function C.Selected()
-	return C.state.selected and C.store:Get(C.state.selected)
+	local key = C.state.selected
+	if key and C.IsGroupKey(key) then
+		return C.GroupChannel(C.store:Sorted(config.kindOrder), key)
+	end
+	return key and C.store:Get(key)
 end
 
 -- Whether lines of `def` (see config.events) show in Main as well.
@@ -159,6 +165,11 @@ end
 function C.MarkRead(key)
 	if C.IsMain(key) then
 		C.store:MarkMergedRead()
+	elseif C.IsGroupKey(key) then
+		local group = C.GroupChannel(C.store:Sorted(config.kindOrder), key)
+		for _, channel in ipairs(group and group.members or {}) do
+			C.store:MarkRead(channel.key)
+		end
 	else
 		C.store:MarkRead(key)
 	end
@@ -273,14 +284,17 @@ function C.SidebarEntries(channels)
 				index = index + 1
 			end
 			for _, key in ipairs(order) do
-				entries[#entries + 1] = { header = key ~= "" and key or ns.T("Channels", "Kanäle") }
+				entries[#entries + 1] = {
+					header = key ~= "" and key or ns.T("Channels", "Kanäle"),
+					group = key ~= "" and ("group:name:" .. key:lower()) or "group:channels",
+				}
 				for _, item in ipairs(groups[key]) do
 					Add(item.channel, item.label)
 				end
 			end
 		else
 			if LOG_KINDS[channel.kind] and not logHeader then
-				entries[#entries + 1] = { header = ns.T("Log", "Protokoll") }
+				entries[#entries + 1] = { header = ns.T("Log", "Protokoll"), group = "group:log" }
 				logHeader = true
 			end
 			Add(channel)
@@ -288,6 +302,77 @@ function C.SidebarEntries(channels)
 		end
 	end
 	return entries
+end
+
+-- A click on a heading opens all channels under it as one (#78): the lines
+-- of each, merged in the order they came, named by their row's label like
+-- the lines in Main. Such a view is keyed by its heading's `group`.
+function C.IsGroupKey(key)
+	return key ~= nil and key:sub(1, 6) == "group:"
+end
+
+-- The lines of the channels `members`, oldest first, each a copy naming its
+-- channel (`labels[key]`, see History.Mirror); lines of the same time keep
+-- the members' order.
+function C.GroupMessages(members, labels)
+	local lines = {}
+	for _, channel in ipairs(members) do
+		for _, entry in ipairs(channel.messages) do
+			lines[#lines + 1] = {
+				entry = History.Mirror(entry, channel.key, labels[channel.key], channel.chatType),
+				order = #lines,
+			}
+		end
+	end
+	table.sort(lines, function(a, b)
+		local ta, tb = a.entry.time or 0, b.entry.time or 0
+		if ta ~= tb then
+			return ta < tb
+		end
+		return a.order < b.order
+	end)
+	local messages = {}
+	for i, line in ipairs(lines) do
+		messages[i] = line.entry
+	end
+	return messages
+end
+
+-- Its lines are only merged when they are read.
+local GroupView = {
+	__index = function(group, field)
+		if field == "messages" then
+			local messages = C.GroupMessages(group.members, group.labels)
+			rawset(group, "messages", messages)
+			return messages
+		end
+	end,
+}
+
+-- The view of the heading keyed `key` among `channels` (in sidebar order):
+-- a read-only channel of the rows under that heading (`members`, with their
+-- row labels in `labels` by key) whose unread count is theirs together.
+-- nil when there is no such heading (any more).
+function C.GroupChannel(channels, key)
+	local group
+	for _, entry in ipairs(C.SidebarEntries(channels)) do
+		if entry.header then
+			if group then
+				break
+			end
+			if entry.group == key then
+				group = { key = key, kind = "group", label = entry.header, readOnly = true, unread = 0, last = 0 }
+				group.members, group.labels = {}, {}
+			end
+		elseif group then
+			local channel = entry.channel
+			group.members[#group.members + 1] = channel
+			group.labels[channel.key] = entry.label
+			group.unread = group.unread + C.Unread(channel)
+			group.last = math.max(group.last, channel.last or 0)
+		end
+	end
+	return group and setmetatable(group, GroupView)
 end
 
 -- Each entry's top (from the list's top) and the list's height: headings
