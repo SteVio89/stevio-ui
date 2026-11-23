@@ -98,6 +98,9 @@ local ns = {
 	PlayerWidgets = {
 		SummaryText = function() end,
 		BlockReason = function() end,
+		VerdictText = function(player)
+			return player.verdict
+		end,
 	},
 }
 loadAddonFile("Modules/Players/Config.lua", ns)
@@ -136,6 +139,29 @@ Fire("GROUP_ROSTER_UPDATE")
 check(not bob.sessions[1].open and bob.sessions[1].stop == 1300, "session closed on leaving")
 check(#popups == 1 and popups[1][1].name == "Bob", "popup after leaving")
 print("roster ok")
+
+-- #86: a player you avoid joins: a red line, also without rating or note.
+bob.verdict = "avoid"
+printed = {}
+inGroup, party = true, { { name = "Bob", role = "HEALER" } }
+now = 1900
+Fire("GROUP_ROSTER_UPDATE")
+check(#printed == 1 and printed[1]:find("^|cffff5050In your group: Bob") and printed[1]:find("avoid"), "red line")
+bob.verdict = "like"
+inGroup, party, popups = false, {}, {}
+now = 1950
+Fire("GROUP_ROSTER_UPDATE")
+inGroup, party = true, { { name = "Bob", role = "HEALER" } }
+now = 1950 + 400 -- after the rejoin grace: a new session
+printed = {}
+Fire("GROUP_ROSTER_UPDATE")
+check(#printed == 1 and not printed[1]:find("|cffff5050", 1, true), "plain line for a liked player")
+inGroup, party, popups = false, {}, {}
+now = 1950 + 500
+Fire("GROUP_ROSTER_UPDATE")
+bob.verdict = nil
+popups = {}
+print("verdict ok")
 
 -- Logging out in a group, back a day later alone: the session ends at the
 -- logout, so the day offline isn't counted.

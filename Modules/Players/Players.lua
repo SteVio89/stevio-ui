@@ -162,17 +162,23 @@ local function WarnInGroup(player)
 	end
 end
 
+-- The line when someone you know joins: rating, verdict, tags and note. Red
+-- for players you chose to avoid, like the marked ones (#86).
 local function Remind(player)
 	WarnInGroup(player)
-	if not config.joinReminder or not (player.note or Store.HasRating(player)) then
+	local known = player.note or Store.HasRating(player) or player.verdict or player.tags
+	if not config.joinReminder or not known then
 		return
 	end
-	local parts = { W.ClassColored(player.name, player.class) }
+	local avoid = player.verdict == "avoid"
+	local parts = { W.ClassColored(player.name, player.class) .. (avoid and WARN_COLOR or "") }
+	parts[#parts + 1] = PW.VerdictText(player, not avoid)
 	parts[#parts + 1] = PW.SummaryText(player) or T("not rated", "nicht bewertet")
 	if player.note then
-		parts[#parts + 1] = NOTE_COLOR .. Store.Title(player.note) .. "|r"
+		parts[#parts + 1] = (avoid and "" or NOTE_COLOR) .. Store.Title(player.note) .. (avoid and "" or "|r")
 	end
-	ns.Print(T("In your group: %s", "In deiner Gruppe: %s"):format(table.concat(parts, " · ")))
+	local text = T("In your group: %s", "In deiner Gruppe: %s"):format(table.concat(parts, " · "))
+	ns.Print(avoid and (WARN_COLOR .. text .. "|r") or text)
 end
 
 local function EndSession(name, now)
@@ -288,6 +294,10 @@ local function AddUnitLines(tooltip)
 	end
 	if player.blocked then
 		tooltip:AddLine(WARN_COLOR .. T("Marked: ", "Markiert: ") .. PW.BlockReason(player) .. "|r", 1, 1, 1, true)
+	end
+	local verdict = PW.VerdictText(player, true)
+	if verdict then
+		tooltip:AddLine(verdict, 1, 1, 1, true)
 	end
 	local summary = PW.SummaryText(player)
 	if summary then

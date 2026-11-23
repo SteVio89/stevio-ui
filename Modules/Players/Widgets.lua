@@ -151,6 +151,27 @@ function PW.LootText(stats)
 	return table.concat(parts, " · ")
 end
 
+-- "Avoid · Needs on everything, Rage quit": the verdict and the tags, nil
+-- when there are neither. Colored when `colored`: red for avoid, green for
+-- play again.
+function PW.VerdictText(player, colored)
+	local parts = {}
+	if player.verdict == "avoid" then
+		parts[1] = T("Avoid", "Meiden")
+	elseif player.verdict == "like" then
+		parts[1] = T("Play again", "Gerne wieder")
+	end
+	if player.tags and #player.tags > 0 then
+		parts[#parts + 1] = table.concat(player.tags, ", ")
+	end
+	if #parts == 0 then
+		return nil
+	end
+	local text = table.concat(parts, " · ")
+	local color = colored and ns.config.players.colors[player.verdict or ""]
+	return color and (ns.Hex(color) .. text .. "|r") or text
+end
+
 -- Why a player is marked: "guild <Name> (matches "pattern")", plus where
 -- they were seen since when that is another guild. Nil when not marked.
 function PW.BlockReason(player)
