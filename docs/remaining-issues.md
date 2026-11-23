@@ -157,3 +157,54 @@ need a check in game.
   the loot ticker comes back when it closes.
 - `replaceBlizzardRolls = false` + `/reload`: Blizzard's popup is back and
   our card appears after rolling there.
+
+### New design (#76, themes Dusk and Night violet)
+Go through each with `style.theme = "dusk"` and once more with `"violet"`
+(`/reload` after switching).
+- Fonts: the chat header's `›`, the date line's `——` and the money squares
+  render (the standard font may lack a glyph; then it shows as a box).
+- Unit frames: shade and tinted missing health visible, text readable; no Lua
+  errors (`/sui errors`) with a hostile player targeted outside the group in
+  combat (secret health and class colors on the bar and its background).
+- Cast bar in the accent; not interruptible stays grey.
+- Action buttons: hover edge, pushed, checked (accent tint and edge, also on
+  the active stance), cooldown, red keybinding out of range, empty slots only
+  a hint. The keybinding keeps Blizzard's grey instead of `textMuted`, so the
+  range tint keeps working.
+- Set switcher: the dots follow the set.
+- `/sui test 5`, `20`, `40`: name, role, debuffs and HoTs don't overlap; dead,
+  out of range, aggro (inner edge) and target (2 px outside) look right.
+  Damage dealers show no role icon (Blizzard's role delegate is handed an
+  empty texture for them).
+- Real group in combat: dispellable debuffs with a blue edge on the right,
+  other debuffs continue to their left (the second aura container is anchored
+  to the first, which sizes itself to its icons; check it closes up when there
+  is no dispellable debuff). At most 2 dispellable + 1 other show. No taint.
+  Not built: an extra blue inner edge on the cell while a dispellable debuff is
+  up, as that can't be read safely in combat; the icon edge has to do.
+- Keyboard healing cursor still visible with and without a target (its
+  colors are unchanged, violet).
+- Chat: headings and zone groups, pills, `✕` only on hover (also while the
+  cursor moves onto the `✕`), accent marker, scrolling with many channels,
+  date line.
+- Notch island: round corners (Media/Corner.tga), shadow, grid with and
+  without rested XP and reputation, many addon buttons muted until hovered,
+  accent edge on the notes/players/rolls button while its window is open;
+  also without a notch (fallback).
+- Minimap: zone and time update; the tracking icon sits above the fade, the
+  mail icon now at the lower right; `,` still hides the corner with the fade.
+- Micro menu and bags: muted icons light up on hover and stay muted after
+  Blizzard swaps a micro button's atlas; the panels sit behind both rows and
+  hide with the corner. Micro buttons moved to the vehicle bar leave their
+  (then empty) panel behind.
+- Mark toolbar: panel with padding; the tooltip still sits above it.
+- Tooltip: panel color and black border on every tooltip kind
+  (`themedBackdrop` turns it off if it causes trouble).
+- Different UI scales (0.64, 0.8, 1.0): 1 px edges stay sharp.
+
+Left out on purpose:
+- The buffs and debuffs at the top right (Blizzard's aura buttons) are
+  unchanged: restyling them from addon code risks taint while auras are secret.
+- The Inter font (optional in the spec) is not bundled; the standard font stays.
+- No free bag slot count next to the bags (`showFreeSlots`, optional).
+- The mana color stays Blizzard's.

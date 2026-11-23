@@ -91,8 +91,194 @@ function ns.CreateBorder(frame, sublevel, size)
 	return border
 end
 
--- Near-black backdrop of small overlay panels (flight list).
-ns.PANEL_COLOR = { 0, 0, 0, 0.9 }
+-- Like CreateBorder, but the edges sit inside the frame: state edges (accent,
+-- aggro, dispel) on top of the content without moving it. `layer` defaults
+-- to OVERLAY.
+function ns.CreateInsetBorder(frame, sublevel, size, layer)
+	local px = ns.PixelSize(frame) * (size or 1)
+	local border = setmetatable({}, Border)
+	for i = 1, 4 do
+		border[i] = frame:CreateTexture(nil, layer or "OVERLAY", nil, sublevel or 5)
+	end
+	local top, bottom, left, right = border[1], border[2], border[3], border[4]
+
+	top:SetPoint("TOPLEFT")
+	top:SetPoint("TOPRIGHT")
+	top:SetHeight(px)
+	bottom:SetPoint("BOTTOMLEFT")
+	bottom:SetPoint("BOTTOMRIGHT")
+	bottom:SetHeight(px)
+	left:SetPoint("TOPLEFT", 0, -px)
+	left:SetPoint("BOTTOMLEFT", 0, px)
+	left:SetWidth(px)
+	right:SetPoint("TOPRIGHT", 0, -px)
+	right:SetPoint("BOTTOMRIGHT", 0, px)
+	right:SetWidth(px)
+
+	border:SetColor(unpack(style.borderColor))
+	return border
+end
+
+-- A click-through frame over `frame` and its child frames (bars, aura
+-- icons), for edges that must not disappear under them.
+function ns.CreateOverlay(frame, levels)
+	local overlay = CreateFrame("Frame", nil, frame)
+	overlay:SetAllPoints()
+	overlay:SetFrameLevel(frame:GetFrameLevel() + (levels or 10))
+	return overlay
+end
+
+-- The glass edge of a panel: a light line along the inside of its top edge
+-- and a faint inner frame, above the panel's child frames. `topOnly` skips
+-- the frame (small icons).
+function ns.CreateInnerEdge(frame, topOnly)
+	local palette = style.palette
+	local px = ns.PixelSize(frame)
+	local overlay = ns.CreateOverlay(frame)
+	local edge = { overlay = overlay }
+	if not topOnly then
+		edge.inner = ns.CreateInsetBorder(overlay, 6)
+		edge.inner:SetColor(unpack(palette.edgeInner))
+	end
+	edge.top = overlay:CreateTexture(nil, "OVERLAY", nil, 7)
+	edge.top:SetPoint("TOPLEFT")
+	edge.top:SetPoint("TOPRIGHT")
+	edge.top:SetHeight(px)
+	edge.top:SetColorTexture(unpack(palette.edgeTop))
+	return edge
+end
+
+-- Where each shadow strip sits and which way it fades: SetGradient's min
+-- color is the bottom (VERTICAL) or left (HORIZONTAL) end.
+local SHADOW_SIDES = {
+	top = { "BOTTOMLEFT", "TOPLEFT", "BOTTOMRIGHT", "TOPRIGHT", "VERTICAL", true },
+	bottom = { "TOPLEFT", "BOTTOMLEFT", "TOPRIGHT", "BOTTOMRIGHT", "VERTICAL", false },
+	left = { "TOPRIGHT", "TOPLEFT", "BOTTOMRIGHT", "BOTTOMLEFT", "HORIZONTAL", false },
+	right = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "HORIZONTAL", true },
+}
+
+-- A soft shadow outside the black border: strips `size` (default 4) wide
+-- that fade from palette.shadow to nothing. The corners stay empty, which is
+-- invisible at this size. `sides` limits it (e.g. { bottom = true }).
+function ns.CreateShadow(frame, size, sides)
+	size = size or 4
+	local px = ns.PixelSize(frame)
+	local r, g, b, a = unpack(style.palette.shadow)
+	local dark, clear = CreateColor(r, g, b, a), CreateColor(r, g, b, 0)
+	local shadow = {}
+	for side, spec in pairs(SHADOW_SIDES) do
+		if not sides or sides[side] then
+			local point1, relative1, point2, relative2, orientation, darkFirst = unpack(spec)
+			local strip = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
+			strip:SetTexture(style.texture)
+			local vertical = orientation == "VERTICAL"
+			local dx = vertical and 0 or (side == "left" and -px or px)
+			local dy = vertical and (side == "top" and px or -px) or 0
+			-- Along the side, the strip covers the border's corners as well.
+			local ax = vertical and px or 0
+			local ay = vertical and 0 or px
+			strip:SetPoint(point1, frame, relative1, dx - ax, dy + ay)
+			strip:SetPoint(point2, frame, relative2, dx + ax, dy - ay)
+			if vertical then
+				strip:SetHeight(size)
+			else
+				strip:SetWidth(size)
+			end
+			if darkFirst then
+				strip:SetGradient(orientation, dark, clear)
+			else
+				strip:SetGradient(orientation, clear, dark)
+			end
+			shadow[side] = strip
+		end
+	end
+	return shadow
+end
+
+-- The common panel: background (palette.panel unless `opts.color`), black
+-- border, glass edge and shadow. `opts`: color, background (false for none),
+-- shadow (false for none), shadowSize, shadowSides.
+function ns.CreatePanel(frame, opts)
+	opts = opts or {}
+	local panel = {}
+	if opts.background ~= false then
+		panel.background = ns.CreateBackground(frame, opts.color)
+	end
+	panel.border = ns.CreateBorder(frame)
+	panel.edge = ns.CreateInnerEdge(frame)
+	if opts.shadow ~= false then
+		panel.shadow = ns.CreateShadow(frame, opts.shadowSize, opts.shadowSides)
+	end
+	return panel
+end
+
+-- Depth on a status bar without touching its color, which may be secret: a
+-- neutral overlay on the fill, darker at the bottom and lighter at the top,
+-- plus a light line along the top. `half` halves the overlay and drops the line.
+function ns.CreateBarShade(bar, half)
+	local strength = half and 0.5 or 1
+	local fill = bar:GetStatusBarTexture()
+	local shade = bar:CreateTexture(nil, "ARTWORK", nil, 7)
+	shade:SetTexture(style.texture)
+	shade:SetAllPoints(fill)
+	shade:SetGradient("VERTICAL", CreateColor(0, 0, 0, 0.30 * strength), CreateColor(1, 1, 1, 0.10 * strength))
+	bar.shade = shade
+	if not half then
+		local light = bar:CreateTexture(nil, "ARTWORK", nil, 7)
+		light:SetPoint("TOPLEFT")
+		light:SetPoint("TOPRIGHT")
+		light:SetHeight(ns.PixelSize(bar))
+		light:SetColorTexture(1, 1, 1, 0.25)
+		bar.light = light
+	end
+	return shade
+end
+
+-- The part of a bar the fill doesn't cover (missing health), tinted with the
+-- bar's color (ns.SetTrackColor) instead of grey.
+function ns.CreateTintedTrack(bar)
+	local track = bar:CreateTexture(nil, "BACKGROUND")
+	track:SetAllPoints()
+	track:SetTexture(style.texture)
+	return track
+end
+
+-- The color may be secret: SetVertexColor takes it as it is.
+function ns.SetTrackColor(track, r, g, b)
+	track:SetVertexColor(r, g, b, 0.14)
+end
+
+-- Muted icons that come to full color on hover.
+function ns.Desaturate(region, on)
+	region:SetDesaturated(on)
+	region:SetAlpha(on and 0.62 or 1)
+end
+
+-- Desaturates what `regions(frame)` returns while the mouse is off `frame`.
+-- A function, because Blizzard swaps some textures (micro menu atlases).
+-- Returns the setter (true: muted), to reapply after such a swap.
+function ns.DesaturateUntilHover(frame, regions)
+	local function Set(on)
+		for _, region in ipairs(regions(frame)) do
+			ns.Desaturate(region, on)
+		end
+	end
+	frame:HookScript("OnEnter", function()
+		Set(false)
+	end)
+	frame:HookScript("OnLeave", function()
+		Set(true)
+	end)
+	Set(true)
+	return Set
+end
+
+-- Backdrop of windows and overlay panels (notes, players, flight list): the
+-- theme's panel color, a little more opaque.
+function ns.PanelColor()
+	local panel = style.palette.panel
+	return { panel[1], panel[2], panel[3], 0.9 }
+end
 
 -- `color` defaults to the style's background colour.
 function ns.CreateBackground(frame, color, sublevel)
@@ -125,9 +311,23 @@ function ns.CreateStatusBar(parent)
 	return bar
 end
 
-function ns.CreateFontString(parent, size, justify)
+-- With style.textShadow, text gets a drop shadow instead of the outline;
+-- `outline` keeps the outline as well, for text on bright bars.
+function ns.SetFont(text, size, outline)
+	local shadow = style.textShadow
+	text:SetFont(style.font, size or style.fontSize, (outline or not shadow) and style.fontFlags or "")
+	if shadow then
+		local offset = outline and 0.5 or 1
+		text:SetShadowOffset(offset, -offset)
+		text:SetShadowColor(0, 0, 0, 1)
+	else
+		text:SetShadowOffset(0, 0)
+	end
+end
+
+function ns.CreateFontString(parent, size, justify, outline)
 	local text = parent:CreateFontString(nil, "OVERLAY")
-	text:SetFont(style.font, size or style.fontSize, style.fontFlags)
+	ns.SetFont(text, size, outline)
 	text:SetJustifyH(justify or "LEFT")
 	text:SetWordWrap(false)
 	return text
@@ -292,8 +492,9 @@ function ns.CreateSeparator(frame, edge, relativeTo, relativeEdge)
 	separator:SetHeight(ns.PixelSize(frame))
 end
 
--- A cropped aura icon with a cooldown swipe, a stack count and a border.
-function ns.StyleAuraIcon(icon, size, countSize)
+-- A cropped aura icon with a cooldown swipe, a stack count and a border
+-- (icon.border, black unless `borderColor`).
+function ns.StyleAuraIcon(icon, size, countSize, borderColor)
 	icon:SetSize(size, size)
 
 	icon.texture = icon:CreateTexture(nil, "ARTWORK")
@@ -309,24 +510,28 @@ function ns.StyleAuraIcon(icon, size, countSize)
 	icon.count = ns.CreateFontString(icon, countSize, "RIGHT")
 	icon.count:SetPoint("BOTTOMRIGHT", 1, -1)
 
-	ns.CreateBorder(icon)
+	icon.border = ns.CreateBorder(icon)
+	if borderColor then
+		icon.border:SetColor(unpack(borderColor))
+	end
+	ns.CreateInnerEdge(icon, true)
 end
 
 -- Sets up a button of Blizzard's secure aura container. This runs once per
 -- button before Blizzard locks it against tainted access while auras are
 -- secret, so it is the only place our code may touch it.
-function ns.InitAuraButton(button, size, countSize)
+function ns.InitAuraButton(button, size, countSize, borderColor)
 	button:EnableMouse(false)
-	ns.StyleAuraIcon(button, size, countSize)
+	ns.StyleAuraIcon(button, size, countSize, borderColor)
 	button:SetIcon(button.texture)
 	button:SetDurationCooldown(button.cooldown)
 	button:SetApplicationCount(button.count)
 end
 
 -- An initializeFrame callback for AuraContainer:AddAuraGroup.
-function ns.AuraButtonInitializer(size, countSize)
+function ns.AuraButtonInitializer(size, countSize, borderColor)
 	return function(button)
-		ns.InitAuraButton(button, size, countSize)
+		ns.InitAuraButton(button, size, countSize, borderColor)
 	end
 end
 

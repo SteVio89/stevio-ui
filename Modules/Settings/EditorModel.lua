@@ -10,7 +10,11 @@ ns.EditorModel = Model
 
 -- Paths the editor never shows: the profile has pages of its own, and the
 -- settings module builds this panel, so turning it off would lock it away.
+-- The palette and the background are copied from the chosen theme
+-- (Core/Theme.lua), so the theme's own colors are what can be changed.
 Model.HIDDEN = {
+	["config/style/palette"] = true,
+	["config/style/backgroundColor"] = true,
 	["config/settings/profile"] = true,
 	["config/settings/enabled"] = true,
 }

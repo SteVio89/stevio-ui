@@ -21,7 +21,62 @@ local function MatchingBagPercent(microPercent)
 	return Menubar.BagPercent(microPercent, CharacterMicroButton:GetHeight() / MainMenuBarBackpackButton:GetHeight())
 end
 
+-- Every texture of `button`: the micro buttons are atlases Blizzard swaps,
+-- so the textures are muted again whenever it does (see MuteButton).
+local function Textures(button)
+	local textures = {}
+	for _, region in ipairs({ button:GetRegions() }) do
+		if region:IsObjectType("Texture") then
+			textures[#textures + 1] = region
+		end
+	end
+	return textures
+end
+
+local SWAPPING_METHODS = { "SetNormalAtlas", "SetPushedAtlas", "SetNormalTexture", "SetPushedTexture" }
+
+-- Muted until hovered. Only looks: the buttons keep their positions and scripts.
+local function MuteButton(button)
+	local set = ns.DesaturateUntilHover(button, Textures)
+	local function Reapply()
+		set(not button:IsMouseOver())
+	end
+	for _, method in ipairs(SWAPPING_METHODS) do
+		if button[method] then
+			hooksecurefunc(button, method, Reapply)
+		end
+	end
+end
+
+-- A narrow panel behind a row of buttons, a little larger than the row.
+local function BackPanel(row)
+	local panel = CreateFrame("Frame", nil, row)
+	panel:SetPoint("TOPLEFT", -3, 3)
+	panel:SetPoint("BOTTOMRIGHT", 3, -3)
+	panel:SetFrameLevel(row:GetFrameLevel())
+	ns.CreatePanel(panel)
+end
+
+local function StyleRow(row)
+	BackPanel(row)
+	for _, child in ipairs({ row:GetChildren() }) do
+		if child:IsObjectType("Button") then
+			MuteButton(child)
+		else
+			-- Bag slots sit in a cluster frame of their own.
+			for _, inner in ipairs({ child:GetChildren() }) do
+				if inner:IsObjectType("Button") then
+					MuteButton(inner)
+				end
+			end
+		end
+	end
+end
+
 function ns.CreateMenubar(config)
+	StyleRow(MicroMenu)
+	StyleRow(BagsBar)
+
 	ns.SetEditModeSystem(Enum.EditModeSystem.MicroMenu, nil, ns.layout.menubar, {
 		[Enum.EditModeMicroMenuSetting.Size] = Menubar.SizeSetting(config.menubarSize, MICRO_MIN),
 	})

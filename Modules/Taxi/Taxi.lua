@@ -102,8 +102,7 @@ local function CreatePanel()
 	panel = CreateFrame("Frame", "StevioUI_TaxiList", UIParent)
 	panel:SetWidth(config.width)
 	panel:SetFrameStrata("HIGH")
-	ns.CreateBackground(panel, ns.PANEL_COLOR)
-	ns.CreateBorder(panel)
+	ns.CreatePanel(panel, { color = ns.PanelColor() })
 	panel:Hide()
 
 	local padding = config.padding

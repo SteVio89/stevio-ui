@@ -171,7 +171,7 @@ local function CreateCardFrame()
 	frame:SetScript("OnEnter", OnCardEnter)
 	frame:SetScript("OnLeave", OnCardLeave)
 	frame:SetScript("OnClick", OnCardClick)
-	ns.CreateBackground(frame)
+	ns.CreatePanel(frame)
 
 	frame.stripe = frame:CreateTexture(nil, "ARTWORK")
 	frame.stripe:SetTexture(style.texture)

@@ -7,7 +7,6 @@ local _, ns = ...
 -- loaded after them (see stevio-ui.toc), but only at runtime, never while loading.
 
 local config = ns.config.chat
-local style = ns.config.style
 local History = ns.ChatHistory
 
 local C = {
@@ -49,7 +48,7 @@ end
 
 -- The font of the messages, the input line and the copy view.
 function C.ApplyFont(widget)
-	widget:SetFont(style.font, config.fontSize, style.fontFlags)
+	ns.SetFont(widget, config.fontSize)
 end
 
 function C.ChannelColor(channel)
@@ -60,7 +59,8 @@ function C.ColorCode(r, g, b)
 	return ("|cff%02x%02x%02x"):format(r * 255, g * 255, b * 255)
 end
 
--- Color code of time stamps and date lines.
+-- Color code of time stamps and date lines; the theme's faint text color once
+-- the channel view exists (View.lua).
 C.GREY = "|cff808080"
 
 function C.Day(t)
@@ -234,19 +234,87 @@ function C.PushPreview(items, item, maxRows)
 	return items
 end
 
--- Sidebar scrolling: `offset` is how far the channel list is scrolled down,
--- `viewHeight` how much of it fits. Returns `offset` kept within the list.
-function C.ClampSidebarScroll(offset, viewHeight, count, rowHeight)
-	return math.max(0, math.min(offset, count * rowHeight - viewHeight))
+-- The sidebar's sections ----------------------------------------------------
+
+-- Chat channels (grouped by name) and the read-only log channels each come
+-- under a heading.
+local CHANNEL_KINDS = { public = true, other = true }
+local LOG_KINDS = { npc = true, progress = true, system = true, notices = true }
+
+-- "General - Tanaris" -> "General", "Tanaris"; nil for a name without a zone.
+function C.SplitChannelLabel(label)
+	return label:match("^(.-) %- (.+)$")
 end
 
--- The scroll offset that shows row `index` whole, moving as little as possible.
-function C.ScrollToRow(offset, viewHeight, index, rowHeight)
-	local top = (index - 1) * rowHeight
+-- The sidebar's lines for `channels` (in sidebar order): { header = text }
+-- or { channel = channel, label = text }. Chat channels of one name (zone
+-- channels) come under that name and show only the zone; channels without a
+-- zone (Trade, own ones) under "Channels". Groups keep the order in which
+-- their first channel came.
+function C.SidebarEntries(channels)
+	local entries = {}
+	local function Add(channel, label)
+		entries[#entries + 1] = { channel = channel, label = label or C.Label(channel) }
+	end
+	local index, logHeader = 1, false
+	while index <= #channels do
+		local channel = channels[index]
+		if CHANNEL_KINDS[channel.kind] then
+			local groups, order = {}, {}
+			while channels[index] and CHANNEL_KINDS[channels[index].kind] do
+				local current = channels[index]
+				local base, zone = C.SplitChannelLabel(C.Label(current))
+				local key = base or ""
+				if not groups[key] then
+					groups[key] = {}
+					order[#order + 1] = key
+				end
+				table.insert(groups[key], { channel = current, label = zone })
+				index = index + 1
+			end
+			for _, key in ipairs(order) do
+				entries[#entries + 1] = { header = key ~= "" and key or ns.T("Channels", "Kanäle") }
+				for _, item in ipairs(groups[key]) do
+					Add(item.channel, item.label)
+				end
+			end
+		else
+			if LOG_KINDS[channel.kind] and not logHeader then
+				entries[#entries + 1] = { header = ns.T("Log", "Protokoll") }
+				logHeader = true
+			end
+			Add(channel)
+			index = index + 1
+		end
+	end
+	return entries
+end
+
+-- Each entry's top (from the list's top) and the list's height: headings
+-- are `headerHeight`, channels `rowHeight` high.
+function C.SidebarLayout(entries, rowHeight, headerHeight)
+	local tops, y = {}, 0
+	for index, entry in ipairs(entries) do
+		tops[index] = y
+		y = y + (entry.header and headerHeight or rowHeight)
+	end
+	return tops, y
+end
+
+-- Sidebar scrolling: `offset` is how far the channel list is scrolled down,
+-- `viewHeight` how much of the list (`listHeight` high) fits. Returns
+-- `offset` kept within the list.
+function C.ClampSidebarScroll(offset, viewHeight, listHeight)
+	return math.max(0, math.min(offset, listHeight - viewHeight))
+end
+
+-- The scroll offset that shows the row at `top` (`height` high) whole,
+-- moving as little as possible.
+function C.ScrollToRow(offset, viewHeight, top, height)
 	if top < offset then
 		return top
 	end
-	local bottom = top + rowHeight
+	local bottom = top + height
 	if bottom > offset + viewHeight then
 		return bottom - viewHeight
 	end

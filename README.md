@@ -20,13 +20,24 @@ until it is needed, and as much as possible can be done from the keyboard.
 
 ## Features
 
+- **Look** – two color themes with the same shapes, picked with `theme` in the
+  style options (`/reload` after a change): **Dusk** (blue-grey tinted black,
+  old gold accent) and **Night violet** (`violet`: violet tinted black, a muted
+  dark violet accent). Panels have a black border, a faint glass edge and a
+  soft shadow, text a drop shadow instead of an outline, bars a light shade
+  from top to bottom and a background tinted in their own color. The accent
+  only marks active things: the shown chat channel, the active action set,
+  checked buttons and stances, the cast bar, the target's raid symbol and the
+  notch button whose window is open.
 - **Unit frames** – player, target, focus, pet and target-of-target as slim
   bars with health text ("12.3k · 87%"), own cast bars with spell name and
   remaining time (focus has a smaller one), combo point segments and your own
   debuffs on the target in a row above it.
-- **Group grid** – up to 40 players; class colours, the name as a faint
-  watermark, resource, incoming heals and absorb shields, dispellable debuffs,
-  your own HoTs and buffs along the top, role, range, death, aggro and target highlight.
+- **Group grid** – up to 40 players; class colours, the name at the top left
+  (dark on priests, rogues and hunters), tank and healer icons at the top
+  right, up to three debuffs on the right (dispellable ones first, with a blue
+  edge), your own HoTs and buffs at the bottom left, resource, incoming heals
+  and absorb shields, range, death ("DEAD"/"OFFLINE"), aggro and target highlight.
   Left-click a cell to target that player, right-click for their menu.
 - **Keyboard healing** – the arrow keys (`keys` in the keyboard healing
   options; they lose their normal binding) move a cursor over the group grid and set
@@ -59,17 +70,20 @@ until it is needed, and as much as possible can be done from the keyboard.
   button in its lower left corner, size derived from the screen. Other
   addons' minimap buttons move into the notch island (the black panel that
   opens when the cursor reaches the top of the screen), in a clickable grid
-  below its other rows (`minimapButtons` in the notch options). The mail and
-  tracking icons stay on the map, the vehicle leave button sits below it.
+  below its other rows (`minimapButtons` in the notch options). The zone name
+  and the time sit on a dark fade along the map's top edge (`showZone`,
+  `showClock`). The tracking icon stays at the top left, the mail icon moves
+  to the lower right corner, the vehicle leave button sits below the map.
   `,` hides the whole lower right corner (the map with its icons, the mark
   toolbar and the micro menu) and shows it again; the choice is kept across
   sessions. The vehicle leave button stays.
-- **Notch island** – a black panel that grows out of the notch when the cursor
-  reaches the top of the screen (not while mouselooking) and hides again
-  shortly after it leaves: level and XP bar with rested XP, the watched
-  reputation, gold, free bag slots, lowest durability (yellow/red when low),
-  zone with coordinates, time, FPS and latency, online friends and guild
-  members, the players and notes buttons and the other addons' minimap buttons.
+- **Notch island** – a black panel with round bottom corners that grows out of
+  the notch when the cursor reaches the top of the screen (not while
+  mouselooking) and hides again shortly after it leaves: level and XP bar with
+  rested XP, the watched reputation, zone with coordinates, then a grid of
+  gold, free bag slots, lowest durability (yellow/red when low), time, FPS and
+  latency, online friends and guild members, and below the players, notes and
+  loot roll buttons and the other addons' minimap buttons (muted until hovered).
 - **Tooltip** – Blizzard's default tooltip position is moved above the minimap
   and the mark toolbar.
 - **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
@@ -77,8 +91,9 @@ until it is needed, and as much as possible can be done from the keyboard.
 - **Mark toolbar** – shown on top of the minimap, right aligned,
   with the default tooltip position above it: the eight raid symbols (skull
   first) and a clear button. Left click puts the symbol on the target or
-  takes it off again (the target's symbol is outlined; symbols are dimmed
-  while there is nothing to mark), left click on clear unmarks the target.
+  takes it off again (the target's symbol has an accent edge, the others are
+  muted until hovered and dimmed while there is nothing to mark), left click
+  on clear unmarks the target.
 - **Channel chat** – chat is organised in channels like
   Slack/Teams, with a persistent per-character history and a date line before
   the first message of each day (`dateFormat`):
@@ -115,7 +130,12 @@ until it is needed, and as much as possible can be done from the keyboard.
   Clicking a player's name in a message opens the whisper channel with them
   and starts typing into it; right click opens a menu to whisper or invite
   them.
-  `x` deletes any channel but guild and Main with its history. Nearby, chat
+  The channel list has headings: chat channels come grouped by name ("General"
+  with one row per zone, other channels under "Channels"), the read-only
+  channels under "Log". Unread counts sit in a small pill at the right of a
+  row; the shown channel is marked with a line in the accent color.
+  The `✕` that shows on a row under the cursor deletes any channel but guild
+  and Main with its history. Nearby, chat
   and community channels, NPC, Loot & Progress and System only count as unread
   unless their lines show in Main. Hidden by default, toggled by key or by the badge at the left
   screen edge, whose three segments light up on new whispers, group (party,

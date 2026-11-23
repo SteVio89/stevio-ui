@@ -102,7 +102,7 @@ local function Adopt(button, size)
 	slots[#slots + 1] = slot
 	-- Our own buttons come first, then the others by name.
 	table.sort(slots, function(a, b)
-		local aOwn, bOwn = own[a.button] or false, own[b.button] or false
+		local aOwn, bOwn = own[a.button] ~= nil, own[b.button] ~= nil
 		if aOwn ~= bOwn then
 			return aOwn
 		end
@@ -110,6 +110,20 @@ local function Adopt(button, size)
 	end)
 
 	StripFrameArt(button)
+	-- Muted icons that light up on hover, like the rest of the UI.
+	ns.DesaturateUntilHover(button, function(frame)
+		local textures = {}
+		for _, region in ipairs({ frame:GetRegions() }) do
+			if region:IsObjectType("Texture") then
+				textures[#textures + 1] = region
+			end
+		end
+		return textures
+	end)
+	-- A 1 px accent edge while the button's window is open (own buttons).
+	slot.active = ns.CreateBorder(slot, 0)
+	slot.active:SetColor(unpack(ns.config.style.palette.accent))
+	slot.active:SetShown(false)
 	button:SetParent(slot)
 	button:SetScale(size / math.max(button:GetWidth(), button:GetHeight()))
 	if button.SetFixedFrameStrata then
@@ -192,8 +206,9 @@ end
 
 -- Places one of stevio-ui's own buttons (it needs a global name) in the grid,
 -- whether or not other addons' buttons are moved there (minimapButtons).
-function Buttons.AddOwn(button)
-	own[button] = true
+-- `windowName` names the window it opens, to mark the button while it's open.
+function Buttons.AddOwn(button, windowName)
+	own[button] = windowName or true
 	if container then
 		Adopt(button, containerButtonSize)
 	else
@@ -215,6 +230,18 @@ function Buttons.Layout(width, size, gap)
 	local positions, height = Buttons.Grid(#shown, width, size, gap)
 	for index, slot in ipairs(shown) do
 		slot:SetPoint("TOPLEFT", container, "TOPLEFT", positions[index].x, -positions[index].y)
+		local window = type(own[slot.button]) == "string" and _G[own[slot.button]]
+		slot.active:SetShown(window and window:IsShown() or false)
 	end
 	return height
+end
+
+-- Whether any button would show in the grid.
+function Buttons.HasShown()
+	for _, slot in ipairs(slots) do
+		if slot.button:IsShown() then
+			return true
+		end
+	end
+	return false
 end

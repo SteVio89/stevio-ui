@@ -54,7 +54,7 @@ local function CreateNotchButton()
 		GameTooltip:Show()
 	end)
 	button:SetScript("OnLeave", GameTooltip_Hide)
-	ns.NotchButtons.AddOwn(button)
+	ns.NotchButtons.AddOwn(button, "StevioUI_Notes")
 end
 
 function Notes:OnEnable()

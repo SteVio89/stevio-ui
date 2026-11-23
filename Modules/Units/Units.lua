@@ -1,6 +1,7 @@
 local _, ns = ...
 
 local config = ns.config.units
+local style = ns.config.style
 
 -- Game API called on every unit event, as upvalues.
 local UnitExists, UnitName, UnitLevel = UnitExists, UnitName, UnitLevel
@@ -19,20 +20,26 @@ ns.UNIT_CHANGE_EVENTS = {
 -- Health, power and names may be secret values in combat. They can be passed
 -- straight into widgets, but never compared or used in arithmetic.
 
--- "12.3k · 87%": health and its percentage may be secret, so both go straight
--- into the font string, abbreviated and scaled by the client.
+-- "12.3k · 87%" with a muted dot, built once the palette is known.
+local healthFormat
+
+-- Health and its percentage may be secret, so both go straight into the font
+-- string, abbreviated and scaled by the client.
 local function UpdateHealth(frame)
 	local unit = frame.unit
 	local health = ns.UpdateHealthBar(frame.health, unit)
 	frame.healthText:SetFormattedText(
-		"%s · %d%%",
+		healthFormat,
 		AbbreviateNumbers(health),
 		UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
 	)
 end
 
+-- The color may be secret; both setters take it as it is.
 local function UpdateHealthColor(frame)
-	frame.health:SetStatusBarColor(ns.UnitHealthColor(frame.unit))
+	local r, g, b = ns.UnitHealthColor(frame.unit)
+	frame.health:SetStatusBarColor(r, g, b)
+	ns.SetTrackColor(frame.healthTrack, r, g, b)
 end
 
 local function UpdatePower(frame)
@@ -75,6 +82,10 @@ local function UpdateName(frame)
 	local level = UnitLevel(unit)
 	local text, r, g, b = Units.LevelDisplay(level, issecretvalue(level), GetCreatureDifficultyColor)
 	frame.level:SetText(text)
+	-- Your own level says nothing about difficulty, so it stays in the background.
+	if unit == "player" then
+		r, g, b = unpack(style.palette.textMuted)
+	end
 	frame.level:SetTextColor(r, g, b)
 end
 
@@ -156,15 +167,17 @@ local function CreateUnitFrame(spec)
 	frame:SetAttribute("*type2", "togglemenu")
 	frame:RegisterForClicks("AnyUp")
 
-	ns.CreateBackground(frame)
-	ns.CreateBorder(frame)
+	ns.CreatePanel(frame)
 
 	frame.health = ns.CreateStatusBar(frame)
 	frame.health:SetPoint("TOPLEFT")
 	frame.health:SetPoint("TOPRIGHT")
 	frame.health:SetHeight(spec.healthHeight)
+	frame.healthTrack = ns.CreateTintedTrack(frame.health)
+	ns.CreateBarShade(frame.health)
 
-	frame.healthText = ns.CreateFontString(frame.health, spec.healthTextSize, "RIGHT")
+	-- On the bright bar the outline stays, for contrast.
+	frame.healthText = ns.CreateFontString(frame.health, spec.healthTextSize, "RIGHT", true)
 	frame.healthText:SetPoint("RIGHT", -3, 0)
 
 	if hasPower then
@@ -172,13 +185,16 @@ local function CreateUnitFrame(spec)
 		frame.power:SetPoint("BOTTOMLEFT")
 		frame.power:SetPoint("BOTTOMRIGHT")
 		frame.power:SetHeight(spec.powerHeight)
+		ns.CreateBarShade(frame.power, true)
 		ns.CreateSeparator(frame, "TOP", frame.health, "BOTTOM")
 	end
 
 	if spec.showName then
-		frame.level = ns.CreateFontString(frame)
+		local nameSize = style.fontSize + 1
+		frame.level = ns.CreateFontString(frame, nameSize)
 		frame.level:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 0, 4)
-		frame.name = ns.CreateFontString(frame)
+		frame.name = ns.CreateFontString(frame, nameSize)
+		frame.name:SetTextColor(unpack(style.palette.textStrong))
 		frame.name:SetPoint("LEFT", frame.level, "RIGHT", 4, 0)
 		frame.name:SetPoint("RIGHT", frame, "RIGHT")
 	end
@@ -243,6 +259,7 @@ end
 
 function Units:OnEnable()
 	HideBlizzardFrames()
+	healthFormat = "%s " .. ns.Hex(style.palette.textMuted) .. "·|r %d%%"
 
 	for _, spec in ipairs(config.frames) do
 		self.frames[spec.unit] = CreateUnitFrame(spec)

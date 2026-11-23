@@ -56,10 +56,6 @@ local function StyleButton(button)
 	button:GetHighlightTexture():SetVertexColor(1, 1, 1, config.highlightAlpha)
 	button:SetPushedTexture(style.texture)
 	button:GetPushedTexture():SetVertexColor(1, 1, 1, config.pushedAlpha)
-	if button.SetCheckedTexture then
-		button:SetCheckedTexture(style.texture)
-		button:GetCheckedTexture():SetVertexColor(unpack(config.checkedColor))
-	end
 
 	if button.cooldown then
 		button.cooldown:ClearAllPoints()
@@ -67,6 +63,63 @@ local function StyleButton(button)
 	end
 
 	ns.CreateBorder(button)
+	ns.CreateShadow(button, 3)
+
+	-- Empty slots: only a hint of a square, below the icon, which covers it.
+	local empty = button:CreateTexture(nil, "BACKGROUND", nil, -7)
+	empty:SetAllPoints()
+	empty:SetColorTexture(1, 1, 1, 0.025)
+	ns.CreateInsetBorder(button, -6, 1, "BACKGROUND"):SetColor(1, 1, 1, 0.055)
+
+	-- A fixed white inner frame rather than a palette color: it looks the same on every icon.
+	ns.CreateInsetBorder(button, 2):SetColor(1, 1, 1, 0.10)
+
+	-- Darkens the bottom so the keybinding and the count stay readable.
+	local vignette = button:CreateTexture(nil, "ARTWORK", nil, 7)
+	vignette:SetTexture(style.texture)
+	vignette:SetPoint("BOTTOMLEFT")
+	vignette:SetPoint("BOTTOMRIGHT")
+	vignette:SetHeight(button:GetHeight() * 0.45)
+	vignette:SetGradient("VERTICAL", CreateColor(0, 0, 0, 0.55), CreateColor(0, 0, 0, 0))
+
+	local hover = ns.CreateInsetBorder(button, 3)
+	hover:SetColor(1, 1, 1, 0.4)
+	hover:SetShown(false)
+	button:HookScript("OnEnter", function()
+		hover:SetShown(true)
+	end)
+	button:HookScript("OnLeave", function()
+		hover:SetShown(false)
+	end)
+
+	-- Checked (active stance, current action): the accent, as a tint and a
+	-- 2 px inner edge. The edge follows SetChecked, which every Blizzard
+	-- update of the state goes through.
+	if button.SetCheckedTexture then
+		local accent = style.palette.accent
+		button:SetCheckedTexture(style.texture)
+		button:GetCheckedTexture():SetVertexColor(accent[1], accent[2], accent[3], 0.25)
+		local checked = ns.CreateInsetBorder(button, 4, 2)
+		checked:SetColor(unpack(accent))
+		checked:SetShownFromBoolean(button:GetChecked())
+		hooksecurefunc(button, "SetChecked", function(self)
+			checked:SetShownFromBoolean(self:GetChecked())
+		end)
+	end
+
+	-- Smaller keybindings; Blizzard's grey stays (it turns red out of range).
+	local hotKey = button.HotKey
+	if hotKey then
+		local font, size, flags = hotKey:GetFont()
+		if font then
+			hotKey:SetFont(font, size - 2, flags)
+		end
+	end
+
+	-- The vignette sizes with the button, which Edit Mode sets later.
+	button:HookScript("OnSizeChanged", function(self)
+		vignette:SetHeight(self:GetHeight() * 0.45)
+	end)
 end
 
 local function StyleBar(bar)

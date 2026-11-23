@@ -245,17 +245,67 @@ do
 end
 print("tags and icons ok")
 
-print("chat shared tests passed")
-
 -- Sidebar scrolling: 10 rows of 20 in a view 70 high (list 200 high).
 do
-	check(C.ClampSidebarScroll(-5, 70, 10, 20) == 0, "no scrolling above the first row")
-	check(C.ClampSidebarScroll(500, 70, 10, 20) == 130, "no scrolling past the last row")
-	check(C.ClampSidebarScroll(40, 70, 10, 20) == 40, "offsets within the list are kept")
-	check(C.ClampSidebarScroll(40, 300, 10, 20) == 0, "a list that fits doesn't scroll")
-	check(C.ScrollToRow(0, 70, 2, 20) == 0, "a visible row doesn't scroll")
-	check(C.ScrollToRow(0, 70, 5, 20) == 30, "a row below scrolls up to the bottom edge")
-	check(C.ScrollToRow(100, 70, 2, 20) == 20, "a row above scrolls down to the top edge")
-	check(C.ScrollToRow(15, 70, 1, 20) == 0, "a partly hidden row is shown whole")
+	check(C.ClampSidebarScroll(-5, 70, 200) == 0, "no scrolling above the first row")
+	check(C.ClampSidebarScroll(500, 70, 200) == 130, "no scrolling past the last row")
+	check(C.ClampSidebarScroll(40, 70, 200) == 40, "offsets within the list are kept")
+	check(C.ClampSidebarScroll(40, 300, 200) == 0, "a list that fits doesn't scroll")
+	check(C.ScrollToRow(0, 70, 20, 20) == 0, "a visible row doesn't scroll")
+	check(C.ScrollToRow(0, 70, 80, 20) == 30, "a row below scrolls up to the bottom edge")
+	check(C.ScrollToRow(100, 70, 20, 20) == 20, "a row above scrolls down to the top edge")
+	check(C.ScrollToRow(15, 70, 0, 20) == 0, "a partly hidden row is shown whole")
+
+	-- Headings count with their own height.
+	local tops, height = C.SidebarLayout({ { channel = 1 }, { header = "x" }, { channel = 2 } }, 20, 15)
+	check(tops[1] == 0 and tops[2] == 20 and tops[3] == 35, "entry tops")
+	check(height == 55, "list height")
+	check(C.ScrollToRow(0, 50, tops[3], 20) == 5, "a row below a heading scrolls into view")
 	print("sidebar scrolling ok")
 end
+
+-- Sidebar sections: chat channels grouped by name, the log channels under one heading.
+do
+	local function Channel(kind, key, label)
+		return { kind = kind, key = key, label = label }
+	end
+	local entries = C.SidebarEntries({
+		Channel("main", "main", "Main"),
+		Channel("guild", "guild", "Guild"),
+		Channel("public", "c1", "General - Tanaris"),
+		Channel("public", "c2", "Trade"),
+		Channel("public", "c3", "LocalDefense - Tanaris"),
+		Channel("public", "c4", "General - Feralas"),
+		Channel("other", "c5", "Own"),
+		Channel("npc", "npc", "NPC"),
+		Channel("system", "system", "System"),
+	})
+	local lines = {}
+	for _, entry in ipairs(entries) do
+		lines[#lines + 1] = entry.header and ("# " .. entry.header) or entry.label
+	end
+	local expected = {
+		"Main",
+		"Guild",
+		"# General",
+		"Tanaris",
+		"Feralas",
+		"# Channels",
+		"Trade",
+		"Own",
+		"# LocalDefense",
+		"Tanaris",
+		"# Log",
+		"NPC",
+		"System",
+	}
+	check(table.concat(lines, "|") == table.concat(expected, "|"), "sidebar sections: " .. table.concat(lines, "|"))
+	check(entries[4].channel.key == "c1", "zone rows keep their channel")
+	check(#C.SidebarEntries({}) == 0, "no channels, no headings")
+	check(C.SplitChannelLabel("Trade") == nil, "no zone")
+	local base, zone = C.SplitChannelLabel("General - Stormwind City")
+	check(base == "General" and zone == "Stormwind City", "base and zone")
+end
+print("sidebar ok")
+
+print("chat shared tests passed")

@@ -1,12 +1,14 @@
 local _, ns = ...
 
 local config = ns.config.chat
+local style = ns.config.style
 local C = ns.ChatInternal
 
 -- The channel view: sidebar with the channels, header, messages and input line.
 
+-- A message frame can't draw lines, so the date line is made of dashes.
 local function DayLine(entry)
-	return C.GREY .. "-- " .. C.Day(entry.time) .. " --|r"
+	return C.GREY .. "——  " .. C.Day(entry.time) .. "  ——|r"
 end
 
 -- Adds `entry` to the message frame, after a date line when it starts a new
@@ -43,31 +45,70 @@ function C.ShowChannel(key)
 	return channel
 end
 
-local function CreateRow(index)
+-- Muted until hovered, like the other icons; the ✕ is two crossed lines,
+-- as the standard font has no such glyph.
+local function CreateDeleteButton(row)
+	local button = CreateFrame("Button", nil, row)
+	button:SetSize(config.rowHeight, config.rowHeight)
+	button:SetPoint("RIGHT")
+	local px = ns.PixelSize(row)
+	for _, angle in ipairs({ 45, -45 }) do
+		local line = button:CreateTexture(nil, "ARTWORK")
+		line:SetSize(9, 1.5 * px)
+		line:SetPoint("CENTER")
+		line:SetColorTexture(unpack(config.deleteColor))
+		line:SetRotation(math.rad(angle))
+	end
+	button:SetScript("OnClick", function()
+		C.DeleteChannel(row.key)
+	end)
+	button:Hide()
+	return button
+end
+
+-- The ✕ shows while the cursor is over a deletable row, in place of the unread pill.
+local function UpdateRowHover(row)
+	local over = row:IsMouseOver() and row.deletable
+	row.delete:SetShown(over)
+	row.pill:SetShown(row.unread > 0 and not over)
+end
+
+local function CreateRow()
 	local ui = C.ui
+	local palette = style.palette
 	local row = CreateFrame("Button", nil, ui.list)
 	row:SetHeight(config.rowHeight)
-	row:SetPoint("TOPLEFT", 0, -(index - 1) * config.rowHeight)
-	row:SetPoint("TOPRIGHT", 0, -(index - 1) * config.rowHeight)
 
 	row.highlight = row:CreateTexture(nil, "BACKGROUND")
 	row.highlight:SetAllPoints()
-	row.highlight:SetColorTexture(unpack(config.selectedColor))
+	row.highlight:SetColorTexture(unpack(palette.selected))
+	row.marker = row:CreateTexture(nil, "ARTWORK")
+	row.marker:SetSize(2, config.rowHeight - 4)
+	row.marker:SetPoint("LEFT")
+	row.marker:SetColorTexture(unpack(palette.accent))
 
 	row.text = ns.CreateFontString(row, config.sidebarFontSize, "LEFT")
-	row.text:SetPoint("LEFT", 4, 0)
+	row.text:SetPoint("LEFT", 8, 0)
 	row.text:SetPoint("RIGHT", -config.rowHeight, 0)
 
-	row.delete = CreateFrame("Button", nil, row)
-	row.delete:SetSize(config.rowHeight, config.rowHeight)
-	row.delete:SetPoint("RIGHT")
-	row.delete.text = ns.CreateFontString(row.delete, config.sidebarFontSize, "CENTER")
-	row.delete.text:SetAllPoints()
-	row.delete.text:SetText("x")
-	row.delete.text:SetTextColor(unpack(config.deleteColor))
-	row.delete:SetScript("OnClick", function()
-		C.DeleteChannel(row.key)
-	end)
+	-- The unread count, right aligned in a pill.
+	row.pill = CreateFrame("Frame", nil, row)
+	row.pill:SetHeight(14)
+	row.pill:SetPoint("RIGHT", -4, 0)
+	ns.CreateBackground(row.pill, palette.pill)
+	row.pill.text = ns.CreateFontString(row.pill, config.sidebarFontSize - 3, "CENTER")
+	row.pill.text:SetPoint("CENTER")
+	row.pill.text:SetTextColor(unpack(palette.pillText))
+
+	row.delete = CreateDeleteButton(row)
+	row.unread = 0
+	local function Hover()
+		UpdateRowHover(row)
+	end
+	row:SetScript("OnEnter", Hover)
+	row:SetScript("OnLeave", Hover)
+	row.delete:SetScript("OnEnter", Hover)
+	row.delete:SetScript("OnLeave", Hover)
 
 	row:SetScript("OnClick", function()
 		C.Select(row.key)
@@ -75,14 +116,22 @@ local function CreateRow(index)
 	return row
 end
 
+-- A section heading of the sidebar (not clickable).
+local function CreateHeading()
+	local heading = ns.CreateFontString(C.ui.list, config.sidebarFontSize - 3, "LEFT")
+	heading:SetHeight(config.headerHeight)
+	heading:SetJustifyV("BOTTOM")
+	heading:SetTextColor(unpack(style.palette.textFaint))
+	return heading
+end
+
 -- Scrolls the channel list to `offset` (clamped) and moves the scroll thumb.
 local function SetSidebarScroll(offset)
 	local ui = C.ui
-	local count = ui.rowCount or 0
+	local listHeight = ui.listHeight or 0
 	local viewHeight = ui.listScroll:GetHeight()
-	offset = C.ClampSidebarScroll(offset, viewHeight, count, config.rowHeight)
+	offset = C.ClampSidebarScroll(offset, viewHeight, listHeight)
 	ui.listScroll:SetVerticalScroll(offset)
-	local listHeight = count * config.rowHeight
 	if viewHeight <= 0 or listHeight <= viewHeight then
 		ui.thumb:Hide()
 		return
@@ -92,59 +141,102 @@ local function SetSidebarScroll(offset)
 	ui.thumb:Show()
 end
 
+local function ShowRow(row, entry, top)
+	local channel = entry.channel
+	local palette = style.palette
+	row.key = channel.key
+	row:ClearAllPoints()
+	row:SetPoint("TOPLEFT", 0, -top)
+	row:SetPoint("TOPRIGHT", 0, -top)
+
+	local selected = channel.key == C.state.selected
+	local unread = C.Unread(channel)
+	row.unread = unread
+	row.text:SetText(entry.label)
+	if selected then
+		row.text:SetTextColor(unpack(palette.textStrong))
+	else
+		local r, g, b = C.ChannelColor(channel)
+		row.text:SetTextColor(r, g, b, unread > 0 and 1 or 0.7)
+	end
+	row.highlight:SetShown(selected)
+	row.marker:SetShown(selected)
+	if unread > 0 then
+		row.pill.text:SetText(unread)
+		row.pill:SetWidth(row.pill.text:GetStringWidth() + 10)
+	end
+	row.deletable = C.store.IsDeletable(channel, config.main.enabled)
+	UpdateRowHover(row)
+	row:Show()
+	return selected
+end
+
+-- "Main › Party": the channel in strong text, the one Main writes to in its color.
+local function RefreshHeader()
+	local ui, palette = C.ui, style.palette
+	local channel = C.Selected()
+	if not channel then
+		ui.header:SetText("")
+		return
+	end
+	local text = ns.Hex(palette.textStrong) .. C.Label(channel) .. "|r"
+	local target = C.IsMain(channel.key) and C.MainTarget()
+	if target then
+		text = ("%s %s›|r %s%s|r"):format(
+			text,
+			ns.Hex(palette.textFaint),
+			C.ColorCode(C.ChannelColor(target)),
+			C.Label(target)
+		)
+	end
+	ui.header:SetText(text)
+end
+
 function C.RefreshSidebar()
 	local ui, store = C.ui, C.store
-	local channels = store:Sorted(config.kindOrder)
+	local entries = C.SidebarEntries(store:Sorted(config.kindOrder))
+	local tops, listHeight = C.SidebarLayout(entries, config.rowHeight, config.headerHeight)
+	local rowCount, headingCount = 0, 0
 	local selectedIndex
-	for index, channel in ipairs(channels) do
-		local row = ui.rows[index] or CreateRow(index)
-		ui.rows[index] = row
-		row.key = channel.key
-		local r, g, b = C.ChannelColor(channel)
-		local text = C.Label(channel)
-		local unread = C.Unread(channel)
-		if unread > 0 then
-			text = ("%s (%d)"):format(text, unread)
+	for index, entry in ipairs(entries) do
+		if entry.header then
+			headingCount = headingCount + 1
+			local heading = ui.headings[headingCount] or CreateHeading()
+			ui.headings[headingCount] = heading
+			heading:SetText(entry.header:upper())
+			heading:ClearAllPoints()
+			heading:SetPoint("TOPLEFT", 8, -tops[index])
+			heading:SetPoint("TOPRIGHT", -4, -tops[index])
+			heading:Show()
+		else
+			rowCount = rowCount + 1
+			local row = ui.rows[rowCount] or CreateRow()
+			ui.rows[rowCount] = row
+			if ShowRow(row, entry, tops[index]) then
+				selectedIndex = index
+			end
 		end
-		row.text:SetText(text)
-		row.text:SetTextColor(r, g, b, unread > 0 and 1 or 0.7)
-		row.highlight:SetShown(channel.key == C.state.selected)
-		if channel.key == C.state.selected then
-			selectedIndex = index
-		end
-		row.delete:SetShown(store.IsDeletable(channel, config.main.enabled))
-		row:Show()
 	end
-	for index = #channels + 1, #ui.rows do
+	for index = rowCount + 1, #ui.rows do
 		ui.rows[index]:Hide()
+	end
+	for index = headingCount + 1, #ui.headings do
+		ui.headings[index]:Hide()
 	end
 
 	-- More channels than fit scroll; a newly selected one is scrolled into view,
 	-- otherwise the list stays where the player scrolled it.
-	ui.rowCount = #channels
-	ui.list:SetHeight(math.max(1, #channels * config.rowHeight))
+	ui.listHeight = listHeight
+	ui.list:SetHeight(math.max(1, listHeight))
 	local offset = ui.listScroll:GetVerticalScroll()
 	local viewHeight = ui.listScroll:GetHeight()
 	if selectedIndex and viewHeight > 0 and C.state.selected ~= ui.scrolledTo then
-		offset = C.ScrollToRow(offset, viewHeight, selectedIndex, config.rowHeight)
+		offset = C.ScrollToRow(offset, viewHeight, tops[selectedIndex], config.rowHeight)
 		ui.scrolledTo = C.state.selected
 	end
 	SetSidebarScroll(offset)
 
-	local channel = C.Selected()
-	if channel then
-		local r, g, b = C.ChannelColor(channel)
-		local text = C.Label(channel)
-		-- Main names the channel it writes to: "Main > Party".
-		local target = C.IsMain(channel.key) and C.MainTarget()
-		if target then
-			text = ("%s > %s%s|r"):format(text, C.ColorCode(C.ChannelColor(target)), C.Label(target))
-		end
-		ui.header:SetText(text)
-		ui.header:SetTextColor(r, g, b)
-	else
-		ui.header:SetText("")
-	end
+	RefreshHeader()
 	C.RefreshInput()
 end
 
@@ -177,7 +269,7 @@ local function CreateInput(frame)
 	input.hint = ns.CreateFontString(input, config.fontSize, "LEFT")
 	input.hint:SetPoint("LEFT", 4, 0)
 	input.hint:SetPoint("RIGHT", -4, 0)
-	input.hint:SetTextColor(unpack(config.inputHintColor))
+	input.hint:SetTextColor(unpack(style.palette.textFaint))
 	input:SetScript("OnTextChanged", function(self)
 		self.hint:SetShown(self:GetText() == "")
 	end)
@@ -219,7 +311,7 @@ local function CreateMessages(frame)
 	-- Room for a date line before each message, so date lines never push
 	-- stored messages out of the view.
 	messages:SetMaxLines(config.historyLimit * 2)
-	messages:SetPoint("TOPLEFT", ui.header, "BOTTOMLEFT", 0, -4)
+	messages:SetPoint("TOPLEFT", ui.header, "BOTTOMLEFT", 0, -7)
 	messages:SetPoint("BOTTOMRIGHT", ui.input, "TOPRIGHT", 0, 6)
 	messages:EnableMouseWheel(true)
 	messages:SetScript("OnMouseWheel", function(self, delta)
@@ -293,8 +385,13 @@ function C.CreateChannelView()
 	frame:SetFrameStrata("MEDIUM")
 	frame:EnableMouse(true)
 	frame:Hide()
-	ui.background = ns.CreateBackground(frame, config.backgroundColor, -8)
+	-- The panel color without its alpha: the background's opacity is its own (below).
+	local panel = style.palette.panel
+	ui.background = ns.CreateBackground(frame, { panel[1], panel[2], panel[3], 1 }, -7)
 	ns.CreateBorder(frame)
+	ns.CreateInnerEdge(frame)
+	ns.CreateShadow(frame)
+	C.GREY = ns.Hex(style.palette.textFaint)
 	ui.frame = frame
 	-- The background turns solid while the chat is read closely (#69); a chat
 	-- that just showed starts at its opacity instead of fading to it.
@@ -313,6 +410,7 @@ function C.CreateChannelView()
 		end
 	end)
 	ui.rows = {}
+	ui.headings = {}
 
 	ui.sidebar = CreateFrame("Frame", nil, frame)
 	ui.sidebar:SetWidth(config.sidebarWidth)
@@ -327,6 +425,11 @@ function C.CreateChannelView()
 
 	ui.header = ns.CreateFontString(frame, config.sidebarFontSize, "LEFT")
 	ui.header:SetPoint("TOPLEFT", ui.sidebar, "TOPRIGHT", 6, 0)
+	local headerLine = frame:CreateTexture(nil, "ARTWORK")
+	headerLine:SetColorTexture(unpack(config.dividerColor))
+	headerLine:SetHeight(ns.PixelSize(frame))
+	headerLine:SetPoint("TOPLEFT", ui.header, "BOTTOMLEFT", 0, -3)
+	headerLine:SetPoint("RIGHT", frame, "RIGHT", -6, 0)
 
 	CreateInput(frame)
 	CreateMessages(frame)
