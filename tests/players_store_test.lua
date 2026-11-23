@@ -20,6 +20,13 @@ check(Store.NormalizeName(" Lina - Die Aldor ") == "Lina-DieAldor", "realm with 
 check(Store.NormalizeName("Lina (Azjol-Nerub)") == "Lina-AzjolNerub", "brackets and hyphen")
 check(Store.NormalizeName("Lina-Home", "Home") == "Lina" and Store.NormalizeName("Lina", "Home") == "Lina", "own realm")
 check(Store.NormalizeName("") == nil and Store.NormalizeName(nil) == nil, "no name")
+-- WoW Forever's "First Last" from the roster, loot history and chat (#42).
+local own = "CAMWOWEU4Realm10RP"
+check(Store.NormalizeName("Jubylee-Signatory", own) == "Jubylee-Signatory", "roster spelling")
+check(Store.NormalizeName("Jubylee Signatory", own) == "Jubylee-Signatory", "loot history spelling")
+check(Store.NormalizeName("Jubylee Signatory-" .. own, own) == "Jubylee-Signatory", "chat spelling")
+check(Store.NormalizeName("Bob-" .. own, own) == "Bob", "own realm dropped")
+check(Store.SendName("Jubylee-Signatory") == "Jubylee Signatory" and Store.SendName("Bob") == "Bob", "send name")
 
 saved = {
 	version = 1,

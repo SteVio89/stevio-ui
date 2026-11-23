@@ -515,7 +515,11 @@ end
 
 -- /sui players toggles the window; /sui players <name> opens that player.
 ns.RegisterModuleCommand("players", "players", function(input)
-	local name = input:match("^%s*(%S+)")
+	-- The whole input: WoW Forever's names have a space ("First Last").
+	local name = input:match("^%s*(.-)%s*$")
+	if name == "" then
+		name = nil
+	end
 	if name then
 		ns.OpenPlayerNote(name)
 	else

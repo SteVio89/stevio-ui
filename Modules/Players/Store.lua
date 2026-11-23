@@ -44,10 +44,16 @@ end
 -- Ambiguate(..., "none") gives chat names. Takes "Name-Realm", "Name Realm",
 -- "Name - Realm Name", "Name (Realm)" and "Name": character names have no
 -- spaces or hyphens, so whatever follows them is the realm. `ownRealm` is
--- GetNormalizedRealmName() (nil: unknown, the realm is kept). Nil for no name.
+-- GetNormalizedRealmName() (nil: unknown, the realm is kept).
+-- WoW Forever names characters "First Last" (#42): the group roster gives
+-- them as "First-Last", the loot history as "First Last" and chat events as
+-- "First Last-OwnRealm". All three end up as "First-Last". Nil for no name.
 function Store.NormalizeName(name, ownRealm)
 	if type(name) ~= "string" then
 		return nil
+	end
+	if ownRealm and ownRealm ~= "" and name:sub(-#ownRealm - 1) == "-" .. ownRealm then
+		name = name:sub(1, -#ownRealm - 2)
 	end
 	local short, rest = name:match("^%s*([^%s%-%(%)]+)(.*)$")
 	if not short then
@@ -58,6 +64,12 @@ function Store.NormalizeName(name, ownRealm)
 		return short
 	end
 	return short .. "-" .. realm
+end
+
+-- The name a whisper or invite goes to: WoW Forever wants "First Last"
+-- without a realm (#42), so the stored "First-Last" gets its space back.
+function Store.SendName(name)
+	return (name:gsub("^([^-]+)-", "%1 ", 1))
 end
 
 function Store:Key(name)

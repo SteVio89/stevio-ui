@@ -154,12 +154,12 @@ local function CreateHeader(page)
 	header.whisper = K.Button(header, T("Whisper", "Flüstern"), 26)
 	header.whisper:SetPoint("TOPLEFT", header.line2, "BOTTOMLEFT", 0, -12)
 	header.whisper:SetScript("OnClick", function()
-		Whisper(page.player.name)
+		Whisper(Store.SendName(page.player.name))
 	end)
 	header.invite = K.Button(header, T("Invite", "Einladen"), 26)
 	header.invite:SetPoint("LEFT", header.whisper, "RIGHT", 8, 0)
 	header.invite:SetScript("OnClick", function()
-		C_PartyInfo.InviteUnit(page.player.name)
+		C_PartyInfo.InviteUnit(Store.SendName(page.player.name))
 	end)
 	header.more = K.Button(header, "...", 26)
 	header.more:SetPoint("LEFT", header.invite, "RIGHT", 8, 0)
@@ -820,7 +820,7 @@ local function CreateHistoryHeader(page)
 		local filter = HISTORY_FILTERS[index]
 		local chip = K.Chip(header, 24)
 		chip.filter = filter[1]
-		chip.text = T(filter[2], filter[3])
+		chip.caption = T(filter[2], filter[3])
 		chip:SetScript("OnClick", function(self)
 			Window().state.history = self.filter
 			Window().RenderContent()
@@ -836,7 +836,7 @@ local function CreateHistoryHeader(page)
 	function header:Update(player)
 		local filter = Window().state.history
 		for _, chip in ipairs(self.chips) do
-			chip:SetChip(chip.text, nil, chip.filter == filter)
+			chip:SetChip(chip.caption, nil, chip.filter == filter)
 		end
 		local groups = #player.sessions
 		self.count:SetText(groups == 1 and T("1 group", "1 Gruppe") or T("%d groups", "%d Gruppen"):format(groups))
