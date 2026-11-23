@@ -90,6 +90,10 @@ ns.config.chat = {
 	-- typing its border takes the color of the channel it writes to.
 	inputBackgroundColor = { 1, 1, 1, 0.04 },
 	inputBorderColor = { 1, 1, 1, 0.11 },
+	-- Gap (pixels) between the messages and the input line: the last line's
+	-- descenders, its shadow and inline icons reach below the line, so a
+	-- small gap let them touch the input's border (#88).
+	inputGap = 12,
 
 	-- Debugging aid: keeps Blizzard's chat visible right of the channel view
 	-- (gap in pixels) to compare which messages arrive.
