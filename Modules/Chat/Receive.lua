@@ -204,7 +204,7 @@ local function Remember(event, now, lineID, ...)
 	return line
 end
 
--- A whisper from a player the notes marked (#45): a warning with the reason
+-- A whisper from a player the player database marked (#45): a warning with the reason
 -- under it, in the whisper's channel.
 local function WarnAfterWhisper(event, sender, def, key, opts, now)
 	local warning = event == "CHAT_MSG_WHISPER" and ns.BlockedWhisperWarning and ns.BlockedWhisperWarning(sender)

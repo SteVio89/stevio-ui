@@ -56,8 +56,8 @@ local labels = {
 	blockedGuilds = {
 		"Blocked guilds",
 		"Gesperrte Gilden",
-		"Lua patterns (any case) of guild names; their members are marked in the notes for good.",
-		"Lua-Muster (Groß/klein egal) von Gildennamen; deren Mitglieder werden dauerhaft in den Notizen markiert.",
+		"Lua patterns (any case) of guild names; their members are marked in the player database for good.",
+		"Lua-Muster (Groß/klein egal) von Gildennamen; deren Mitglieder werden dauerhaft in der Spielerdatenbank markiert.",
 	},
 	bnet = { "Battle.net", "Battle.net" },
 	borderColor = { "Border", "Rahmen" },
@@ -213,6 +213,12 @@ local labels = {
 	},
 	key = { "Channel key", "Kanalschlüssel" },
 	keyboardHealing = { "Keyboard healing", "Tastaturheilung" },
+	lootInTooltip = {
+		"Loot in tooltips",
+		"Beute in Tooltips",
+		"Items won with you and their Need, Greed and Pass shares.",
+		"Mit dir gewonnene Gegenstände und ihre Anteile an Bedarf, Gier und Passen.",
+	},
 	keys = { "Keys", "Tasten" },
 	kind = { "Kind", "Art" },
 	kindOrder = { "Sidebar order", "Reihenfolge Seitenleiste" },
@@ -282,6 +288,7 @@ local labels = {
 	passedAlpha = { "Opacity after pass", "Deckkraft nach Passen" },
 	petBar = { "Pet bar", "Begleiterleiste" },
 	player = { "Player", "Spieler" },
+	players = { "Players", "Spieler" },
 	point = {
 		"Anchor point",
 		"Ankerpunkt",

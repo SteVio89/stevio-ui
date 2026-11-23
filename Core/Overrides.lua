@@ -253,6 +253,28 @@ Overrides.MIGRATIONS = {
 			end
 		end,
 	},
+	{
+		-- The player part of the notes became the players module (#74). Both
+		-- keep a showInTooltip; the players' one starts as the notes' was.
+		id = "playersModule",
+		run = function(values)
+			for _, key in ipairs({
+				"keepUnratedDays",
+				"rejoinGrace",
+				"popupAfterGroup",
+				"popupMaxPlayers",
+				"joinReminder",
+				"blockedGuilds",
+				"blockWarnings",
+			}) do
+				Overrides.Rename(values, "config/notes/" .. key, "config/players/" .. key)
+			end
+			local tooltip = values["config/notes/showInTooltip"]
+			if tooltip ~= nil and values["config/players/showInTooltip"] == nil then
+				values["config/players/showInTooltip"] = tooltip
+			end
+		end,
+	},
 }
 
 -- Runs the migrations not yet in `done` (a set of ids, saved with the values)

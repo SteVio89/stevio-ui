@@ -45,6 +45,8 @@ end
 local function RollOf(info)
 	return {
 		name = Logic.ShortName(info.playerName),
+		-- With the realm, as the player database (Modules/Players) needs it.
+		fullName = info.playerName,
 		class = info.playerClass,
 		isSelf = info.isSelf and true or false,
 		state = info.state,

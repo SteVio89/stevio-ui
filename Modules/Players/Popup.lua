@@ -2,12 +2,13 @@ local _, ns = ...
 
 -- After leaving a group: a small window listing its players with role, stars
 -- and a comment field. Ratings are saved as they are clicked; "Later" just
--- closes it, the players stay unrated in the notes window.
+-- closes it, the players stay unrated in the players window.
 
 local Popup = {}
-ns.NotesPopup = Popup
+ns.PlayersPopup = Popup
 
 local W = ns.NotesWidgets
+local PW = ns.PlayerWidgets
 local T = ns.T
 
 local ROW_HEIGHT = 26
@@ -15,7 +16,7 @@ local ROW_HEIGHT = 26
 local frame
 
 local function CreatePopup()
-	frame = CreateFrame("Frame", "StevioUI_NotesPopup", UIParent)
+	frame = CreateFrame("Frame", "StevioUI_PlayersPopup", UIParent)
 	frame:SetWidth(640)
 	frame:SetPoint("TOP", 0, -140)
 	frame:SetFrameStrata("DIALOG")
@@ -49,7 +50,7 @@ end
 
 local function OnRated()
 	frame.close:SetText(T("Done", "Fertig"))
-	ns.NotesWindow.Refresh()
+	ns.PlayersWindow.Refresh()
 end
 
 -- entries: { name, class, session } of the players of the group just left.
@@ -64,7 +65,7 @@ function Popup.Show(entries)
 	for index, entry in ipairs(entries) do
 		local row = frame.rows[index]
 		if not row then
-			row = W.SessionRow(frame, 150, OnRated)
+			row = PW.SessionRow(frame, 150, OnRated)
 			row:SetPoint("TOPLEFT", 8, -36 - (index - 1) * ROW_HEIGHT)
 			row:SetPoint("RIGHT", -8, 0)
 			frame.rows[index] = row

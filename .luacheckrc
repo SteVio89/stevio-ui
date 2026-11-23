@@ -18,6 +18,7 @@ globals = {
 	"StevioUIChatHistory",
 	"StevioUIActionSets",
 	"StevioUINotes",
+	"StevioUIPlayers",
 	"StevioUIRollHistory",
 	-- Reached from Bindings.xml
 	"StevioUI",

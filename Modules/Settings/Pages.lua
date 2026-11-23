@@ -26,6 +26,7 @@ Pages.MODULES = {
 	{ "notch" },
 	{ "questRewards" },
 	{ "taxi" },
+	{ "players" },
 	{ "notes" },
 	{ "settings" },
 }

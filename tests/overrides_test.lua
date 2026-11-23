@@ -181,5 +181,22 @@ do
 	check(list[1].bar == "MainBar" and list[2].bar == "Bar2" and list[3].bar == "Bar3", "bars named in order")
 	check(list[4].bar == nil and list[2].point == "TOP", "the rest as it was")
 end
+-- The player options of the notes move to the players module (#74).
+do
+	local migrating = {
+		["config/notes/blockedGuilds"] = { "alternative f" },
+		["config/notes/keepUnratedDays"] = 30,
+		["config/notes/showInTooltip"] = false,
+		["config/notes/enabled"] = false,
+	}
+	Overrides.Migrate(migrating, Overrides.MIGRATIONS, {})
+	check(migrating["config/players/blockedGuilds"][1] == "alternative f", "blocked guilds moved")
+	check(
+		migrating["config/players/keepUnratedDays"] == 30 and migrating["config/notes/keepUnratedDays"] == nil,
+		"moved"
+	)
+	check(migrating["config/players/showInTooltip"] == false, "tooltip option copied")
+	check(migrating["config/notes/showInTooltip"] == false and migrating["config/notes/enabled"] == false, "rest stays")
+end
 print("migrate ok")
 print("overrides tests passed")

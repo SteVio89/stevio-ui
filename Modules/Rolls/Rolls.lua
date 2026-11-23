@@ -87,8 +87,16 @@ local function ReadDrop(encounterID, lootListKey)
 	local summary = Logic.Summary(drop)
 	Cards.UpdateDrop(("%s:%s"):format(encounterID, lootListKey), summary)
 	if not summary.pending then
-		Logic.SaveRecord(Saved(), Logic.Record(summary, Fight(encounterID), lootListKey, time()))
+		local record = Logic.Record(summary, Fight(encounterID), lootListKey, time())
+		local saved = Saved()
+		-- The loot history repeats drops after a reload: only new ones go to
+		-- the player database (Modules/Players).
+		local isNew = not Logic.FindRecord(saved, record.encounterID, record.lootListKey, record.fightTime)
+		Logic.SaveRecord(saved, record)
 		History.Refresh()
+		if isNew and ns.PlayersRecordLoot then
+			ns.PlayersRecordLoot(record)
+		end
 	end
 end
 

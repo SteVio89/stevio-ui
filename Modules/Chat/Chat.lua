@@ -167,8 +167,8 @@ function C.ShowPlayerMenu(owner, fullName)
 		root:CreateButton(ns.T("Invite", "Einladen"), function()
 			C_PartyInfo.InviteUnit(ns.ChatHistory.SendName(fullName))
 		end)
-		if ns.Notes and ns.Notes.active then
-			root:CreateButton(ns.T("Note", "Notiz"), function()
+		if ns.Players and ns.Players.active then
+			root:CreateButton(ns.T("Player info", "Spielerinfo"), function()
 				ns.OpenPlayerNote(fullName)
 			end)
 		end
