@@ -165,7 +165,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   are handed to that input pre-filled, and Enter runs them.
   Blizzard's chat stays hidden; only its
   input box (Enter, slash commands) is used, shown right under the channel view
-  and hidden together with it. Blizzard's chat toasts (e.g. a Battle.net friend
+  only while it is typed into. Blizzard's chat toasts (e.g. a Battle.net friend
   coming online) pop up right under that input box.
 - **Loot ticker** – your own last 24 looted items, currencies and gold above
   the bags, with icon, name in quality colour and count; gold is shown with
