@@ -125,9 +125,23 @@ function ns.CreateStatusBar(parent)
 	return bar
 end
 
-function ns.CreateFontString(parent, size, justify)
+-- With style.textShadow, text gets a drop shadow instead of the outline;
+-- `outline` keeps the outline as well, for text on bright bars.
+function ns.SetFont(text, size, outline)
+	local shadow = style.textShadow
+	text:SetFont(style.font, size or style.fontSize, (outline or not shadow) and style.fontFlags or "")
+	if shadow then
+		local offset = outline and 0.5 or 1
+		text:SetShadowOffset(offset, -offset)
+		text:SetShadowColor(0, 0, 0, 1)
+	else
+		text:SetShadowOffset(0, 0)
+	end
+end
+
+function ns.CreateFontString(parent, size, justify, outline)
 	local text = parent:CreateFontString(nil, "OVERLAY")
-	text:SetFont(style.font, size or style.fontSize, style.fontFlags)
+	ns.SetFont(text, size, outline)
 	text:SetJustifyH(justify or "LEFT")
 	text:SetWordWrap(false)
 	return text

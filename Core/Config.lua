@@ -5,9 +5,26 @@ ns.config.style = {
 	font = STANDARD_TEXT_FONT,
 	fontSize = 11,
 	fontFlags = "OUTLINE",
+	-- Text gets a drop shadow instead of an outline; text on bright bars
+	-- (health) keeps the outline and adds a thin shadow.
+	textShadow = true,
 
 	borderColor = { 0, 0, 0, 1 },
-	backgroundColor = { 0.08, 0.08, 0.08, 0.85 },
+
+	-- "dusk" or "violet"; read once at load, a change needs /reload. Modules
+	-- read the chosen theme's colors from style.palette (Core/Theme.lua),
+	-- which also sets style.backgroundColor to its panel color.
+	theme = "dusk",
+	themes = {
+		-- Blue-grey tinted black, old gold accent.
+		dusk = {
+			panel = { 0.047, 0.055, 0.075, 0.84 },
+		},
+		-- Violet tinted black, muted dark violet accent.
+		violet = {
+			panel = { 0.070, 0.043, 0.102, 0.86 },
+		},
+	},
 
 	-- Used when class/reaction can't be determined (e.g. secret identity).
 	fallbackHealthColor = { 0.2, 0.75, 0.2 },
