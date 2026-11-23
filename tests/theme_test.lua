@@ -7,10 +7,10 @@ loadAddonFile("Core/Config.lua", ns)
 loadAddonFile("Core/Theme.lua", ns)
 local style = ns.config.style
 
--- Loading resolves the default theme right away.
-check(style.theme == "dusk", "dusk is the default")
-check(style.palette.accent == style.themes.dusk.accent, "palette holds the dusk colors")
-check(style.backgroundColor == style.themes.dusk.panel, "background is the panel color")
+-- Loading resolves the default theme (violet) right away.
+check(style.theme == "violet", "violet is the default")
+check(style.palette.accent == style.themes.violet.accent, "palette holds the violet colors")
+check(style.backgroundColor == style.themes.violet.panel, "background is the panel color")
 
 -- Both themes define the same colors.
 for key in pairs(style.themes.dusk) do
@@ -23,11 +23,11 @@ print("themes ok")
 
 -- ResolveTheme picks the named theme and fills the table in place.
 local palette = style.palette
-style.theme = "violet"
+style.theme = "dusk"
 ns.ApplyTheme()
 check(style.palette == palette, "same table after a change")
-check(palette.accent == style.themes.violet.accent, "violet accent")
-check(style.backgroundColor == style.themes.violet.panel, "violet background")
+check(palette.accent == style.themes.dusk.accent, "dusk accent")
+check(style.backgroundColor == style.themes.dusk.panel, "dusk background")
 
 -- Unknown names fall back to dusk; keys of the old theme don't linger.
 local themes = {

@@ -14,7 +14,7 @@ ns.config.style = {
 	-- "dusk" or "violet"; read once at load, a change needs /reload. Modules
 	-- read the chosen theme's colors from style.palette (Core/Theme.lua),
 	-- which also sets style.backgroundColor to its panel color.
-	theme = "dusk",
+	theme = "violet",
 	themes = {
 		-- Blue-grey tinted black, old gold accent.
 		dusk = {
