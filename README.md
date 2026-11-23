@@ -69,7 +69,7 @@ until it is needed, and as much as possible can be done from the keyboard.
   shortly after it leaves: level and XP bar with rested XP, the watched
   reputation, gold, free bag slots, lowest durability (yellow/red when low),
   zone with coordinates, time, FPS and latency, online friends and guild
-  members, the notes button and the other addons' minimap buttons.
+  members, the players and notes buttons and the other addons' minimap buttons.
 - **Tooltip** – Blizzard's default tooltip position is moved above the minimap
   and the mark toolbar.
 - **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
@@ -171,21 +171,27 @@ until it is needed, and as much as possible can be done from the keyboard.
   `/reload`); the cards then appear once you rolled there.
 - **Quest rewards** – on the turn-in page with at least two item choices,
   a gold coin marks the one with the highest vendor value (sell price × count).
-- **Notes** – a window (button in the notch island, or `/sui notes`) with three
-  tabs. *Players*: everyone you group with is recorded, one session per time
-  together with the date, the role and the place (the instances entered, or
-  else the open-world zone). Rate each session with 1–5 stars, change its role,
-  add a comment, and keep one note per player; the list and the player's
-  tooltip show the average of the rated sessions, overall and per role.
-  After leaving a group a small popup offers to rate its players ("Later"
-  closes it), and a rated or noted player joining your group gets a chat line.
-  "Note" in the chat's name menu opens a player. Players without a rating or
-  note are deleted after 90 days (`keepUnratedDays`); rated ones stay.
-  *Blocked guilds* (`blockedGuilds`, Lua patterns in the Notes options):
+- **Players** – a player database (button in the notch island, or
+  `/sui players`): everyone you group with is recorded, one session per time
+  together with the date, the role, the place (the instances entered, or else
+  the open-world zone) and the bosses killed and wipes. Rate each session with
+  1–5 stars, change its role, add a comment, and keep one note per player; the
+  list and the player's tooltip show the average of the rated sessions,
+  overall and per role. Each player's page also shows the groups and time
+  together, the items they won in your groups (from the roll history, also
+  per session) and how often they chose Need, Greed or Pass; the tooltip shows
+  the loot line too (`lootInTooltip`). After leaving a group a small popup
+  offers to rate its players ("Later" closes it), and a rated or noted player
+  joining your group gets a chat line. "Player info" in the chat's name menu
+  opens a player. Players without a rating or note are deleted after 90 days
+  (`keepUnratedDays`); rated ones stay.
+  *Blocked guilds* (`blockedGuilds`, Lua patterns in the Players options):
   players seen in such a guild are marked in the players list for good, also
   after they leave it, with a red warning when first seen, when they join your
   group and under each of their whispers, naming the guild and the pattern.
-  *Items*: free text per item type, shown in its tooltip; Alt+right-click an
+  Account-wide.
+- **Notes** – a window (button in the notch island, or `/sui notes`) with two
+  tabs. *Items*: free text per item type, shown in its tooltip; Alt+right-click an
   item in your bags or bank (or drop it on the list) to write or remove it.
   *Notes*: plain notes. All notes are account-wide.
 - **Auras** – Blizzard's own, compacted to two rows of buffs and two rows of debuffs in the top right corner, with the objective tracker below them. Blizzard's damage meter is turned
@@ -232,6 +238,7 @@ first login.
 | `/sui bars [name\|number\|next]` | List the action sets or switch to one |
 | `/sui bars missing` | List the actions the active set could not place |
 | `/sui bars forget` | Drop those actions from the active set |
+| `/sui players [name]` | Toggle the players window, or open that player |
 | `/sui notes [item link]` | Toggle the notes window, or edit the note of that item |
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |

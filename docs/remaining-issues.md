@@ -126,7 +126,7 @@ need a check in game.
   key only offers whispers from Blizzard's own input box (and received ones).
 - Flight list: a list taller than the map scrolls (Blizzard's scroll box with
   a minimal scroll bar that shows only when needed); free flights show no cost.
-- Notes: sessions open at logout end at the logout; after a `/reload` in the
+- Players: sessions open at logout end at the logout; after a `/reload` in the
   same group they continue, after a later login alone the rating popup shows.
 - Settings: `GxApi` and the resolution CVars are no longer set from the
   profile; saved overrides of them are dropped at login.
