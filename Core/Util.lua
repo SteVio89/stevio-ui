@@ -119,17 +119,28 @@ function ns.CreateInsetBorder(frame, sublevel, size, layer)
 	return border
 end
 
+-- A click-through frame over `frame` and its child frames (bars, aura
+-- icons), for edges that must not disappear under them.
+function ns.CreateOverlay(frame, levels)
+	local overlay = CreateFrame("Frame", nil, frame)
+	overlay:SetAllPoints()
+	overlay:SetFrameLevel(frame:GetFrameLevel() + (levels or 10))
+	return overlay
+end
+
 -- The glass edge of a panel: a light line along the inside of its top edge
--- and a faint inner frame. `topOnly` skips the frame (small icons).
+-- and a faint inner frame, above the panel's child frames. `topOnly` skips
+-- the frame (small icons).
 function ns.CreateInnerEdge(frame, topOnly)
 	local palette = style.palette
 	local px = ns.PixelSize(frame)
-	local edge = {}
+	local overlay = ns.CreateOverlay(frame)
+	local edge = { overlay = overlay }
 	if not topOnly then
-		edge.inner = ns.CreateInsetBorder(frame, 6)
+		edge.inner = ns.CreateInsetBorder(overlay, 6)
 		edge.inner:SetColor(unpack(palette.edgeInner))
 	end
-	edge.top = frame:CreateTexture(nil, "OVERLAY", nil, 7)
+	edge.top = overlay:CreateTexture(nil, "OVERLAY", nil, 7)
 	edge.top:SetPoint("TOPLEFT")
 	edge.top:SetPoint("TOPRIGHT")
 	edge.top:SetHeight(px)
@@ -476,8 +487,9 @@ function ns.CreateSeparator(frame, edge, relativeTo, relativeEdge)
 	separator:SetHeight(ns.PixelSize(frame))
 end
 
--- A cropped aura icon with a cooldown swipe, a stack count and a border.
-function ns.StyleAuraIcon(icon, size, countSize)
+-- A cropped aura icon with a cooldown swipe, a stack count and a border
+-- (icon.border, black unless `borderColor`).
+function ns.StyleAuraIcon(icon, size, countSize, borderColor)
 	icon:SetSize(size, size)
 
 	icon.texture = icon:CreateTexture(nil, "ARTWORK")
@@ -493,25 +505,28 @@ function ns.StyleAuraIcon(icon, size, countSize)
 	icon.count = ns.CreateFontString(icon, countSize, "RIGHT")
 	icon.count:SetPoint("BOTTOMRIGHT", 1, -1)
 
-	ns.CreateBorder(icon)
+	icon.border = ns.CreateBorder(icon)
+	if borderColor then
+		icon.border:SetColor(unpack(borderColor))
+	end
 	ns.CreateInnerEdge(icon, true)
 end
 
 -- Sets up a button of Blizzard's secure aura container. This runs once per
 -- button before Blizzard locks it against tainted access while auras are
 -- secret, so it is the only place our code may touch it.
-function ns.InitAuraButton(button, size, countSize)
+function ns.InitAuraButton(button, size, countSize, borderColor)
 	button:EnableMouse(false)
-	ns.StyleAuraIcon(button, size, countSize)
+	ns.StyleAuraIcon(button, size, countSize, borderColor)
 	button:SetIcon(button.texture)
 	button:SetDurationCooldown(button.cooldown)
 	button:SetApplicationCount(button.count)
 end
 
 -- An initializeFrame callback for AuraContainer:AddAuraGroup.
-function ns.AuraButtonInitializer(size, countSize)
+function ns.AuraButtonInitializer(size, countSize, borderColor)
 	return function(button)
-		ns.InitAuraButton(button, size, countSize)
+		ns.InitAuraButton(button, size, countSize, borderColor)
 	end
 end
 

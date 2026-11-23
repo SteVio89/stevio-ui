@@ -19,23 +19,27 @@ ns.config.style = {
 		-- Blue-grey tinted black, old gold accent.
 		dusk = {
 			panel = { 0.047, 0.055, 0.075, 0.84 },
+			cell = { 0.027, 0.031, 0.043, 1 },
 			edgeTop = { 1, 1, 1, 0.07 },
 			edgeInner = { 1, 1, 1, 0.03 },
 			shadow = { 0, 0, 0, 0.45 },
 			textStrong = { 0.95, 0.94, 0.92 },
 			text = { 0.91, 0.90, 0.88 },
 			textMuted = { 0.54, 0.56, 0.60 },
+			textFaint = { 0.42, 0.44, 0.49 },
 			accent = { 0.78, 0.65, 0.38 },
 		},
 		-- Violet tinted black, muted dark violet accent.
 		violet = {
 			panel = { 0.070, 0.043, 0.102, 0.86 },
+			cell = { 0.043, 0.027, 0.059, 1 },
 			edgeTop = { 0.77, 0.63, 1, 0.12 },
 			edgeInner = { 0.77, 0.63, 1, 0.04 },
 			shadow = { 0, 0, 0, 0.45 },
 			textStrong = { 0.96, 0.94, 0.98 },
 			text = { 0.93, 0.91, 0.95 },
 			textMuted = { 0.56, 0.53, 0.63 },
+			textFaint = { 0.44, 0.41, 0.50 },
 			accent = { 0.52, 0.33, 0.79 },
 		},
 	},

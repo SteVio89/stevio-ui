@@ -46,4 +46,26 @@ check(ns.Hex({ 1, 0, 0 }) == "|cffff0000", "red")
 check(ns.Hex({ 0.54, 0.56, 0.60, 0.5 }) == "|cff8a8f99", "muted, alpha ignored")
 print("hex ok")
 
+-- Luminance: dark names go on priest, rogue and hunter (above 0.5), not on
+-- the other class colors.
+local CLASS_COLORS = {
+	PRIEST = { 1, 1, 1 },
+	ROGUE = { 1, 0.96, 0.41 },
+	HUNTER = { 0.67, 0.83, 0.45 },
+	MAGE = { 0.25, 0.78, 0.92 },
+	DRUID = { 1, 0.49, 0.04 },
+	PALADIN = { 0.96, 0.55, 0.73 },
+	WARRIOR = { 0.78, 0.61, 0.43 },
+	WARLOCK = { 0.53, 0.53, 0.93 },
+	SHAMAN = { 0, 0.44, 0.87 },
+}
+local BRIGHT = { PRIEST = true, ROGUE = true, HUNTER = true }
+for class, color in pairs(CLASS_COLORS) do
+	local bright = ns.Luminance(color[1], color[2], color[3]) > 0.5
+	check(bright == (BRIGHT[class] or false), "luminance of " .. class)
+end
+check(ns.Luminance(0, 0, 0) == 0, "black")
+check(math.abs(ns.Luminance(1, 1, 1) - 1) < 1e-9, "white")
+print("luminance ok")
+
 print("theme tests passed")

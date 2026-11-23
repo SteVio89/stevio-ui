@@ -45,26 +45,55 @@ local function CreatePreviewIcon(cell, anchorPoint, offsetX, offsetY, size)
 	return icon
 end
 
--- Plain frames the /sui test preview fills with fake debuffs and HoTs.
+-- Plain frames the /sui test preview fills with fake debuffs and HoTs, where
+-- the cell's aura containers put them (ns.GROUP_CELL_LAYOUT).
 local function BuildPreviewIcons(cell)
+	local layout = ns.GROUP_CELL_LAYOUT
 	local step = config.iconSize + ns.GROUP_ICON_SPACING
-	cell.leftIcons, cell.rightIcons, cell.ownIcons = {}, {}, {}
-	for i = 1, config.iconsPerSide do
-		cell.leftIcons[i] = CreatePreviewIcon(cell, "LEFT", 2 + (i - 1) * step, 0, config.iconSize)
-		cell.rightIcons[i] = CreatePreviewIcon(cell, "RIGHT", -2 - (i - 1) * step, 0, config.iconSize)
+	cell.debuffIcons, cell.ownIcons = {}, {}
+	for i = 1, config.debuffsMax do
+		cell.debuffIcons[i] =
+			CreatePreviewIcon(cell, "TOPRIGHT", layout.debuffX - (i - 1) * step, layout.debuffY, config.iconSize)
 	end
 	local ownStep = config.ownAuraSize + ns.GROUP_ICON_SPACING
 	for i = 1, config.ownAurasMax do
-		cell.ownIcons[i] = CreatePreviewIcon(cell, "TOPLEFT", 2 + (i - 1) * ownStep, -2, config.ownAuraSize)
+		cell.ownIcons[i] =
+			CreatePreviewIcon(cell, "TOPLEFT", layout.ownX + (i - 1) * ownStep, layout.ownY, config.ownAuraSize)
+	end
+end
+
+local function ShowIcon(icon, texture, borderColor)
+	icon.texture:SetTexture(texture)
+	icon.count:SetText("")
+	icon.cooldown:Clear()
+	icon.border:SetColor(unpack(borderColor or style.borderColor))
+	icon:Show()
+end
+
+-- Dispellable debuffs first (as many as the live cell's group takes), then
+-- the others, together at most config.debuffsMax.
+local function ShowDebuffs(cell, dispellable, other)
+	local dispellableMax = math.min(ns.GROUP_CELL_LAYOUT.dispellableMax, config.debuffsMax)
+	dispellable = math.min(dispellable, dispellableMax)
+	other = math.min(other, config.debuffsMax - dispellableMax)
+	for i, icon in ipairs(cell.debuffIcons) do
+		if i <= dispellable then
+			ShowIcon(icon, DISPELLABLE_ICON, config.dispelColor)
+		elseif i <= dispellable + other then
+			ShowIcon(icon, OTHER_ICON)
+		else
+			icon:Hide()
+		end
 	end
 end
 
 local function ShowIcons(icons, count, texture)
 	for i, icon in ipairs(icons) do
-		icon.texture:SetTexture(texture)
-		icon.count:SetText("")
-		icon.cooldown:Clear()
-		icon:SetShown(i <= count)
+		if i <= count then
+			ShowIcon(icon, texture)
+		else
+			icon:Hide()
+		end
 	end
 end
 
@@ -73,13 +102,15 @@ local function ShowMember(cell, member)
 	cell.power:SetMinMaxValues(0, 1)
 	if member.dead then
 		cell.health:SetValue(0)
-		cell.health:SetStatusBarColor(unpack(style.deadColor))
 		cell.power:SetValue(0)
+		local r, g, b = unpack(style.deadColor)
+		ns.ShowGroupCellState(cell, "dead", false, r, g, b)
 	else
 		local color = C_ClassColor.GetClassColor(member.class)
 		cell.health:SetValue(member.health)
-		cell.health:SetStatusBarColor(color.r, color.g, color.b)
 		cell.power:SetValue(1 - member.health / 2)
+		local dark = ns.Luminance(color.r, color.g, color.b) > config.darkNameLuminance
+		ns.ShowGroupCellState(cell, nil, dark, color.r, color.g, color.b)
 	end
 	local powerColor = PowerBarColor[member.power]
 	cell.power:SetStatusBarColor(powerColor.r, powerColor.g, powerColor.b)
@@ -87,10 +118,13 @@ local function ShowMember(cell, member)
 	cell:SetAlpha(member.outOfRange and config.outOfRangeAlpha or 1)
 	cell.aggroBorder:SetShown(member.aggro)
 	cell.targetBorder:SetShown(member.target)
-	cell.roleIcon:SetAtlas(GetMicroIconForRole(member.role))
-	cell.roleIcon:Show()
-	ShowIcons(cell.leftIcons, member.dispellable, DISPELLABLE_ICON)
-	ShowIcons(cell.rightIcons, member.other, OTHER_ICON)
+	if member.role == "DAMAGER" then
+		cell.roleIcon:Hide()
+	else
+		cell.roleIcon:SetAtlas(GetMicroIconForRole(member.role))
+		cell.roleIcon:Show()
+	end
+	ShowDebuffs(cell, member.dispellable, member.other)
 	ShowIcons(cell.ownIcons, member.own, OWN_ICON)
 	cell.nameText:SetText(member.name)
 end

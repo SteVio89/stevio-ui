@@ -79,6 +79,7 @@ local labels = {
 	cardGap = { "Gap between cards", "Abstand zwischen Karten" },
 	castBar = { "Cast bar", "Zauberleiste" },
 	category = { "Category", "Kategorie" },
+	cell = { "Raid cell", "Raid-Zelle" },
 	channel = { "Chat channel", "Chatkanal" },
 	channels = {
 		"Shown in Main",
@@ -105,6 +106,13 @@ local labels = {
 	critical = { "Critical", "Kritisch" },
 	cursorColor = { "Cursor colour", "Cursorfarbe" },
 	cursorSize = { "Cursor thickness", "Cursorstärke" },
+	darkNameColor = { "Dark name", "Dunkler Name" },
+	darkNameLuminance = {
+		"Dark name above",
+		"Dunkler Name ab",
+		"Relative luminance (0-1) of the class color from which the name turns dark.",
+		"Relative Helligkeit (0-1) der Klassenfarbe, ab der der Name dunkel wird.",
+	},
 	dateFormat = {
 		"Date format",
 		"Datumsformat",
@@ -112,9 +120,17 @@ local labels = {
 		"os.date-Format der Datumszeile, z. B. %a %d.%m.%Y.",
 	},
 	deadColor = { "Dead", "Tot" },
+	deadTrackColor = { "Dead/offline background", "Hintergrund tot/offline" },
 	debuffs = { "Debuffs", "Debuffs" },
+	debuffsMax = {
+		"Debuffs (max)",
+		"Debuffs (max.)",
+		"Dispellable ones first, at most 2 of them.",
+		"Bannbare zuerst, davon höchstens 2.",
+	},
 	deleteColor = { "Delete button", "Löschen-Knopf" },
 	dim = { "Dimmed text", "Gedämpfter Text" },
+	dispelColor = { "Dispellable edge", "Rand bannbar" },
 	dispellableFilter = { "Dispellable filter", "Filter bannbar" },
 	dividerColor = { "Divider", "Trennlinie" },
 	down = { "Down", "Runter" },
@@ -208,7 +224,6 @@ local labels = {
 	iconScale = { "Icon scale", "Symbolskalierung" },
 	iconSize = { "Icon size", "Symbolgröße" },
 	iconsPerRow = { "Icons per row", "Symbole pro Reihe" },
-	iconsPerSide = { "Icons per side", "Symbole pro Seite" },
 	idleCursorColor = { "Cursor colour off target", "Cursorfarbe ohne Ziel" },
 	idleCursorSize = { "Cursor thickness off target", "Cursorstärke ohne Ziel" },
 	ignoredCVars = {
@@ -276,7 +291,6 @@ local labels = {
 		"Verschiebt die Minikarten-Knöpfe anderer Addons in die Insel.",
 	},
 	myHealColor = { "Own incoming heals", "Eigene eingehende Heilung" },
-	nameColor = { "Name colour", "Namensfarbe" },
 	nameFontSize = { "Name font size", "Namens-Schriftgröße" },
 	nearby = { "Nearby", "In der Nähe" },
 	notchGap = { "Gap below notch", "Abstand unter Notch" },
@@ -439,6 +453,12 @@ local labels = {
 	taxi = { "Flight list", "Flugliste" },
 	text = { "Text", "Text" },
 	textEmote = { "Text emote", "Text-Emote" },
+	textFaint = {
+		"Faint text",
+		"Text blass",
+		"Timestamps and section labels.",
+		"Zeitstempel und Abschnittsüberschriften.",
+	},
 	textMuted = {
 		"Muted text",
 		"Text gedämpft",

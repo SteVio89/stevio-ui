@@ -6,7 +6,85 @@ local style = ns.config.style
 -- Game API called on every unit event of up to 40 cells, as upvalues.
 local UnitExists, UnitName, UnitIsUnit, UnitInRange = UnitExists, UnitName, UnitIsUnit, UnitInRange
 local UnitThreatSituation, UnitGetDetailedHealPrediction = UnitThreatSituation, UnitGetDetailedHealPrediction
+local UnitIsConnected, UnitIsDeadOrGhost, UnitIsPlayer, UnitClass =
+	UnitIsConnected, UnitIsDeadOrGhost, UnitIsPlayer, UnitClass
 local issecretvalue = issecretvalue
+
+-- Where things sit on the health bar, shared with the /sui test preview
+-- (Preview.lua): name and role in the top row, debuffs right below on the
+-- right, own HoTs at the bottom left.
+local CELL_LAYOUT = {
+	nameX = 4,
+	nameY = -3,
+	nameRight = -14,
+	roleX = -3,
+	roleY = -3,
+	debuffX = -3,
+	debuffY = -16,
+	ownX = 4,
+	ownY = -31,
+	-- Of config.debuffsMax, the dispellable group gets at most this many.
+	dispellableMax = 2,
+}
+ns.GROUP_CELL_LAYOUT = CELL_LAYOUT
+
+-- "dead", "offline" or nil. Group members' states are readable; a secret one
+-- (should that ever happen) shows as alive.
+local function UnitStatus(unit)
+	local connected, dead = UnitIsConnected(unit), UnitIsDeadOrGhost(unit)
+	if issecretvalue(connected) or issecretvalue(dead) then
+		return nil
+	end
+	if not connected then
+		return "offline"
+	elseif dead then
+		return "dead"
+	end
+	return nil
+end
+
+-- Whether the name goes dark on this unit's bright class color; only for a
+-- class that isn't secret, as its color is compared.
+local function WantsDarkName(unit)
+	local isPlayer = UnitIsPlayer(unit)
+	if issecretvalue(isPlayer) or not isPlayer then
+		return false
+	end
+	local _, classFile = UnitClass(unit)
+	if not classFile or issecretvalue(classFile) then
+		return false
+	end
+	local color = C_ClassColor.GetClassColor(classFile)
+	return color ~= nil and ns.Luminance(color.r, color.g, color.b) > config.darkNameLuminance
+end
+
+local STATUS_TEXT = {
+	dead = ns.T("DEAD", "TOT"),
+	offline = ns.T("OFFLINE", "OFFLINE"),
+}
+
+-- Health bar color (may be secret), background tint, name color and the
+-- dead/offline label; shared with the preview.
+function ns.ShowGroupCellState(cell, status, darkName, r, g, b)
+	local palette = style.palette
+	cell.health:SetStatusBarColor(r, g, b)
+	local name = cell.nameText
+	if status then
+		cell.healthTrack:SetVertexColor(unpack(config.deadTrackColor))
+		cell.statusText:SetText(STATUS_TEXT[status])
+		cell.statusText:Show()
+	else
+		ns.SetTrackColor(cell.healthTrack, r, g, b)
+		cell.statusText:Hide()
+	end
+	if darkName and not status then
+		name:SetTextColor(unpack(config.darkNameColor))
+		name:SetShadowColor(0, 0, 0, 0)
+	else
+		name:SetTextColor(unpack(status and palette.textFaint or palette.textStrong))
+		name:SetShadowColor(0, 0, 0, 1)
+	end
+end
 
 -- Incoming heals and absorbs may be secret: the calculator clamps them to the
 -- missing health and the bars take them as they are, so nothing is compared.
@@ -27,7 +105,8 @@ end
 local function UpdateHealth(cell)
 	local unit = cell.unit
 	ns.UpdateHealthBar(cell.health, unit)
-	cell.health:SetStatusBarColor(ns.UnitHealthColor(unit))
+	local r, g, b = ns.UnitHealthColor(unit)
+	ns.ShowGroupCellState(cell, UnitStatus(unit), WantsDarkName(unit), r, g, b)
 	UpdatePrediction(cell)
 end
 
@@ -224,22 +303,30 @@ ns.GROUP_ICON_COUNT_SIZE = ICON_COUNT_SIZE
 -- Addon code can't read other units' auras in combat (the queries error once
 -- they turn secret), so Blizzard's secure container reads and tracks them and
 -- only fills in the elements we hand it. `anchorPoint` is the cell corner or
--- edge the icons start from (e.g. "LEFT", "TOPLEFT").
-local function CreateAuraGroup(cell, key, filter, anchorPoint, offsetX, offsetY, growth, count, size)
+-- edge the icons start from (e.g. "TOPRIGHT", "TOPLEFT"), on `relativeTo`
+-- (default: the health bar) at `relativePoint`.
+local function CreateAuraGroup(cell, options)
+	local anchorPoint = options.anchorPoint
 	return ns.CreateAuraContainer(cell.health, {
 		place = function(container)
 			container:SetFrameLevel(cell.health:GetFrameLevel() + 2)
-			container:SetPoint(anchorPoint, cell.health, anchorPoint, offsetX, offsetY)
+			container:SetPoint(
+				anchorPoint,
+				options.relativeTo or cell.health,
+				options.relativePoint or anchorPoint,
+				options.x,
+				options.y
+			)
 		end,
 		-- The icons are display only; clicks go through to the cell underneath.
 		noMouse = true,
-		flowAnchor = anchorPoint:find("TOP") and anchorPoint or ("TOP" .. anchorPoint),
-		growth = growth,
-		key = key,
-		filter = filter,
-		max = count,
+		flowAnchor = anchorPoint,
+		growth = options.growth,
+		key = options.key,
+		filter = options.filter,
+		max = options.max,
 		spacing = ICON_SPACING,
-		initializeFrame = ns.AuraButtonInitializer(size, ICON_COUNT_SIZE),
+		initializeFrame = ns.AuraButtonInitializer(options.size, ICON_COUNT_SIZE, options.borderColor),
 	})
 end
 
@@ -287,12 +374,11 @@ end
 function ns.BuildGroupCell(cell)
 	local px = ns.PixelSize(cell)
 
-	ns.CreateBackground(cell)
+	local palette = style.palette
+
+	ns.CreateBackground(cell, palette.cell)
 	ns.CreateBorder(cell, 0)
-	cell.aggroBorder = ns.CreateBorder(cell, 1)
-	cell.aggroBorder:SetColor(unpack(config.aggroColor))
-	cell.aggroBorder:SetShown(false)
-	cell.targetBorder = ns.CreateBorder(cell, 2)
+	cell.targetBorder = ns.CreateBorder(cell, 2, 2)
 	cell.targetBorder:SetColor(unpack(config.targetColor))
 	cell.targetBorder:SetShown(false)
 
@@ -304,23 +390,34 @@ function ns.BuildGroupCell(cell)
 	cell.health = ns.CreateStatusBar(cell)
 	cell.health:SetPoint("TOPLEFT")
 	cell.health:SetPoint("BOTTOMRIGHT", cell.power, "TOPRIGHT", 0, px)
+	cell.healthTrack = ns.CreateTintedTrack(cell.health)
+	ns.CreateBarShade(cell.health)
 
 	ns.CreateSeparator(cell, "BOTTOM", cell.power, "TOP")
 
-	-- Drawn on the health bar right above its fill, so every icon covers it.
-	cell.nameText = cell.health:CreateFontString(nil, "ARTWORK", nil, 7)
-	cell.nameText:SetFont(style.font, config.nameFontSize, "")
-	cell.nameText:SetTextColor(unpack(config.nameColor))
-	cell.nameText:SetPoint("LEFT", 2, 0)
-	cell.nameText:SetPoint("RIGHT", -2, 0)
-	cell.nameText:SetWordWrap(false)
+	cell.nameText = ns.CreateFontString(cell.health, config.nameFontSize)
+	cell.nameText:SetPoint("TOPLEFT", CELL_LAYOUT.nameX, CELL_LAYOUT.nameY)
+	cell.nameText:SetPoint("RIGHT", CELL_LAYOUT.nameRight, 0)
+	cell.nameText:SetTextColor(unpack(palette.textStrong))
+
+	cell.statusText = ns.CreateFontString(cell.health, 9, "CENTER")
+	cell.statusText:SetPoint("CENTER")
+	cell.statusText:SetTextColor(unpack(palette.textFaint))
+	cell.statusText:Hide()
+
+	-- Inside the cell, above the bars and icons.
+	local overlay = ns.CreateOverlay(cell)
+	cell.aggroBorder = ns.CreateInsetBorder(overlay, 1)
+	cell.aggroBorder:SetColor(unpack(config.aggroColor))
+	cell.aggroBorder:SetShown(false)
 
 	-- Field names are what Blizzard's role icon delegate reads from the frame.
+	-- Damage dealers get an empty texture, so only tanks and healers show.
 	cell.roleIcon = cell.health:CreateTexture(nil, "OVERLAY")
 	cell.roleIcon:SetSize(config.roleIconSize, config.roleIconSize)
-	cell.roleIcon:SetPoint("CENTER", cell.health)
+	cell.roleIcon:SetPoint("TOPRIGHT", CELL_LAYOUT.roleX, CELL_LAYOUT.roleY)
 	cell.roleIcon:Hide()
-	cell.optionTable = { displayRoleIcon = true }
+	cell.optionTable = { displayRoleIcon = true, textureMap = { DAMAGER = "" } }
 end
 
 -- Called from the XML template's OnLoad; the cell size lives in Cell.xml
@@ -333,41 +430,44 @@ function ns.InitGroupCell(cell)
 	ns.BuildGroupCell(cell)
 	CreatePrediction(cell)
 	local Flow = AnchorUtil.FlowDirection
-	cell.auraContainers = {
-		CreateAuraGroup(
-			cell,
-			"dispellable",
-			config.dispellableFilter,
-			"LEFT",
-			2,
-			0,
-			Flow.Right,
-			config.iconsPerSide,
-			config.iconSize
-		),
-		CreateAuraGroup(
-			cell,
-			"other",
-			config.otherFilter,
-			"RIGHT",
-			-2,
-			0,
-			Flow.Left,
-			config.iconsPerSide,
-			config.iconSize
-		),
-		CreateAuraGroup(
-			cell,
-			"own",
-			config.ownAuraFilter,
-			"TOPLEFT",
-			2,
-			-2,
-			Flow.Right,
-			config.ownAurasMax,
-			config.ownAuraSize
-		),
-	}
+	-- Two containers, as each takes one filter: the other debuffs continue left
+	-- of the dispellable ones (a container sizes itself to its icons), so
+	-- together they never exceed config.debuffsMax.
+	local dispellableMax = math.min(CELL_LAYOUT.dispellableMax, config.debuffsMax)
+	local dispellable = CreateAuraGroup(cell, {
+		key = "dispellable",
+		filter = config.dispellableFilter,
+		anchorPoint = "TOPRIGHT",
+		x = CELL_LAYOUT.debuffX,
+		y = CELL_LAYOUT.debuffY,
+		growth = Flow.Left,
+		max = dispellableMax,
+		size = config.iconSize,
+		borderColor = config.dispelColor,
+	})
+	local other = CreateAuraGroup(cell, {
+		key = "other",
+		filter = config.otherFilter,
+		anchorPoint = "TOPRIGHT",
+		relativeTo = dispellable,
+		relativePoint = "TOPLEFT",
+		x = -ICON_SPACING,
+		y = 0,
+		growth = Flow.Left,
+		max = config.debuffsMax - dispellableMax,
+		size = config.iconSize,
+	})
+	local own = CreateAuraGroup(cell, {
+		key = "own",
+		filter = config.ownAuraFilter,
+		anchorPoint = "TOPLEFT",
+		x = CELL_LAYOUT.ownX,
+		y = CELL_LAYOUT.ownY,
+		growth = Flow.Right,
+		max = config.ownAurasMax,
+		size = config.ownAuraSize,
+	})
+	cell.auraContainers = { dispellable, other, own }
 	cells[#cells + 1] = cell
 	cell:SetScript("OnEvent", OnEvent)
 	cell:HookScript("OnAttributeChanged", OnAttributeChanged)

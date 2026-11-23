@@ -30,6 +30,18 @@ function ns.Hex(color)
 	return ("|cff%02x%02x%02x"):format(Byte(color[1]), Byte(color[2]), Byte(color[3]))
 end
 
+-- Relative luminance (WCAG) of a color that is not secret: 0 for black, 1
+-- for white. Decides dark or light text on a class color.
+function ns.Luminance(r, g, b)
+	local function Linear(value)
+		if value <= 0.03928 then
+			return value / 12.92
+		end
+		return ((value + 0.055) / 1.055) ^ 2.4
+	end
+	return 0.2126 * Linear(r) + 0.7152 * Linear(g) + 0.0722 * Linear(b)
+end
+
 function ns.ApplyTheme()
 	style.palette = ns.ResolveTheme(style, style.palette)
 	style.backgroundColor = style.palette.panel
