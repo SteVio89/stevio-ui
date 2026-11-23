@@ -18,7 +18,8 @@ function Zone.New()
 	return { shown = false, outside = 0 }
 end
 
--- input: x, y (cursor), cursorHidden (mouselook), notch and island rects.
+-- input: x, y (cursor), cursorHidden (mouselook), blocked (something else
+-- hangs below the notch, e.g. roll cards), notch and island rects.
 -- options: hideDelay (seconds outside before hiding), margin (around the island).
 -- Returns whether the island should be shown.
 function Zone.Step(state, input, elapsed, options)
@@ -27,7 +28,10 @@ function Zone.Step(state, input, elapsed, options)
 		-- back on the next poll if the cursor reappears inside the notch.
 		state.shown, state.outside = false, 0
 	elseif Zone.Contains(input.notch, input.x, input.y) then
-		state.shown, state.outside = true, 0
+		-- While blocked the island doesn't come up; one already open stays.
+		if state.shown or not input.blocked then
+			state.shown, state.outside = true, 0
+		end
 	elseif state.shown then
 		if Zone.Contains(input.island, input.x, input.y, options.margin) then
 			state.outside = 0

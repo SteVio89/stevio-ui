@@ -39,4 +39,13 @@ check(step(state, 200, 999), "open again")
 check(not step(state, 200, 999, 0.05, { cursorHidden = true }), "hidden while mouselooking")
 check(step(state, 200, 999), "back after mouselook with the cursor still in the notch")
 
+-- Roll cards below the notch block the island from coming up (#84).
+state = Zone.New()
+check(not step(state, 200, 999, 0.05, { blocked = true }), "blocked: cursor in the notch keeps it hidden")
+check(step(state, 200, 999), "comes up once no longer blocked")
+check(step(state, 200, 999, 0.05, { blocked = true }), "an island already open stays while blocked")
+check(step(state, 50, 850, 0.05, { blocked = true }), "and stays over the island")
+check(not step(state, 200, 700, 0.35, { blocked = true }), "hides as usual after leaving")
+check(not step(state, 200, 999, 0.05, { blocked = true }), "and doesn't come back while blocked")
+
 print("notch zone tests passed")
