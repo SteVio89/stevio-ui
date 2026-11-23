@@ -13,7 +13,6 @@ local labels = {
 		"The one accent color, only for active states.",
 		"Die einzige Akzentfarbe, nur für aktive Zustände.",
 	},
-	activeColor = { "Marked symbol", "Markiertes Symbol" },
 	activeAlpha = {
 		"Opacity when read",
 		"Deckkraft beim Lesen",
@@ -195,6 +194,7 @@ local labels = {
 	gap = { "Gap", "Abstand" },
 	gapAboveMinimap = { "Gap above minimap", "Abstand über Minikarte" },
 	gapToTarget = { "Gap to target frame", "Abstand zum Ziel" },
+	glowWidth = { "Glow width", "Leuchtbreite" },
 	gold = { "Gold", "Gold" },
 	gridColumns = { "Grid columns", "Rasterspalten" },
 	gridRowGap = { "Grid row gap", "Rasterzeilenabstand" },
@@ -425,6 +425,7 @@ local labels = {
 		"Debugging aid: Blizzard's chat stays visible next to the channel view.",
 		"Hilfe zur Fehlersuche: Blizzards Chat bleibt neben der Kanalansicht sichtbar.",
 	},
+	showClock = { "Show clock", "Uhr anzeigen" },
 	showCombat = { "Combat icon", "Kampfsymbol" },
 	showCurrency = { "Currencies", "Währungen" },
 	showInTooltip = { "Show in tooltips", "In Tooltips zeigen" },
@@ -432,6 +433,7 @@ local labels = {
 	showName = { "Name", "Name" },
 	shownColor = { "Colour when shown", "Farbe sichtbar" },
 	shownOnLogin = { "Shown on login", "Beim Login sichtbar" },
+	showZone = { "Show zone", "Zone anzeigen" },
 	sidebarFontSize = { "Sidebar font size", "Schriftgröße Seitenleiste" },
 	sidebarWidth = { "Sidebar width", "Breite Seitenleiste" },
 	silent = {

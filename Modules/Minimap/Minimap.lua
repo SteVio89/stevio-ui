@@ -32,12 +32,16 @@ end
 
 -- Mail and tracking are the only cluster parts worth keeping; they move onto
 -- the map itself so the whole cluster (border, zone text, clock, calendar) can go.
+-- Mail goes to the lower right corner, so the top edge stays free for the
+-- zone name and clock.
 local function AdoptIndicators()
-	AttachToMap(MinimapCluster.IndicatorFrame, "TOPRIGHT", -2, -2)
+	AttachToMap(MinimapCluster.IndicatorFrame, "BOTTOMRIGHT", -2, 2)
 
 	local tracking = MinimapCluster.Tracking
 	ns.KillTexture(tracking.Background)
 	AttachToMap(tracking, "TOPLEFT", 2, -2)
+	-- Above the zone header's fade.
+	tracking:SetFrameLevel(Minimap:GetFrameLevel() + 5)
 end
 
 -- Blizzard anchors the looking-for-group eye to the micro menu, which ends up
@@ -93,6 +97,51 @@ local function KeepNorthUp()
 	C_Timer.After(0.2, ApplySquareMask)
 end
 
+-- The zone name (after the tracking button) and the clock on a fade along
+-- the top edge, above the map but below its icons.
+local function CreateHeader()
+	if not (config.showZone or config.showClock) then
+		return
+	end
+	local palette = ns.config.style.palette
+	local header = CreateFrame("Frame", nil, Minimap)
+	header:SetPoint("TOPLEFT")
+	header:SetPoint("TOPRIGHT")
+	header:SetHeight(config.headerHeight)
+	header:SetFrameLevel(Minimap:GetFrameLevel() + 1)
+	local fade = header:CreateTexture(nil, "BACKGROUND")
+	fade:SetAllPoints()
+	fade:SetTexture(ns.config.style.texture)
+	fade:SetGradient("VERTICAL", CreateColor(0, 0, 0, 0), CreateColor(0, 0, 0, 0.62))
+
+	local clock
+	if config.showClock then
+		clock = ns.CreateFontString(header, 11, "RIGHT")
+		clock:SetPoint("TOPRIGHT", -10, -7)
+		local r, g, b = unpack(palette.text)
+		clock:SetTextColor(r, g, b, 0.8)
+		local function UpdateClock()
+			clock:SetText(date("%H:%M"))
+		end
+		UpdateClock()
+		C_Timer.NewTicker(10, UpdateClock)
+	end
+
+	if config.showZone then
+		local zone = ns.CreateFontString(header, 11, "LEFT")
+		zone:SetPoint("TOPLEFT", MinimapCluster.Tracking, "TOPRIGHT", 4, -5)
+		zone:SetPoint("RIGHT", clock or header, clock and "LEFT" or "RIGHT", -8, 0)
+		zone:SetTextColor(unpack(palette.textStrong))
+		local function UpdateZone()
+			zone:SetText(GetMinimapZoneText())
+		end
+		UpdateZone()
+		for _, event in ipairs({ "ZONE_CHANGED", "ZONE_CHANGED_INDOORS", "ZONE_CHANGED_NEW_AREA" }) do
+			ns.RegisterEvent(event, UpdateZone)
+		end
+	end
+end
+
 function MinimapModule:OnEnable()
 	local size = GetMapSize()
 	Minimap:SetParent(UIParent)
@@ -101,9 +150,10 @@ function MinimapModule:OnEnable()
 		ns.SetPoint(frame, ns.layout.minimap)
 	end)
 
-	ns.CreateBorder(Minimap)
+	ns.CreatePanel(Minimap, { background = false })
 
 	AdoptIndicators()
+	CreateHeader()
 	PlaceQueueButton()
 	PlaceVehicleLeaveButton(size)
 

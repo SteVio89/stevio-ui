@@ -12,8 +12,8 @@ local buttonStep = 38
 -- Below the second debuff row (see buffs and debuffs further down).
 local rightBarsTop = -152
 -- The two vertical bars keep clear of the tracker's toggle badge on the
--- right screen edge (6 wide, style.badge.width in Core/Config.lua) plus a gap.
-local rightBarsEdge = 6 + 2
+-- right screen edge (3 wide, style.badge.width in Core/Config.lua) plus a gap.
+local rightBarsEdge = 3 + 2
 -- From the screen edge to the left of the two bars, plus the gap before what sits left of them.
 local rightBarsWidth = rightBarsEdge + 2 * buttonStep + 4
 

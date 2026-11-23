@@ -256,6 +256,7 @@ end
 
 -- Desaturates what `regions(frame)` returns while the mouse is off `frame`.
 -- A function, because Blizzard swaps some textures (micro menu atlases).
+-- Returns the setter (true: muted), to reapply after such a swap.
 function ns.DesaturateUntilHover(frame, regions)
 	local function Set(on)
 		for _, region in ipairs(regions(frame)) do
@@ -272,8 +273,12 @@ function ns.DesaturateUntilHover(frame, regions)
 	return Set
 end
 
--- Near-black backdrop of small overlay panels (flight list).
-ns.PANEL_COLOR = { 0, 0, 0, 0.9 }
+-- Backdrop of windows and overlay panels (notes, players, flight list): the
+-- theme's panel color, a little more opaque.
+function ns.PanelColor()
+	local panel = style.palette.panel
+	return { panel[1], panel[2], panel[3], 0.9 }
+end
 
 -- `color` defaults to the style's background colour.
 function ns.CreateBackground(frame, color, sublevel)

@@ -11,8 +11,7 @@ local function CreateWindow()
 	frame:SetSize(width, height)
 	frame:SetPoint("CENTER")
 	frame:SetFrameStrata("DIALOG")
-	ns.CreateBackground(frame, { 0.05, 0.05, 0.05, 0.95 })
-	ns.CreateBorder(frame)
+	ns.CreatePanel(frame, { color = ns.PanelColor() })
 	-- Lets Escape close the window like any Blizzard panel.
 	tinsert(UISpecialFrames, frame:GetName())
 

@@ -63,10 +63,12 @@ ns.config.style = {
 	tappedColor = { 0.5, 0.5, 0.5 },
 
 	-- Edge badges that toggle hidden-by-default elements (chat, tracker).
+	-- Segments that light up (new whispers) glow in their color away from the edge.
 	badge = {
-		width = 6,
+		width = 3,
 		height = 48,
-		hiddenColor = { 0.3, 0.3, 0.3, 0.6 },
-		shownColor = { 0.8, 0.8, 0.8, 0.9 },
+		hiddenColor = { 1, 1, 1, 0.18 },
+		shownColor = { 1, 1, 1, 0.45 },
+		glowWidth = 8,
 	},
 }

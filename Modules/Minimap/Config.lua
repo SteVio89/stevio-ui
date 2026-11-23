@@ -11,4 +11,9 @@ ns.config.minimap = {
 	iconScale = 0.8,
 	-- Space between the map's bottom edge and the vehicle leave button below it.
 	vehicleLeaveGap = 4,
+
+	-- Zone name and clock on a dark fade along the map's top edge.
+	showZone = true,
+	showClock = true,
+	headerHeight = 34,
 }

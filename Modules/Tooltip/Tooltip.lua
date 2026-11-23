@@ -13,7 +13,7 @@ local function MarkBarHeight()
 	if not marks or marks.enabled == false then
 		return 0
 	end
-	return ns.layout.marks.y + marks.buttonSize
+	return ns.layout.marks.y + marks.buttonSize + 2 * marks.padding
 end
 
 function Tooltip:OnEnable()

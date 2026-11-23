@@ -22,21 +22,30 @@ local function TargetSymbol()
 	return index
 end
 
+-- Full color for the target's symbol and the one under the cursor, muted
+-- otherwise; dimmed further while it can't be used.
+local function ShowButtonState(button)
+	local icon = button.icon
+	ns.Desaturate(icon, not (button.isActive or button:IsMouseOver()))
+	if button.dimmed then
+		icon:SetAlpha(config.unusableAlpha)
+	end
+end
+
 local function UpdateTargetMarks()
 	local usable = CanMark()
 	local current = TargetSymbol()
 	for _, button in ipairs(buttons) do
 		local index = button.symbol and button.symbol.index
-		local active = index ~= nil and index == current
-		button.active:SetShown(active)
+		button.isActive = index ~= nil and index == current
+		button.active:SetShown(button.isActive)
 		-- The clear button is dimmed while the target has no symbol to clear.
-		local dimmed
 		if index then
-			dimmed = not usable
+			button.dimmed = not usable
 		else
-			dimmed = not current
+			button.dimmed = not current
 		end
-		button.icon:SetAlpha(dimmed and config.unusableAlpha or 1)
+		ShowButtonState(button)
 	end
 end
 
@@ -63,11 +72,9 @@ end
 local function CreateButton(position, symbol)
 	local button = CreateFrame("Button", "StevioUI_Mark" .. position, bar, "SecureActionButtonTemplate")
 	button:SetSize(config.buttonSize, config.buttonSize)
-	button:SetPoint("LEFT", (position - 1) * (config.buttonSize + config.buttonGap), 0)
-	ns.CreateBackground(button)
-	ns.CreateBorder(button)
-	button.active = ns.CreateBorder(button, 1, 2)
-	button.active:SetColor(unpack(config.activeColor))
+	button:SetPoint("LEFT", config.padding + (position - 1) * (config.buttonSize + config.buttonGap), 0)
+	button.active = ns.CreateInsetBorder(button, 1)
+	button.active:SetColor(unpack(style.palette.accent))
 	button.active:SetShown(false)
 
 	button.icon = button:CreateTexture(nil, "ARTWORK")
@@ -91,6 +98,8 @@ local function CreateButton(position, symbol)
 	-- The target's mark changes with RAID_TARGET_UPDATE.
 	button:HookScript("OnEnter", ShowTooltip)
 	button:HookScript("OnLeave", GameTooltip_Hide)
+	button:HookScript("OnEnter", ShowButtonState)
+	button:HookScript("OnLeave", ShowButtonState)
 	buttons[#buttons + 1] = button
 	return button
 end
@@ -98,7 +107,11 @@ end
 function Marks:OnEnable()
 	bar = CreateFrame("Frame", "StevioUI_MarkBar", UIParent)
 	local count = #Symbols.LIST + 1
-	bar:SetSize(count * config.buttonSize + (count - 1) * config.buttonGap, config.buttonSize)
+	bar:SetSize(
+		count * config.buttonSize + (count - 1) * config.buttonGap + 2 * config.padding,
+		config.buttonSize + 2 * config.padding
+	)
+	ns.CreatePanel(bar)
 	ns.SetPoint(bar, ns.layout.marks, Minimap)
 
 	for position, symbol in ipairs(Symbols.LIST) do
