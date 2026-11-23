@@ -132,8 +132,11 @@ until it is needed, and as much as possible can be done from the keyboard.
   them.
   The channel list has headings: chat channels come grouped by name ("General"
   with one row per zone, other channels under "Channels"), the read-only
-  channels under "Log". Unread counts sit in a small pill at the right of a
-  row; the shown channel is marked with a line in the accent color.
+  channels under "Log". A click on a heading shows the lines of all channels
+  under it together, by time and each tagged with its row's name ("Tanaris",
+  "NPC"); it's read-only, and a click on a chat channel's tag there opens
+  that channel. Unread counts sit in a small pill at the right of a
+  row; the shown channel (or heading) is marked with a line in the accent color.
   The `✕` that shows on a row under the cursor deletes any channel but guild
   and Main with its history. Nearby, chat
   and community channels, NPC, Loot & Progress and System only count as unread

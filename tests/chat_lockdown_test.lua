@@ -90,7 +90,10 @@ end
 C.Label = function(channel)
 	return channel.label or channel.key
 end
-C.ShowEntry = function() end
+C.AppendEntry = function() end
+C.IsGroupKey = function()
+	return false
+end
 C.ExpandExpressions = function(text)
 	return text
 end

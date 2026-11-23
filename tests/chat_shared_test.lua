@@ -308,4 +308,60 @@ do
 end
 print("sidebar ok")
 
+-- A click on a heading opens its channels as one (#78).
+do
+	local function Channel(kind, key, label, lines, unread)
+		local messages = {}
+		for i, line in ipairs(lines) do
+			messages[i] = { time = line[1], text = line[2] }
+		end
+		return { kind = kind, key = key, label = label, messages = messages, unread = unread or 0, last = 0 }
+	end
+	local channels = {
+		Channel("guild", "guild", "Guild", { { 1, "guild" } }),
+		Channel("public", "c1", "General - Tanaris", { { 2, "t1" }, { 6, "t2" } }, 2),
+		Channel("public", "c2", "Trade", { { 3, "trade" } }),
+		Channel("public", "c4", "General - Feralas", { { 4, "f1" }, { 6, "f2" } }, 1),
+		Channel("npc", "npc", "NPC", { { 5, "npc" } }, 3),
+		Channel("system", "system", "System", { { 1, "sys" } }),
+	}
+	local entries = C.SidebarEntries(channels)
+	check(entries[2].group == "group:name:general", "a zone group's key: " .. tostring(entries[3].group))
+	check(entries[5].group == "group:channels", "the channels without a zone")
+	check(entries[7].group == "group:log", "the log")
+	check(C.IsGroupKey("group:log") and not C.IsGroupKey("guild") and not C.IsGroupKey(nil), "group keys")
+
+	local general = C.GroupChannel(channels, "group:name:general")
+	check(general.label == "General" and general.readOnly, "named after its heading, read-only")
+	check(#general.members == 2 and general.labels.c1 == "Tanaris", "its rows, labelled as in the sidebar")
+	check(general.unread == 3, "unread of its rows together: " .. general.unread)
+	local lines = {}
+	for _, entry in ipairs(general.messages) do
+		lines[#lines + 1] = entry.source .. ":" .. entry.text
+	end
+	check(
+		table.concat(lines, " ") == "Tanaris:t1 Feralas:f1 Tanaris:t2 Feralas:f2",
+		"merged by time, same times in row order: " .. table.concat(lines, " ")
+	)
+	check(general.messages[1].sourceKey == "c1", "each line knows its channel")
+	check(channels[2].messages[1].source == nil, "the stored lines stay as they are")
+
+	local log = C.GroupChannel(channels, "group:log")
+	check(#log.members == 2 and log.messages[1].text == "sys" and log.messages[2].text == "npc", "the log, by time")
+	check(C.GroupChannel(channels, "group:name:trade") == nil, "a heading that isn't there")
+
+	-- Reading the view reads its rows.
+	local store = History.New({}, 10, false)
+	for _, channel in ipairs(channels) do
+		store.db.channels[channel.key] = channel
+	end
+	C.store = store
+	C.state.selected = "group:name:general"
+	check(C.Selected().label == "General", "the open view")
+	C.MarkRead("group:name:general")
+	check(channels[2].unread == 0 and channels[4].unread == 0 and channels[5].unread == 3, "reads only its rows")
+	C.state.selected, C.store = nil, nil
+end
+print("heading views ok")
+
 print("chat shared tests passed")
