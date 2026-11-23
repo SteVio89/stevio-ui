@@ -193,6 +193,11 @@ Go through each with `style.theme = "dusk"` and once more with `"violet"`
   their unread counts, takes new lines live (date line included) and keeps the
   input on "Only /commands here"; a click on a zone tag opens that channel;
   "Copy" copies the merged lines; a `/sui` reply while "Log" is open stays there.
+- Chat fixes (#79): a long message (several wrapped lines, also with item
+  links) shows in full as a preview while the chat is hidden; several long
+  ones stay within the chat's area, the oldest dropping out; a click and the
+  hover hold still work on each wrapped line. Text in the input line
+  (Ä, g, y, item links) isn't cut off at the box's top or bottom edge.
 - Notch island: round corners (Media/Corner.tga), no shadow or light rim, grid with and
   without rested XP and reputation, many addon buttons muted until hovered,
   accent edge on the notes/players/rolls button while its window is open;
