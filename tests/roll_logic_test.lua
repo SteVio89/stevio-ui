@@ -174,7 +174,10 @@ check(Logic.HeaderText(record, formatDate, "?") == "Ragnaros · Molten Core · d
 check(Logic.HeaderText({ encounter = "", time = 5 }, formatDate, "Loot") == "Loot · d5", "unnamed fight")
 
 -- Simulated rolls (/sui roll).
-check(Logic.Winner({ Info("Ann", State.Greed, 99), Info("Cid", State.NeedMainSpec, 12) }).playerName == "Cid", "need wins")
+check(
+	Logic.Winner({ Info("Ann", State.Greed, 99), Info("Cid", State.NeedMainSpec, 12) }).playerName == "Cid",
+	"need wins"
+)
 check(Logic.Winner({ Info("Ann", State.Greed, 40), Info("Dan", State.Greed, 70) }).playerName == "Dan", "highest roll")
 check(
 	Logic.Winner({ Info("Ann", State.Greed, 99), Info("Eve", State.Transmog, 5) }).playerName == "Eve",
