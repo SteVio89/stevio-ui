@@ -168,8 +168,9 @@ local function TextButton(parent, text, onClick)
 	return button
 end
 
+-- Clears what the window shows: while previewing only the made-up records.
 local function Clear()
-	wipe(records)
+	wipe(Shown())
 	wipe(expanded)
 	History.Refresh()
 end
