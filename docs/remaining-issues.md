@@ -188,6 +188,11 @@ Go through each with `style.theme = "dusk"` and once more with `"violet"`
   cursor moves onto the `✕`), accent marker, scrolling with many channels,
   date line; headings and channels evenly spaced; no light line inside the
   chat's or the mark bar's black border.
+- Chat headings (#78): a click on "Log", "General" or "Channels" shows all lines
+  of its channels by time with their tag, marks the heading like a row, reads
+  their unread counts, takes new lines live (date line included) and keeps the
+  input on "Only /commands here"; a click on a zone tag opens that channel;
+  "Copy" copies the merged lines; a `/sui` reply while "Log" is open stays there.
 - Notch island: round corners (Media/Corner.tga), no shadow or light rim, grid with and
   without rested XP and reputation, many addon buttons muted until hovered,
   accent edge on the notes/players/rolls button while its window is open;
