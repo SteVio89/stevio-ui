@@ -247,6 +247,11 @@ end
 _G.CreateKeyChordStringUsingMetaKeyState = function(key)
 	return "SHIFT-" .. key
 end
+_G.C_CVar = {
+	GetCVarDefault = function()
+		return "0"
+	end,
+}
 _G.StevioUIConfig = { values = {}, bindings = {}, cvars = {} }
 _G.StevioUIState = { consented = true, backup = { time = now - 86400 } }
 
@@ -275,6 +280,9 @@ local ns = {
 		fn()
 	end,
 	ApplyOverridesNow = function() end,
+	KnownCVarName = function(name)
+		return name
+	end,
 }
 function ns.T(english, german)
 	return ns.isGerman and german or english
@@ -294,6 +302,7 @@ for _, file in ipairs({
 	"Config",
 	"Profile",
 	"Model",
+	"CVarInfo",
 	"Client",
 	"Labels",
 	"Pages",
@@ -309,6 +318,7 @@ for _, file in ipairs({
 	"PageModule",
 	"PageSearch",
 	"PageBindings",
+	"PageCVars",
 	"Panel",
 }) do
 	loadAddonFile("Modules/Settings/" .. file .. ".lua", ns)
@@ -489,5 +499,47 @@ mountRow.reset.scripts.OnClick(mountRow.reset)
 check(next(StevioUIConfig.bindings) == nil, "reset to the profile")
 check(BindingRow("STEVIOUI_CURSOR_VERTICAL"), "keyboard healing keys listed")
 print("bindings ok")
+
+-- Graphics & game: change a CVar, back to the profile, technical names, the
+-- raid switch.
+Window.Open("cvars")
+local cvars = StevioUI_Settings.pages.cvars
+local function CVarRow(name)
+	for _, cvarCard in ipairs(cvars.cards.frames) do
+		for _, rows in pairs(cvarCard.rows) do
+			for _, cvarRow in ipairs(rows) do
+				if cvarRow.shown and cvarRow.cvar == name then
+					return cvarRow
+				end
+			end
+		end
+	end
+end
+local farclip = CVarRow("farclip")
+check(farclip and farclip.control.slider, "farclip slider")
+farclip.control.onChange(4000)
+check(StevioUIConfig.cvars.farclip == "4000", "own value saved")
+farclip = CVarRow("farclip")
+check(farclip.reset.shown and farclip.profile.text:find("6000"), "profile value shown: " .. farclip.profile.text)
+farclip.reset.scripts.OnClick(farclip.reset)
+check(StevioUIConfig.cvars.farclip == nil, "back to the profile")
+local lock = CVarRow("lockActionBars")
+lock.control.scripts.OnClick(lock.control)
+check(StevioUIConfig.cvars.lockActionBars == "1", "switch writes 1")
+cvars.technical.onChange(true)
+check(CVarRow("lockActionBars").technical.shown, "technical names")
+check(CVarRow("RAIDfarclip") == nil, "raid variants hidden while mirrored")
+local pendingBefore = UI.PendingChanges()
+cvars.mirror.switch.onChange(false)
+check(ns.config.settings.mirrorRaidCVars == false, "mirror off")
+check(UI.PendingChanges() == pendingBefore, "applied at once, no reload")
+Window.Render()
+check(CVarRow("RAIDfarclip"), "raid rows shown")
+for _, chip in ipairs(cvars.chips) do
+	chip.scripts.OnClick(chip)
+end
+cvars.mirror.switch.onChange(true)
+StevioUIConfig.cvars = {}
+print("cvars ok")
 
 print("settings window tests passed")

@@ -341,6 +341,8 @@ M["taxi.rowHeight"] = Slider("list", 12, 30, 1, "px")
 M["taxi.padding"] = Slider("list", 0, 16, 1, "px")
 M["settings.consoleKey"] = { section = "general", control = "text" }
 M["settings.ignoredCVars"] = ADVANCED
+-- The switch on the graphics page; it is applied at once.
+M["settings.mirrorRaidCVars"] = { hidden = true, live = true }
 
 -- Style ----------------------------------------------------------------------------------
 

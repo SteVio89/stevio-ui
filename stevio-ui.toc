@@ -128,6 +128,7 @@ Modules\Players\Players.lua
 Modules\Settings\Config.lua
 Modules\Settings\Profile.lua
 Modules\Settings\Model.lua
+Modules\Settings\CVarInfo.lua
 Modules\Settings\Client.lua
 Modules\Settings\Export.lua
 Modules\Settings\Backup.lua
@@ -147,4 +148,5 @@ Modules\Settings\PageStart.lua
 Modules\Settings\PageModule.lua
 Modules\Settings\PageSearch.lua
 Modules\Settings\PageBindings.lua
+Modules\Settings\PageCVars.lua
 Modules\Settings\Panel.lua

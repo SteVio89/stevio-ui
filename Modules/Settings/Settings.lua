@@ -14,8 +14,13 @@ local function EffectiveBindings()
 	return ns.Overrides.Merge(config.profile.bindings or {}, StevioUIConfig.bindings)
 end
 
+-- With mirrorRaidCVars the raid variants take their base CVar's value.
 local function EffectiveCVars()
-	return ns.Overrides.Merge(config.profile.cvars or {}, StevioUIConfig.cvars)
+	local cvars = ns.Overrides.Merge(config.profile.cvars or {}, StevioUIConfig.cvars)
+	if config.mirrorRaidCVars then
+		cvars = ns.CVarInfo.Mirror(cvars)
+	end
+	return cvars
 end
 
 local function ApplyActionBars(toggles)

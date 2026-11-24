@@ -301,6 +301,12 @@ local labels = {
 		"0 schlecht, 1 gewöhnlich, 2 ungewöhnlich, 3 selten, 4 episch.",
 	},
 	minimap = { "Minimap", "Minikarte" },
+	mirrorRaidCVars = {
+		"Same values in raids",
+		"Im Schlachtzug dieselben Werte",
+		"The raid variants (RAID…) of the graphics settings follow their normal values.",
+		"Die Schlachtzug-Varianten (RAID…) der Grafikeinstellungen folgen den normalen Werten.",
+	},
 	minimapButtons = {
 		"Addon minimap buttons",
 		"Minikarten-Knöpfe von Addons",
