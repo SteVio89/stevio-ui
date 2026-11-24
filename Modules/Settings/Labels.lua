@@ -551,6 +551,12 @@ local labels = {
 	vertical = { "Vertical", "Senkrecht", "One column instead of one row.", "Eine Spalte statt einer Zeile." },
 	violet = { "Night violet", "Nachtviolett" },
 	warn = { "Warning", "Warnung" },
+	warning = {
+		"Warning",
+		"Warnung",
+		"Hints that need attention, e.g. a key taken twice.",
+		"Hinweise, die Aufmerksamkeit brauchen, z. B. eine doppelt belegte Taste.",
+	},
 	whisper = { "Whisper", "Flüstern" },
 	width = { "Width", "Breite" },
 	widthFraction = {

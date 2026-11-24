@@ -221,6 +221,32 @@ _G.StaticPopup_Show = function(name, _, _, data)
 end
 _G.IsControlKeyDown, _G.IsAltKeyDown, _G.IsMetaKeyDown, _G.IsShiftKeyDown =
 	function() end, function() end, function() end, function() end
+-- A small binding list: two categories, a header that isn't an action.
+local BINDINGS = {
+	{ "HEADER_BLANK", "BINDING_HEADER_MOVEMENT" },
+	{ "MOVEFORWARD", "BINDING_HEADER_MOVEMENT" },
+	{ "STRAFELEFT", "BINDING_HEADER_MOVEMENT" },
+	{ "JUMP", "BINDING_HEADER_MOVEMENT" },
+	{ "MOUNT", nil },
+	{ "SCREENSHOT", nil },
+}
+_G.BINDING_HEADER_MOVEMENT = "Bewegung"
+_G.OTHER = "Sonstiges"
+_G.GetNumBindings = function()
+	return #BINDINGS
+end
+_G.GetBinding = function(index)
+	return BINDINGS[index][1], BINDINGS[index][2]
+end
+_G.GetBindingName = function(command)
+	return command:lower()
+end
+_G.IsKeyPressIgnoredForBinding = function(key)
+	return key == "LSHIFT"
+end
+_G.CreateKeyChordStringUsingMetaKeyState = function(key)
+	return "SHIFT-" .. key
+end
 _G.StevioUIConfig = { values = {}, bindings = {}, cvars = {} }
 _G.StevioUIState = { consented = true, backup = { time = now - 86400 } }
 
@@ -248,6 +274,7 @@ local ns = {
 	RunAfterCombat = function(fn)
 		fn()
 	end,
+	ApplyOverridesNow = function() end,
 }
 function ns.T(english, german)
 	return ns.isGerman and german or english
@@ -267,11 +294,13 @@ for _, file in ipairs({
 	"Config",
 	"Profile",
 	"Model",
+	"Client",
 	"Labels",
 	"Pages",
 	"Meta",
 	"Help",
 	"Search",
+	"Keys",
 	"EditorModel",
 	"UI",
 	"Controls",
@@ -279,6 +308,7 @@ for _, file in ipairs({
 	"PageStart",
 	"PageModule",
 	"PageSearch",
+	"PageBindings",
 	"Panel",
 }) do
 	loadAddonFile("Modules/Settings/" .. file .. ".lua", ns)
@@ -414,5 +444,50 @@ local edit = StevioUI_Settings.search.edit
 edit.scripts.OnEscapePressed(edit)
 check(edit.text == "" and Window.state.search == "", "escape empties the search")
 print("search ok")
+
+-- Keybindings: bind a key (with a conflict), Escape cancels, a locked key is
+-- refused, the row's reset brings the profile back.
+ns.config.settings.profile.bindings = { ["SHIFT-A"] = "STRAFELEFT", W = "MOVEFORWARD", SPACE = "JUMP" }
+Window.Open("bindings")
+local bindings = StevioUI_Settings.pages.bindings
+check(bindings.shown, "bindings page")
+local function BindingRow(command)
+	for _, pool in pairs(bindings.rowPools) do
+		for _, bindingRow in ipairs(pool.frames) do
+			if bindingRow.shown and bindingRow.command == command then
+				return bindingRow
+			end
+		end
+	end
+end
+local mountRow
+bindings.chips[4].scripts.OnClick(bindings.chips[4])
+mountRow = BindingRow("MOUNT")
+check(mountRow, "unbound mount row")
+mountRow.add.scripts.OnClick(mountRow.add)
+local captureFrame = bindings.captureBox
+check(captureFrame.shown, "capturing")
+captureFrame.scripts.OnKeyDown(captureFrame, "LSHIFT")
+captureFrame.scripts.OnKeyDown(captureFrame, "A")
+check(StevioUIConfig.bindings["SHIFT-A"] == "MOUNT", "key bound")
+bindings.chips[1].scripts.OnClick(bindings.chips[1])
+mountRow = BindingRow("MOUNT")
+check(mountRow.note.shown and mountRow.note.text:find("strafeleft"), "conflict shown: " .. mountRow.note.text)
+mountRow.add.scripts.OnClick(mountRow.add)
+captureFrame.scripts.OnKeyDown(captureFrame, "ESCAPE")
+check(StevioUIConfig.bindings["SHIFT-ESCAPE"] == nil, "escape cancels")
+_G.CreateKeyChordStringUsingMetaKeyState = function(key)
+	return key
+end
+mountRow = BindingRow("MOUNT")
+mountRow.add.scripts.OnClick(mountRow.add)
+captureFrame.scripts.OnKeyDown(captureFrame, "UP")
+check(StevioUIConfig.bindings.UP == nil, "locked key refused")
+mountRow = BindingRow("MOUNT")
+check(mountRow.note.text:find("Tastaturheilung"), "locked note")
+mountRow.reset.scripts.OnClick(mountRow.reset)
+check(next(StevioUIConfig.bindings) == nil, "reset to the profile")
+check(BindingRow("STEVIOUI_CURSOR_VERTICAL"), "keyboard healing keys listed")
+print("bindings ok")
 
 print("settings window tests passed")

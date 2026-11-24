@@ -137,6 +137,7 @@ Modules\Settings\Pages.lua
 Modules\Settings\Meta.lua
 Modules\Settings\Help.lua
 Modules\Settings\Search.lua
+Modules\Settings\Keys.lua
 Modules\Settings\EditorModel.lua
 Modules\Settings\Editor.lua
 Modules\Settings\UI.lua
@@ -145,4 +146,5 @@ Modules\Settings\Window.lua
 Modules\Settings\PageStart.lua
 Modules\Settings\PageModule.lua
 Modules\Settings\PageSearch.lua
+Modules\Settings\PageBindings.lua
 Modules\Settings\Panel.lua
