@@ -90,6 +90,9 @@ Modules\QuestRewards\Config.lua
 Modules\QuestRewards\Choices.lua
 Modules\QuestRewards\QuestRewards.lua
 
+Modules\FastLoot\Config.lua
+Modules\FastLoot\FastLoot.lua
+
 Modules\LootTicker\Config.lua
 Modules\LootTicker\Feed.lua
 Modules\LootTicker\LootTicker.lua
