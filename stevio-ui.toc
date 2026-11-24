@@ -142,4 +142,5 @@ Modules\Settings\UI.lua
 Modules\Settings\Controls.lua
 Modules\Settings\Window.lua
 Modules\Settings\PageStart.lua
+Modules\Settings\PageModule.lua
 Modules\Settings\Panel.lua

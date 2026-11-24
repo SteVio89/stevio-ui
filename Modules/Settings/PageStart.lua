@@ -115,6 +115,10 @@ local function CreateThemeCard(parent)
 	return card
 end
 
+-- The style page shows the same cards.
+Window.THEMES = THEMES
+Window.CreateThemeCard = CreateThemeCard
+
 local function CreateTile(parent)
 	local tile = Card(parent)
 	tile:SetHeight(TILE_HEIGHT)

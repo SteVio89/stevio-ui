@@ -129,6 +129,49 @@ local function ShowMember(cell, member)
 	cell.nameText:SetText(member.name)
 end
 
+-- The four states the settings window's group page shows side by side.
+local SAMPLES = {
+	{ "PRIEST", "Shiewa", { own = 3 } },
+	{ "MAGE", "Cassian", { dispellable = 1, other = 1, own = 1 } },
+	{ "WARRIOR", "Aldric", { aggro = true, role = "TANK", other = 1, power = "RAGE" } },
+	{ "DRUID", "Elowen", { outOfRange = true, own = 1 } },
+}
+
+local function SampleMember(sample)
+	local member = {
+		class = sample[1],
+		name = sample[2],
+		power = "MANA",
+		health = 0.72,
+		role = "DAMAGER",
+		dispellable = 0,
+		other = 0,
+		own = 0,
+	}
+	for key, value in pairs(sample[3]) do
+		member[key] = value
+	end
+	return member
+end
+
+-- Four cells (normal, dispellable, aggro, out of range) in `parent`, built
+-- with the current config like the /sui test preview. Returns the cells and
+-- one cell's size; the config is read while building, so a changed config
+-- needs new cells.
+function ns.CreateGroupSamples(parent)
+	local width, height = ns.GetGroupCellSize()
+	local cells = {}
+	for index, sample in ipairs(SAMPLES) do
+		local cell = CreateFrame("Frame", nil, parent)
+		cell:SetSize(width, height)
+		ns.BuildGroupCell(cell)
+		BuildPreviewIcons(cell)
+		ShowMember(cell, SampleMember(sample))
+		cells[index] = cell
+	end
+	return cells, width, height
+end
+
 local function CreatePreview()
 	local baseWidth, cellHeight = ns.GetGroupCellSize()
 	local cells = {}
