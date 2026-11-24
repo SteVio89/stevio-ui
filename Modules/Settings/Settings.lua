@@ -232,6 +232,7 @@ function SettingsModule:OnEnable()
 		ns.RunAfterCombat(Restore)
 	end)
 
-	-- Last, so a failing panel can't take /sui restore down with it.
+	-- Last, so a failing settings window can't take /sui restore down with
+	-- it; the window itself is only built when it is first opened.
 	ns.SafeCall(ns.SetupOptionsPanel)
 end

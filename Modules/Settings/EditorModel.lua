@@ -1,6 +1,6 @@
 local _, ns = ...
 
--- What the config editor (Editor.lua) shows and in which order. Kept free of
+-- What the settings window shows and in which order (see Meta.lua). Kept free of
 -- WoW API calls so it can be tested outside the game.
 
 local Overrides = ns.Overrides
@@ -8,8 +8,9 @@ local Overrides = ns.Overrides
 local Model = {}
 ns.EditorModel = Model
 
--- Paths the editor never shows: the profile has pages of its own, and the
--- settings module builds this panel, so turning it off would lock it away.
+-- Paths the settings window never shows (nor imports): the profile has
+-- pages of its own, and the settings module builds the window, so turning
+-- it off would lock it away.
 -- The palette and the background are copied from the chosen theme
 -- (Core/Theme.lua), so the theme's own colors are what can be changed.
 Model.HIDDEN = {
