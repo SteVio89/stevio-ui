@@ -271,12 +271,14 @@ for _, file in ipairs({
 	"Pages",
 	"Meta",
 	"Help",
+	"Search",
 	"EditorModel",
 	"UI",
 	"Controls",
 	"Window",
 	"PageStart",
 	"PageModule",
+	"PageSearch",
 	"Panel",
 }) do
 	loadAddonFile("Modules/Settings/" .. file .. ".lua", ns)
@@ -387,5 +389,30 @@ registered.PLAYER_REGEN_DISABLED()
 registered.PLAYER_REGEN_ENABLED()
 Window.Open()
 print("keys ok")
+
+-- Search: typing shows the results, a chip filters, values change in the
+-- result rows, Escape empties the search.
+local function Type(text)
+	local edit = StevioUI_Settings.search.edit
+	edit:SetText(text)
+	edit.scripts.OnTextChanged(edit, true)
+end
+Type("abstand")
+local results = StevioUI_Settings.pages.search
+check(results.shown and results.title.text:find("Treffer"), "results shown: " .. results.title.text)
+check(not StevioUI_Settings.pages.module.shown, "page hidden while searching")
+results.chips:Get(2).scripts.OnClick(results.chips:Get(2))
+local card = results.cards:Get(1)
+local first = card.rows.frames.slider[1]
+check(first and first.shown, "a slider row in the results")
+first.control.onChange(first.item.meta.max)
+check(next(StevioUIConfig.values) ~= nil, "changed from the results")
+UI.Reset(first.item)
+Type("xyzzy")
+check(results.title.text:find("^0"), "nothing found")
+local edit = StevioUI_Settings.search.edit
+edit.scripts.OnEscapePressed(edit)
+check(edit.text == "" and Window.state.search == "", "escape empties the search")
+print("search ok")
 
 print("settings window tests passed")
