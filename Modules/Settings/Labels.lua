@@ -532,6 +532,12 @@ local labels = {
 	trackerBadge = { "Tracker badge", "Tracker-Randmarke" },
 	transmog = { "Transmog", "Transmog" },
 	unit = { "Unit", "Einheit" },
+	unitFrames = {
+		"Unit frame tooltips",
+		"Tooltips an Einheitenfenstern",
+		"The unit's tooltip while hovering a unit frame or group cell.",
+		"Tooltip der Einheit beim Überfahren eines Einheitenfensters oder einer Gruppenzelle.",
+	},
 	units = { "Unit frames", "Einheitenfenster" },
 	unusableAlpha = {
 		"Unusable opacity",

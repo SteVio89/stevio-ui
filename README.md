@@ -85,7 +85,8 @@ until it is needed, and as much as possible can be done from the keyboard.
   latency, online friends and guild members, and below the players, notes and
   loot roll buttons and the other addons' minimap buttons (muted until hovered).
 - **Tooltip** – Blizzard's default tooltip position is moved above the minimap
-  and the mark toolbar.
+  and the mark toolbar. Hovering a unit frame or a group grid cell shows that
+  unit's tooltip there (`unitFrames` in the tooltip options).
 - **Objective tracker** – hidden at login (`shownOnLogin`), toggled with `-`
   or the badge at the right screen edge, placed below the auras.
 - **Mark toolbar** – shown on top of the minimap, right aligned,

@@ -370,6 +370,41 @@ function ns.CreateFontString(parent, size, justify, outline)
 	return text
 end
 
+-- The unit's game tooltip at the default position (above the minimap, see
+-- Modules/Tooltip) while the cursor is over a unit frame or group cell, as
+-- Blizzard's own unit frames do. The unit is read on every hover: group cells
+-- change it whenever the roster does. Hooked, not set, so the secure
+-- template's own scripts stay untouched.
+local function UpdateUnitTooltip(frame)
+	local unit = frame.unit or frame:GetAttribute("unit")
+	if unit and UnitExists(unit) and GameTooltip:SetUnit(unit) then
+		frame.UpdateTooltip = UpdateUnitTooltip
+	else
+		frame.UpdateTooltip = nil
+	end
+end
+
+local function ShowUnitTooltip(frame)
+	local tooltipConfig = ns.config.tooltip
+	if tooltipConfig and tooltipConfig.unitFrames == false then
+		return
+	end
+	GameTooltip_SetDefaultAnchor(GameTooltip, frame)
+	UpdateUnitTooltip(frame)
+end
+
+local function HideUnitTooltip(frame)
+	frame.UpdateTooltip = nil
+	if GameTooltip:IsOwned(frame) then
+		GameTooltip:Hide()
+	end
+end
+
+function ns.AddUnitTooltip(frame)
+	frame:HookScript("OnEnter", ShowUnitTooltip)
+	frame:HookScript("OnLeave", HideUnitTooltip)
+end
+
 -- Reparenting to a hidden frame is the least invasive way to hide Blizzard
 -- frames: their code keeps running untouched, so nothing else gets tainted.
 -- Unregistering events additionally stops work nobody will ever see, but must

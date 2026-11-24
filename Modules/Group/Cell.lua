@@ -507,6 +507,7 @@ function ns.InitGroupCell(cell)
 	-- type1/type2 attributes set by the header need both buttons. Cells are
 	-- precreated out of combat (see PrecreateCells), where this is allowed.
 	cell:RegisterForClicks("AnyUp")
+	ns.AddUnitTooltip(cell)
 	ns.BuildGroupCell(cell)
 	-- The cell listens for its unit before the extras are built: should one of
 	-- them fail, it still paints health, name and power instead of staying an

@@ -166,6 +166,7 @@ local function CreateUnitFrame(spec)
 	frame:SetAttribute("*type1", "target")
 	frame:SetAttribute("*type2", "togglemenu")
 	frame:RegisterForClicks("AnyUp")
+	ns.AddUnitTooltip(frame)
 
 	ns.CreatePanel(frame)
 

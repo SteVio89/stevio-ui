@@ -295,3 +295,11 @@ Left out on purpose:
   appears after `revealDelay` with what is left; LOOT_READY passes the auto
   loot flag in this client (otherwise the CVar and modifier fallback runs).
 - Fishing, mining, herbalism and skinning loot the same way.
+
+### Unit frame tooltips (#91)
+- Hovering player, target, focus, pet, target of target and a group grid cell
+  shows the unit's tooltip above the minimap; it hides on leaving and follows
+  health changes while hovered. Left/right click still target and open the menu.
+- Group cells after a roster change (someone joins, leaves or moves group) show
+  the new unit, also in combat; an empty cell shows nothing.
+- With `unitFrames` off no tooltip appears; no taint errors (`/sui errors`).
