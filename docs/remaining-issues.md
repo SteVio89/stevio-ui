@@ -286,3 +286,12 @@ Left out on purpose:
 - The Inter font (optional in the spec) is not bundled; the standard font stays.
 - No free bag slot count next to the bags (`showFreeSlots`, optional).
 - The mana color stays Blizzard's.
+
+### Fast loot (#90)
+- With auto loot on, a corpse with several items is emptied at once and the
+  loot window doesn't flash; holding the auto loot key (or auto loot off)
+  shows the normal loot window, nothing is taken.
+- Full bags, a bind-on-pickup confirmation or locked master loot: the window
+  appears after `revealDelay` with what is left; LOOT_READY passes the auto
+  loot flag in this client (otherwise the CVar and modifier fallback runs).
+- Fishing, mining, herbalism and skinning loot the same way.
