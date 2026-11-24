@@ -197,6 +197,11 @@ until it is needed, and as much as possible can be done from the keyboard.
   `/reload`); the cards then appear once you rolled there.
 - **Quest rewards** – on the turn-in page with at least two item choices,
   a gold coin marks the one with the highest vendor value (sell price × count).
+- **Fast loot** – with auto loot on (inverted while the auto loot key is held,
+  like Blizzard's), everything is taken at once as soon as the loot is ready;
+  the loot window stays hidden. Whatever can't be taken (full bags, a bind
+  confirmation, locked master loot) shows it after `revealDelay` seconds.
+  Auto loot off, or `enabled = false` in the fast loot options, loots as usual.
 - **Players** – a player database (button in the notch island, or
   `/sui players`): everyone you group with is recorded, one session per time
   together with the date, the role, the place (the instances entered, or else
