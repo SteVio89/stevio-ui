@@ -134,6 +134,7 @@ Modules\Settings\Backup.lua
 Modules\Settings\Settings.lua
 Modules\Settings\Labels.lua
 Modules\Settings\Pages.lua
+Modules\Settings\Meta.lua
 Modules\Settings\EditorModel.lua
 Modules\Settings\Editor.lua
 Modules\Settings\Panel.lua
