@@ -137,4 +137,7 @@ Modules\Settings\Pages.lua
 Modules\Settings\Meta.lua
 Modules\Settings\EditorModel.lua
 Modules\Settings\Editor.lua
+Modules\Settings\UI.lua
+Modules\Settings\Controls.lua
+Modules\Settings\Window.lua
 Modules\Settings\Panel.lua
