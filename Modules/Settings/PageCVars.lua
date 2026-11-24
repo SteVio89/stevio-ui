@@ -9,7 +9,6 @@ local K = ns.PlayersKit
 local C = ns.SettingsControls
 local Info = ns.CVarInfo
 local Meta = ns.SettingsMeta
-local Model = ns.SettingsModel
 local UI = ns.SettingsUI
 local Window = ns.SettingsWindow
 local config = ns.config.settings
@@ -40,19 +39,7 @@ local function ProfileCVars()
 	return config.profile.cvars or {}
 end
 
--- Sets `name` to `value` as an override (nil removes it) and applies it.
-local function SetCVarOverride(name, value)
-	name = ns.KnownCVarName(name)
-	local override, backToDefault = Model.CVarOverride(value, ProfileCVars()[name])
-	StevioUIConfig.cvars[name] = override
-	-- A CVar outside the profile is no longer managed: back to the game default.
-	if backToDefault then
-		ns.ApplyOverridesNow(name, C_CVar.GetCVarDefault(name))
-	else
-		ns.ApplyOverridesNow()
-	end
-	Window.RequestRender()
-end
+local SetCVarOverride = ns.SettingsUI.SetCVarOverride
 
 -- The pseudo item a control gets for a CVar: its kind and range.
 local function ControlItem(info)

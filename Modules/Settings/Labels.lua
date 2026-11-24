@@ -122,6 +122,12 @@ local labels = {
 		"os.date format of the date line, e.g. %a %d.%m.%Y.",
 		"os.date-Format der Datumszeile, z. B. %a %d.%m.%Y.",
 	},
+	danger = {
+		"Danger",
+		"Gefahr",
+		"Actions that can't be undone, e.g. resetting everything.",
+		"Aktionen, die sich nicht rückgängig machen lassen, z. B. alles zurücksetzen.",
+	},
 	deadColor = { "Dead", "Tot" },
 	deadTrackColor = { "Dead/offline background", "Hintergrund tot/offline" },
 	debuffs = { "Debuffs", "Debuffs" },

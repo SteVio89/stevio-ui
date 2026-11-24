@@ -153,6 +153,43 @@ function UI.WriteMany(entries)
 	Changed()
 end
 
+-- Keybindings and CVars --------------------------------------------------------
+
+local Model = ns.SettingsModel
+local settings = ns.config.settings
+
+-- Sets (or with `command` nil, unbinds) `key` as an override and applies it
+-- (after combat).
+function UI.SetBindingOverride(key, command)
+	StevioUIConfig.bindings[key] = Model.BindingOverride(command, (settings.profile.bindings or {})[key])
+	ns.ApplyOverridesNow()
+	Changed()
+end
+
+-- Sets CVar `name` to `value` (text) as an override, nil back to the profile,
+-- and applies it.
+function UI.SetCVarOverride(name, value)
+	name = ns.KnownCVarName(name)
+	local override, backToDefault = Model.CVarOverride(value, (settings.profile.cvars or {})[name])
+	StevioUIConfig.cvars[name] = override
+	-- A CVar outside the profile is no longer managed: back to the game default.
+	if backToDefault then
+		ns.ApplyOverridesNow(name, C_CVar.GetCVarDefault(name))
+	else
+		ns.ApplyOverridesNow()
+	end
+	Changed()
+end
+
+-- Removes the override at `path` (encoded), back to the code's value.
+function UI.ResetPath(encoded, label)
+	local path = Overrides.Decode(encoded)
+	if Write(path, Overrides.DeepCopy(UI.Default(path)), label) then
+		UI.InvalidateItems()
+		Changed()
+	end
+end
+
 -- Reload bar ------------------------------------------------------------------
 
 -- The waiting changes as { label } sorted by module, a module with several

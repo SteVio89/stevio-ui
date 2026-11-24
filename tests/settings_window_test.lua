@@ -251,7 +251,19 @@ _G.C_CVar = {
 	GetCVarDefault = function()
 		return "0"
 	end,
+	GetCVarInfo = function(name)
+		if name ~= "unknownCVar" then
+			return "1", "0"
+		end
+	end,
 }
+_G.date = os.date
+_G.time = function()
+	return now
+end
+_G.IsMacClient = function()
+	return true
+end
 _G.StevioUIConfig = { values = {}, bindings = {}, cvars = {} }
 _G.StevioUIState = { consented = true, backup = { time = now - 86400 } }
 
@@ -310,6 +322,8 @@ for _, file in ipairs({
 	"Help",
 	"Search",
 	"Keys",
+	"Deviations",
+	"Share",
 	"EditorModel",
 	"UI",
 	"Controls",
@@ -319,6 +333,7 @@ for _, file in ipairs({
 	"PageSearch",
 	"PageBindings",
 	"PageCVars",
+	"PageProfileBackup",
 	"Panel",
 }) do
 	loadAddonFile("Modules/Settings/" .. file .. ".lua", ns)
@@ -541,5 +556,59 @@ end
 cvars.mirror.switch.onChange(true)
 StevioUIConfig.cvars = {}
 print("cvars ok")
+
+-- Profile & backup: deviations with reset, sharing as text and back.
+_G.StevioUIState.consentTime = now - 7 * 86400
+StevioUIConfig.values, StevioUIConfig.bindings, StevioUIConfig.cvars = {}, {}, {}
+StevioUIConfig.values["config/group/nameFontSize"] = 12
+ns.config.group.nameFontSize = 12
+StevioUIConfig.bindings["SHIFT-A"] = "MOUNT"
+StevioUIConfig.cvars.farclip = "4000"
+Window.Open("profile")
+local profilePage = StevioUI_Settings.pages.profile
+check(profilePage.shown, "profile page")
+check(profilePage.profile.when.text:find("zugestimmt"), "consent time")
+check(profilePage.backup.title.text:find("Sicherung vom"), "backup date: " .. profilePage.backup.title.text)
+local deviationRows = profilePage.deviations.rows.frames
+check(#deviationRows >= 3, "deviations listed")
+check(deviationRows[1].entry.kind == "value" and deviationRows[1].change.text:find("12"), "a value first")
+profilePage.share.keys.scripts.OnClick(profilePage.share.keys)
+profilePage.share.cvars.scripts.OnClick(profilePage.share.cvars)
+local exported = profilePage.share.exportText.edit.text
+check(exported:find("^!SUI1!"), "export text")
+check(
+	profilePage.share.copyHint.text == "Enthält 1 Einstellung, 1 Taste, 1 Spieleinstellung",
+	profilePage.share.copyHint.text
+)
+profilePage.share.copy.scripts.OnClick(profilePage.share.copy)
+check(profilePage.share.copyHint.text == "Cmd+C kopiert", "copy hint")
+-- Reset everything listed, then import the text again.
+for _ = 1, 3 do
+	local topRow = profilePage.deviations.rows.frames[1]
+	topRow.reset.scripts.OnClick(topRow.reset)
+end
+check(next(StevioUIConfig.values) == nil and next(StevioUIConfig.bindings) == nil, "deviations reset")
+check(next(StevioUIConfig.cvars) == nil and ns.config.group.nameFontSize == 11, "all of them")
+local importEdit = profilePage.share.importText.edit
+importEdit:SetText("kaputt")
+importEdit.scripts.OnTextChanged(importEdit, true)
+check(profilePage.share.preview.text:find("kein stevio"), "bad text refused")
+importEdit:SetText(exported)
+importEdit.scripts.OnTextChanged(importEdit, true)
+check(profilePage.share.preview.text:find("Vorschau: 3 Änderungen"), profilePage.share.preview.text)
+profilePage.share.take.scripts.OnClick(profilePage.share.take)
+check(StevioUIConfig.values["config/group/nameFontSize"] == 12 and ns.config.group.nameFontSize == 12, "value imported")
+check(
+	StevioUIConfig.bindings["SHIFT-A"] == "MOUNT" and StevioUIConfig.cvars.farclip == "4000",
+	"keys and cvars imported"
+)
+check(profilePage.share.preview.text:find("Übernommen"), "taken over")
+profilePage.danger.button.scripts.OnClick(profilePage.danger.button)
+check(popups[#popups].name == "STEVIOUI_RESET_CONFIG", "reset asks first")
+profilePage.backup.restore.scripts.OnClick(profilePage.backup.restore)
+check(popups[#popups].name == "STEVIOUI_RESTORE_BACKUP", "restore asks first")
+Window.Open("profile", "share")
+StevioUIConfig.values, StevioUIConfig.bindings, StevioUIConfig.cvars = {}, {}, {}
+print("profile ok")
 
 print("settings window tests passed")

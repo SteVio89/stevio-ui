@@ -124,6 +124,10 @@ local function ApplyProfile()
 		changed[#changed + 1] = ns.T("key bindings", "Tastenbelegung")
 	end
 	profileApplied = true
+	-- Shown on the settings window's profile page.
+	if StevioUIState then
+		StevioUIState.lastApplied = time()
+	end
 	if #changed > 0 then
 		-- Nobody asked for it, so it doesn't open the chat (ns.Notify).
 		ns.Notify(ns.T("Profile applied (%s).", "Profil angewendet (%s)."):format(table.concat(changed, "; ")))

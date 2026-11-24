@@ -9,7 +9,6 @@ local _, ns = ...
 local K = ns.PlayersKit
 local C = ns.SettingsControls
 local Keys = ns.SettingsKeys
-local Model = ns.SettingsModel
 local Window = ns.SettingsWindow
 local config = ns.config.settings
 local T = ns.T
@@ -34,11 +33,7 @@ local function ProfileBindings()
 	return config.profile.bindings or {}
 end
 
--- Sets (or with `command` nil, unbinds) `key` as an override and applies it.
-local function SetBindingOverride(key, command)
-	StevioUIConfig.bindings[key] = Model.BindingOverride(command, ProfileBindings()[key])
-	ns.ApplyOverridesNow()
-end
+local SetBindingOverride = ns.SettingsUI.SetBindingOverride
 
 -- The client's actions in its order, with category and name.
 local function Actions()
