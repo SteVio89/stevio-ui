@@ -34,6 +34,10 @@ ns.config.style = {
 			pillText = { 0.79, 0.80, 0.82 },
 			xpFrom = { 0.43, 0.23, 0.62 },
 			xpTo = { 0.64, 0.35, 0.82 },
+			-- Hints that need attention and actions that can't be undone
+			-- (the settings window's key conflicts and reset).
+			warning = { 0.92, 0.62, 0.25 },
+			danger = { 0.86, 0.36, 0.36 },
 		},
 		-- Violet tinted black, muted dark violet accent.
 		violet = {
@@ -53,6 +57,8 @@ ns.config.style = {
 			pillText = { 0.89, 0.84, 0.96 },
 			xpFrom = { 0.29, 0.15, 0.50 },
 			xpTo = { 0.52, 0.33, 0.79 },
+			warning = { 0.95, 0.64, 0.30 },
+			danger = { 0.90, 0.38, 0.42 },
 		},
 	},
 

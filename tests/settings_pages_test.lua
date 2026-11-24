@@ -64,4 +64,39 @@ local unclaimed = Pages.UnclaimedLayout({ chat = {}, zeta = {}, alpha = {} })
 check(#unclaimed == 2 and unclaimed[1] == "alpha" and unclaimed[2] == "zeta", "unclaimed positions, sorted")
 print("layout claims ok")
 
+-- Every module has a known category, a description in both languages and
+-- sections with titles; section keys are unique per page.
+local categories = {}
+for _, category in ipairs(Pages.CATEGORIES) do
+	categories[category.key] = true
+end
+local pages = { Pages.STYLE }
+for _, module in ipairs(Pages.MODULES) do
+	check(categories[module.category], "category of " .. module[1])
+	pages[#pages + 1] = module
+end
+for _, module in ipairs(pages) do
+	check(#module.description == 2 and module.description[2] ~= "", "description of " .. module[1])
+	check(#module.sections > 0, "sections of " .. module[1])
+	local seen = {}
+	for _, section in ipairs(module.sections) do
+		check(not seen[section.key], "section twice: " .. module[1] .. "." .. section.key)
+		seen[section.key] = true
+		check(section.title[1] and section.title[2], "section title " .. section.key)
+	end
+	check((module.layout ~= nil) == (Pages.Section(module, "position") ~= nil), "position section of " .. module[1])
+	check(Pages.Module(module[1]) == module, "lookup " .. module[1])
+end
+check(#Pages.InCategory("combat") == 5, "combat modules")
+ns.isGerman = true
+check(Pages.CategoryTitle("loot") == "Beute", "category title")
+print("categories ok")
+
+-- The module a saved value belongs to.
+check(Pages.ModuleForPath("config/group/nameFontSize") == "group", "config path")
+check(Pages.ModuleForPath("layout/chatBadge/x") == "chat", "layout path")
+check(Pages.ModuleForPath("config/style/fontSize") == "style", "style")
+check(Pages.ModuleForPath("config/nothing/x") == nil, "unknown module")
+print("module for path ok")
+
 print("settings pages tests passed")

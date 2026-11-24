@@ -303,3 +303,56 @@ Left out on purpose:
 - Group cells after a roster change (someone joins, leaves or moves group) show
   the new unit, also in combat; an empty cell shows nothing.
 - With `unitFrames` off no tooltip appears; no taint errors (`/sui errors`).
+
+### Settings window (#92)
+The pure parts (metadata, search, key conflicts, raid mirroring, deviations,
+sharing) are unit tested, and `tests/settings_window_test.lua` renders every
+page with faked frames. Nothing of the window has been seen in the game yet.
+
+- Opens with `/sui config`, `/sui`, the gear in the notch island and the button
+  in Options → AddOns → stevio-ui; moves, resizes, remembers both after a
+  reload; Escape closes it (and first empties the search). In German and
+  English.
+- Every module page opens without errors (`/sui errors`); sliders (round
+  thumb, accent fill, number box, mouse wheel, arrow keys in the box),
+  switches, steppers, segmented choices, dropdowns, colour swatches (Blizzard's
+  colour picker in front of the window), lists and positions change their
+  value; the dot, "Default: x" and "Reset" appear and go again; the reload
+  bar counts the changes and "Reload now" reloads.
+- Static popups (reset module, restore, reset everything) and menus appear in
+  front of the window, not behind it.
+- Group grid page: the four preview cells look like the real ones and follow
+  changes (name size, colours, out-of-range opacity). Each change of the group
+  config builds four new cells and keeps the old ones hidden (a few frames per
+  change, gone after a reload). The test buttons run `/sui test 5|10|25|40`.
+- Search "abstand": gaps of unit frames, notch, group grid, chat and loot;
+  chips filter by module; values change in the result rows.
+- Keybindings: "+" then Shift+A on an action shows the conflict with
+  "Strafe left" in orange; Escape cancels; the arrow keys are refused while
+  keyboard healing is on; Reset brings the profile's keys back; changes in
+  Blizzard's keybinding menu show up as own. Only keyboard keys can be
+  captured (no mouse buttons). Binding in combat waits for its end.
+- Graphics & game: change the view distance and go back to the profile; the
+  values the controls show fit the client (levels are named "Level n", CVars
+  without a known range get a text box). With "Same values in raids" on, the
+  `RAID…` CVars follow their base at login without a change message on every
+  login; switched off, they show in their own group.
+- Profile & backup: agreement and last application times (older states say
+  "unknown"), the backup date (only for backups taken from now on), the
+  deviations list with resets, export with and without keys/game settings,
+  "Copy" selects the text (Cmd+C on the Mac), import on a second character
+  (preview, skipped entries, "Take over" then reload), restore asks first.
+- Open the window in combat: no taint messages; key capture and binding
+  changes wait for the combat to end.
+
+Simpler than the design, on purpose:
+- The search highlights the term in accent colour instead of a tinted pill.
+- The keybindings page lists own bindings in their Blizzard category (the
+  "Own" chip filters them) instead of a separate "Own" group, and draws at
+  most 150 actions (the search finds the rest of "Not bound").
+- "What is set?" opens the keybindings or graphics page with all entries, not
+  filtered to the profile alone.
+- "Later" hides the reload bar until the next change instead of keeping it.
+- "What's new" on the start page is left out: there is no CHANGELOG.
+- Only `settings.mirrorRaidCVars` is marked `live`; whether other values
+  already take effect without a reload wasn't checked, so they all wait for one.

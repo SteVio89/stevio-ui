@@ -131,7 +131,13 @@ SlashCmdList.STEVIOUI = function(input)
 	if handler then
 		handler(rest)
 	else
-		local names = GetKeysArray(slashCommands)
+		local names = {}
+		for commandName in pairs(slashCommands) do
+			-- "" is /sui alone.
+			if commandName ~= "" then
+				names[#names + 1] = commandName
+			end
+		end
 		table.sort(names)
 		ns.Print("/sui " .. table.concat(names, " | "))
 	end

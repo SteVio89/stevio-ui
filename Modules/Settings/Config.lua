@@ -7,6 +7,11 @@ ns.config.settings = {
 	-- client doesn't persist SetConsoleKey, so it is set on every login.
 	consoleKey = "F12",
 
+	-- The raid variants of the graphics CVars ("RAIDfarclip") take the values
+	-- of their base CVar ("farclip"), so a change in the graphics settings
+	-- holds in raids too. Off, the raid values are set on their own.
+	mirrorRaidCVars = true,
+
 	-- CVars that hold client state rather than preferences; exporting them would
 	-- make the profile fight the client on every login.
 	ignoredCVars = {

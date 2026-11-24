@@ -7,6 +7,7 @@ local addonName, ns = ...
 -- profile later can be handed back too.
 function ns.CaptureBackup()
 	local backup = {
+		time = time(),
 		actionBars = ns.CurrentActionBarToggles(),
 		bindings = (ns.BoundKeys()),
 		bindingSet = GetCurrentBindingSet(),

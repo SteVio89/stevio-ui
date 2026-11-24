@@ -25,7 +25,7 @@ StaticPopupDialogs[DIALOG] = {
 	selectCallbackByIndex = true,
 	OnButton1 = function()
 		-- ns.CaptureBackup lives in Modules/Settings/Backup.lua.
-		StevioUIState = { consented = true, backup = ns.CaptureBackup() }
+		StevioUIState = { consented = true, consentTime = time(), backup = ns.CaptureBackup() }
 		ReloadUI()
 	end,
 	OnButton2 = function()

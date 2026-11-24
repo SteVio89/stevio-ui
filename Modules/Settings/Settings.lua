@@ -14,8 +14,13 @@ local function EffectiveBindings()
 	return ns.Overrides.Merge(config.profile.bindings or {}, StevioUIConfig.bindings)
 end
 
+-- With mirrorRaidCVars the raid variants take their base CVar's value.
 local function EffectiveCVars()
-	return ns.Overrides.Merge(config.profile.cvars or {}, StevioUIConfig.cvars)
+	local cvars = ns.Overrides.Merge(config.profile.cvars or {}, StevioUIConfig.cvars)
+	if config.mirrorRaidCVars then
+		cvars = ns.CVarInfo.Mirror(cvars)
+	end
+	return cvars
 end
 
 local function ApplyActionBars(toggles)
@@ -119,6 +124,10 @@ local function ApplyProfile()
 		changed[#changed + 1] = ns.T("key bindings", "Tastenbelegung")
 	end
 	profileApplied = true
+	-- Shown on the settings window's profile page.
+	if StevioUIState then
+		StevioUIState.lastApplied = time()
+	end
 	if #changed > 0 then
 		-- Nobody asked for it, so it doesn't open the chat (ns.Notify).
 		ns.Notify(ns.T("Profile applied (%s).", "Profil angewendet (%s)."):format(table.concat(changed, "; ")))
@@ -223,6 +232,7 @@ function SettingsModule:OnEnable()
 		ns.RunAfterCombat(Restore)
 	end)
 
-	-- Last, so a failing panel can't take /sui restore down with it.
+	-- Last, so a failing settings window can't take /sui restore down with
+	-- it; the window itself is only built when it is first opened.
 	ns.SafeCall(ns.SetupOptionsPanel)
 end

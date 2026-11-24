@@ -122,6 +122,12 @@ local labels = {
 		"os.date format of the date line, e.g. %a %d.%m.%Y.",
 		"os.date-Format der Datumszeile, z. B. %a %d.%m.%Y.",
 	},
+	danger = {
+		"Danger",
+		"Gefahr",
+		"Actions that can't be undone, e.g. resetting everything.",
+		"Aktionen, die sich nicht rückgängig machen lassen, z. B. alles zurücksetzen.",
+	},
 	deadColor = { "Dead", "Tot" },
 	deadTrackColor = { "Dead/offline background", "Hintergrund tot/offline" },
 	debuffs = { "Debuffs", "Debuffs" },
@@ -301,6 +307,12 @@ local labels = {
 		"0 schlecht, 1 gewöhnlich, 2 ungewöhnlich, 3 selten, 4 episch.",
 	},
 	minimap = { "Minimap", "Minikarte" },
+	mirrorRaidCVars = {
+		"Same values in raids",
+		"Im Schlachtzug dieselben Werte",
+		"The raid variants (RAID…) of the graphics settings follow their normal values.",
+		"Die Schlachtzug-Varianten (RAID…) der Grafikeinstellungen folgen den normalen Werten.",
+	},
 	minimapButtons = {
 		"Addon minimap buttons",
 		"Minikarten-Knöpfe von Addons",
@@ -551,6 +563,12 @@ local labels = {
 	vertical = { "Vertical", "Senkrecht", "One column instead of one row.", "Eine Spalte statt einer Zeile." },
 	violet = { "Night violet", "Nachtviolett" },
 	warn = { "Warning", "Warnung" },
+	warning = {
+		"Warning",
+		"Warnung",
+		"Hints that need attention, e.g. a key taken twice.",
+		"Hinweise, die Aufmerksamkeit brauchen, z. B. eine doppelt belegte Taste.",
+	},
 	whisper = { "Whisper", "Flüstern" },
 	width = { "Width", "Breite" },
 	widthFraction = {
@@ -590,6 +608,727 @@ function ns.ConfigLabel(key)
 		return key
 	end
 	return Words(key)
+end
+
+-- Labels and help for one setting where its key alone is too vague ("gap",
+-- "height"), by the settings window's metadata key (Meta.lua): exact paths
+-- first, then those with "*" for list entries.
+local pathLabels = {
+	-- Unit frames
+	["units.frames.*.width"] = { nil, nil, "Width of the frame.", "Breite des Fensters." },
+	["units.frames.*.healthHeight"] = { nil, nil, "Height of the health bar.", "Höhe des Lebensbalkens." },
+	["units.frames.*.powerHeight"] = {
+		nil,
+		nil,
+		"Height of the mana, rage or energy bar below it. 0 hides it.",
+		"Höhe der Mana-, Wut- oder Energieleiste darunter. 0 blendet sie aus.",
+	},
+	["units.frames.*.healthTextSize"] = {
+		nil,
+		nil,
+		'Font size of the "12.3k · 87%" text in the health bar.',
+		"Schriftgröße des Textes „12.3k · 87%“ im Lebensbalken.",
+	},
+	["units.frames.*.showName"] = {
+		nil,
+		nil,
+		"Name and level above the frame.",
+		"Name und Stufe über dem Fenster.",
+	},
+	["units.frames.*.showCombat"] = {
+		nil,
+		nil,
+		"A crossed-swords icon while you are in combat.",
+		"Ein Symbol mit gekreuzten Schwertern, solange du im Kampf bist.",
+	},
+	["units.combatIconSize"] = { nil, nil, "Size of the combat icon.", "Größe des Kampfsymbols." },
+	["units.castBar.height"] = {
+		"Height",
+		"Höhe",
+		"Height of the cast bars of player and target.",
+		"Höhe der Zauberleisten von Spieler und Ziel.",
+	},
+	["units.castBar.fontSize"] = {
+		"Font size",
+		"Schriftgröße",
+		"Spell name and remaining time.",
+		"Zaubername und Restzeit.",
+	},
+	["units.castBar.gap"] = {
+		"Gap",
+		"Abstand",
+		"Gap between the cast bar and its unit frame.",
+		"Abstand der Zauberleiste zum Einheitenfenster.",
+	},
+	["units.castBar.notInterruptibleColor"] = {
+		nil,
+		nil,
+		"Bar colour of casts that can't be interrupted; others use the accent.",
+		"Balkenfarbe von Zaubern, die man nicht unterbrechen kann; andere haben die Akzentfarbe.",
+	},
+	["units.castBar.focusHeight"] = {
+		nil,
+		nil,
+		"The focus frame's smaller cast bar.",
+		"Die kleinere Zauberleiste des Fokusfensters.",
+	},
+	["units.castBar.focusFontSize"] = {
+		nil,
+		nil,
+		"Text of the focus frame's cast bar.",
+		"Text der Zauberleiste des Fokusfensters.",
+	},
+	["units.classPower.height"] = { "Height", "Höhe", "Height of the segments.", "Höhe der Segmente." },
+	["units.classPower.gap"] = {
+		"Gap",
+		"Abstand",
+		"Gap of the class resource (e.g. combo points) to the unit frame.",
+		"Abstand der Klassenressource (z. B. Combopunkte) zum Einheitenfenster.",
+	},
+	["units.classPower.spacing"] = {
+		"Spacing",
+		"Zwischenraum",
+		"Space between two segments.",
+		"Platz zwischen zwei Segmenten.",
+	},
+	["units.targetAuras.max"] = {
+		"Maximum",
+		"Höchstens",
+		"How many of your debuffs show at most.",
+		"Wie viele deiner Debuffs höchstens erscheinen.",
+	},
+	["units.targetAuras.size"] = {
+		"Icon size",
+		"Symbolgröße",
+		"Size of the debuff icons.",
+		"Größe der Debuff-Symbole.",
+	},
+	["units.targetAuras.spacing"] = {
+		"Spacing",
+		"Zwischenraum",
+		"Space between two icons.",
+		"Platz zwischen zwei Symbolen.",
+	},
+
+	-- Group grid
+	["group.nameFontSize"] = {
+		nil,
+		nil,
+		"Size of the names at the top left of each cell. On bright class colours the name turns dark by itself.",
+		"Größe der Namen oben links in jeder Zelle. Auf hellen Klassenfarben wird der Name automatisch dunkel.",
+	},
+	["group.powerHeight"] = {
+		"Resource height",
+		"Ressourcenhöhe",
+		"Height of the mana, rage or energy bar at the bottom of the cell. 0 hides it.",
+		"Höhe der Mana-, Wut- oder Energieleiste unten in der Zelle. 0 blendet sie aus.",
+	},
+	["group.spacing"] = { "Gap", "Abstand", "Space between the cells.", "Platz zwischen den Zellen." },
+	["group.roleIconSize"] = {
+		nil,
+		nil,
+		"Tank and healer icon at the top right.",
+		"Tank- und Heilersymbol oben rechts.",
+	},
+	["group.iconSize"] = { "Icon size", "Symbolgröße", "Size of the debuff icons.", "Größe der Debuff-Symbole." },
+	["group.ownAuraSize"] = {
+		nil,
+		nil,
+		"Your HoTs and buffs on the player, a small row at the bottom left.",
+		"Deine HoTs und Buffs auf dem Spieler, als kleine Reihe unten links.",
+	},
+	["group.ownAurasMax"] = {
+		nil,
+		nil,
+		"How many of your own auras show at most.",
+		"Wie viele deiner eigenen Auren höchstens erscheinen.",
+	},
+	["group.dispelColor"] = {
+		"Dispellable",
+		"Bannbar",
+		"Edge of debuffs you can dispel.",
+		"Kante bannbarer Debuffs.",
+	},
+	["group.aggroColor"] = {
+		nil,
+		nil,
+		"Inner edge while the player has aggro.",
+		"Innenkante, wenn der Spieler Aggro hat.",
+	},
+	["group.targetColor"] = { nil, nil, "Outer edge of your target.", "Außenkante deines Ziels." },
+	["group.myHealColor"] = { nil, nil, "Your incoming heals.", "Deine eingehende Heilung." },
+	["group.otherHealColor"] = { nil, nil, "Incoming heals of others.", "Eingehende Heilung anderer." },
+	["group.absorbColor"] = { nil, nil, "Absorb shields, striped in white.", "Schilde, weiß gestreift." },
+	["group.deadTrackColor"] = {
+		nil,
+		nil,
+		"Background of dead and disconnected players.",
+		"Hintergrund toter und getrennter Spieler.",
+	},
+	["group.outOfRangeAlpha"] = {
+		nil,
+		nil,
+		"Players you can't reach turn see-through. Lower = more obvious.",
+		"Spieler, die du nicht erreichst, werden durchsichtig. Niedriger = deutlicher.",
+	},
+
+	-- Keyboard healing
+	["keyboardHealing.cursorColor"] = {
+		nil,
+		nil,
+		"Frame around the cell of your target.",
+		"Rahmen um die Zelle deines Ziels.",
+	},
+	["keyboardHealing.cursorSize"] = {
+		nil,
+		nil,
+		"Thickness of that frame, outside the cell.",
+		"Stärke dieses Rahmens, außen um die Zelle.",
+	},
+	["keyboardHealing.idleCursorColor"] = {
+		nil,
+		nil,
+		"While your target is something else (an enemy, nothing), the cursor waits on its cell in this colour.",
+		"Solange dein Ziel etwas anderes ist (ein Gegner, nichts), wartet der Cursor in dieser Farbe auf seiner Zelle.",
+	},
+	["keyboardHealing.idleCursorSize"] = {
+		nil,
+		nil,
+		"Thickness of the waiting cursor.",
+		"Stärke des wartenden Cursors.",
+	},
+
+	-- Mark toolbar
+	["marks.buttonSize"] = { nil, nil, "Size of the marker symbols.", "Größe der Markierungssymbole." },
+	["marks.buttonGap"] = { nil, nil, "Space between two symbols.", "Platz zwischen zwei Symbolen." },
+	["marks.padding"] = {
+		nil,
+		nil,
+		"Space between the bar's edge and the symbols.",
+		"Platz zwischen dem Rand der Leiste und den Symbolen.",
+	},
+
+	-- Tooltip
+	["tooltip.gapAboveMinimap"] = {
+		nil,
+		nil,
+		"Space between the minimap and the tooltip above it.",
+		"Platz zwischen der Minikarte und dem Tooltip darüber.",
+	},
+
+	-- Action bars
+	["actionBars.iconSize"] = {
+		nil,
+		nil,
+		"Edit Mode size of the bars. The layout is made for 80 %; other sizes may overlap.",
+		"Größe der Leisten im Bearbeitungsmodus. Das Layout ist für 80 % gemacht; andere Größen können überlappen.",
+	},
+	["actionBars.iconPadding"] = {
+		nil,
+		nil,
+		"Space between two buttons.",
+		"Platz zwischen zwei Knöpfen.",
+	},
+	["actionBars.highlightAlpha"] = {
+		nil,
+		nil,
+		"Brightening of a button under the mouse.",
+		"Aufhellung eines Knopfes unter der Maus.",
+	},
+	["actionBars.pushedAlpha"] = {
+		nil,
+		nil,
+		"Brightening of a button while it is pressed.",
+		"Aufhellung eines Knopfes, solange er gedrückt ist.",
+	},
+	["actionBars.menubarSize"] = {
+		nil,
+		nil,
+		"Size of the micro menu at the bottom right; the bags follow it.",
+		"Größe des Mikromenüs unten rechts; die Taschen passen sich an.",
+	},
+
+	-- Auras
+	["auras.buffs.iconSize"] = {
+		nil,
+		nil,
+		"Edit Mode size of the buff icons.",
+		"Größe der Buff-Symbole im Bearbeitungsmodus.",
+	},
+	["auras.buffs.iconsPerRow"] = {
+		nil,
+		nil,
+		"Icons per row; together with Blizzard's 32 buffs it decides how many rows they take.",
+		"Symbole pro Reihe; mit Blizzards 32 Buffs bestimmt das, wie viele Reihen sie belegen.",
+	},
+	["auras.debuffs.iconSize"] = {
+		nil,
+		nil,
+		"Edit Mode size of the debuff icons.",
+		"Größe der Debuff-Symbole im Bearbeitungsmodus.",
+	},
+	["auras.debuffs.iconsPerRow"] = {
+		nil,
+		nil,
+		"Icons per row; together with Blizzard's 16 debuffs it decides how many rows they take.",
+		"Symbole pro Reihe; mit Blizzards 16 Debuffs bestimmt das, wie viele Reihen sie belegen.",
+	},
+
+	-- Chat
+	["chat.height"] = { nil, nil, "Height of the chat window.", "Höhe des Chatfensters." },
+	["chat.sidebarWidth"] = {
+		nil,
+		nil,
+		"Width of the channel list on the left.",
+		"Breite der Kanalliste links.",
+	},
+	["chat.fontSize"] = {
+		nil,
+		nil,
+		"Messages, the input line and the copy view.",
+		"Nachrichten, Eingabezeile und Kopieransicht.",
+	},
+	["chat.sidebarFontSize"] = {
+		nil,
+		nil,
+		"Channel list and the header above the messages.",
+		"Kanalliste und die Kopfzeile über den Nachrichten.",
+	},
+	["chat.scrollStep"] = { nil, nil, "Lines per mouse wheel notch.", "Zeilen pro Mausrad-Raste." },
+	["chat.preview.enabled"] = {
+		"Preview lines",
+		"Vorschauzeilen",
+		"New messages show for a moment where the hidden chat sits; a click opens the chat on their channel. Off, they only light the badge.",
+		"Neue Nachrichten erscheinen kurz dort, wo der versteckte Chat sitzt; ein Klick öffnet den Chat im Kanal. Aus: nur die Randmarke leuchtet.",
+	},
+	["chat.preview.maxRows"] = {
+		"Preview messages",
+		"Vorschau-Nachrichten",
+		"How many messages show at once.",
+		"Wie viele Nachrichten gleichzeitig erscheinen.",
+	},
+	["chat.preview.holdTime"] = {
+		"Preview time (s)",
+		"Vorschaudauer (s)",
+		"How long a message stays (longer under the mouse).",
+		"Wie lange eine Nachricht bleibt (unter der Maus länger).",
+	},
+	["chat.preview.fadeOutTime"] = {
+		"Preview fade-out (s)",
+		"Vorschau ausblenden (s)",
+		"How long it takes to fade out.",
+		"Wie lange das Ausblenden dauert.",
+	},
+	["chat.inputGap"] = {
+		nil,
+		nil,
+		"Space between the last message and the input line.",
+		"Platz zwischen der letzten Nachricht und der Eingabezeile.",
+	},
+	["chat.main.enabled"] = {
+		"Main channel",
+		"Hauptkanal",
+		'"Main" shows the channels below together, each line tagged with its channel.',
+		"„Haupt“ zeigt die Kanäle unten zusammen, jede Zeile mit ihrem Kanal markiert.",
+	},
+	["chat.dividerColor"] = {
+		nil,
+		nil,
+		"Lines between the channel list and the messages.",
+		"Linien zwischen Kanalliste und Nachrichten.",
+	},
+	["chat.scrollThumbColor"] = {
+		nil,
+		nil,
+		"Scroll position on the channel list's edge.",
+		"Scrollposition am Rand der Kanalliste.",
+	},
+	["chat.deleteColor"] = {
+		nil,
+		nil,
+		"The × that deletes a channel, shown on hover.",
+		"Das ×, das einen Kanal löscht, beim Überfahren.",
+	},
+	["chat.buttonBorderColor"] = { nil, nil, "Frame of the Copy button.", "Rahmen des Kopieren-Knopfes." },
+	["chat.inputBackgroundColor"] = {
+		nil,
+		nil,
+		"Background of the input line.",
+		"Hintergrund der Eingabezeile.",
+	},
+	["chat.inputBorderColor"] = {
+		nil,
+		nil,
+		"Its frame; while typing it takes the channel's colour.",
+		"Ihr Rahmen; beim Tippen nimmt er die Farbe des Kanals an.",
+	},
+
+	-- Notch
+	["notch.extraWidth"] = {
+		nil,
+		nil,
+		"How far the island sticks out on each side of the notch.",
+		"Wie weit die Insel auf jeder Seite über die Notch hinausragt.",
+	},
+	["notch.padding"] = { nil, nil, "Space inside the island's edge.", "Platz innerhalb des Inselrands." },
+	["notch.cornerRadius"] = {
+		nil,
+		nil,
+		"Roundness of the bottom corners.",
+		"Rundung der unteren Ecken.",
+	},
+	["notch.rowHeight"] = { nil, nil, "Height of a text row.", "Höhe einer Textzeile." },
+	["notch.rowGap"] = {
+		"Row gap",
+		"Zeilenabstand",
+		"Space between two rows of the island.",
+		"Platz zwischen zwei Zeilen der Insel.",
+	},
+	["notch.groupGap"] = {
+		"Group gap",
+		"Gruppenabstand",
+		"Space between groups of rows, e.g. before the buttons.",
+		"Platz zwischen Gruppen von Zeilen, z. B. vor der Knopfreihe.",
+	},
+	["notch.gridColumns"] = {
+		nil,
+		nil,
+		"Columns of the value grid (gold, bags, durability, …).",
+		"Spalten des Werterasters (Gold, Taschen, Haltbarkeit, …).",
+	},
+	["notch.barHeight"] = { nil, nil, "Height of the XP and reputation bars.", "Höhe der EP- und Rufbalken." },
+	["notch.buttonSize"] = { nil, nil, "Size of the buttons in the island.", "Größe der Knöpfe in der Insel." },
+	["notch.buttonGap"] = { nil, nil, "Space between two buttons.", "Platz zwischen zwei Knöpfen." },
+	["notch.restedAlpha"] = {
+		nil,
+		nil,
+		"Opacity of the rested XP on the XP bar.",
+		"Deckkraft der erholten EP auf dem EP-Balken.",
+	},
+	["notch.colors.background"] = {
+		nil,
+		nil,
+		"Pure black blends the island into the notch.",
+		"Reines Schwarz lässt die Insel mit der Notch verschmelzen.",
+	},
+	["notch.colors.warn"] = {
+		nil,
+		nil,
+		"Durability below the warning level.",
+		"Haltbarkeit unter der Warnschwelle.",
+	},
+	["notch.colors.critical"] = {
+		nil,
+		nil,
+		"Durability below the critical level.",
+		"Haltbarkeit unter der kritischen Schwelle.",
+	},
+	["notch.colors.xpRested"] = { nil, nil, "Rested XP on the XP bar.", "Erholte EP auf dem EP-Balken." },
+
+	-- Notes
+	["notes.showInTooltip"] = {
+		nil,
+		nil,
+		"Your item notes in item tooltips.",
+		"Deine Gegenstandsnotizen in Gegenstands-Tooltips.",
+	},
+	["notes.window.width"] = { nil, nil, "Width of the notes window.", "Breite des Notizfensters." },
+	["notes.window.height"] = { nil, nil, "Height of the notes window.", "Höhe des Notizfensters." },
+
+	-- Players
+	["players.popupAfterGroup"] = {
+		nil,
+		nil,
+		"After leaving a group, a popup to rate its players.",
+		"Nach dem Verlassen einer Gruppe ein Fenster, um die Mitspieler zu bewerten.",
+	},
+	["players.joinReminder"] = {
+		nil,
+		nil,
+		"A chat line when a player with a rating or note joins your group.",
+		"Eine Chatzeile, wenn ein Spieler mit Bewertung oder Notiz deiner Gruppe beitritt.",
+	},
+	["players.showInTooltip"] = {
+		nil,
+		nil,
+		"Ratings and notes in player tooltips.",
+		"Bewertungen und Notizen in Spieler-Tooltips.",
+	},
+	["players.blockWarnings"] = {
+		nil,
+		nil,
+		"Red chat lines when a marked player is first seen, joins your group or whispers you.",
+		"Rote Chatzeilen, wenn ein markierter Spieler auftaucht, deiner Gruppe beitritt oder dir flüstert.",
+	},
+	["players.colors.need"] = { nil, nil, "Need rolls in the roll bars.", "Bedarf-Würfe in den Wurfbalken." },
+	["players.colors.greed"] = { nil, nil, "Greed rolls in the roll bars.", "Gier-Würfe in den Wurfbalken." },
+	["players.colors.transmog"] = {
+		nil,
+		nil,
+		"Transmog rolls in the roll bars.",
+		"Transmog-Würfe in den Wurfbalken.",
+	},
+	["players.colors.pass"] = { nil, nil, "Passes in the roll bars.", "Passen in den Wurfbalken." },
+	["players.colors.star"] = { nil, nil, "The rating stars.", "Die Bewertungssterne." },
+
+	-- Loot rolls
+	["rolls.width"] = { nil, nil, "Width of the roll cards.", "Breite der Würfelkarten." },
+	["rolls.fontSize"] = { nil, nil, "Text on the cards.", "Text auf den Karten." },
+	["rolls.iconSize"] = { nil, nil, "Item icon on the cards.", "Gegenstandssymbol auf den Karten." },
+	["rolls.notchGap"] = {
+		nil,
+		nil,
+		"Gap between the roll cards and the notch.",
+		"Abstand der Würfelkarten unter der Notch.",
+	},
+	["rolls.cardGap"] = { nil, nil, "Space between two cards.", "Platz zwischen zwei Karten." },
+	["rolls.passedAlpha"] = {
+		nil,
+		nil,
+		"Cards you passed on fade to this.",
+		"Karten, auf die du gepasst hast, verblassen so weit.",
+	},
+
+	-- Loot ticker
+	["lootTicker.showMoney"] = {
+		nil,
+		nil,
+		"Looted gold, silver and copper on one line.",
+		"Geplündertes Gold, Silber und Kupfer in einer Zeile.",
+	},
+	["lootTicker.showCurrency"] = {
+		nil,
+		nil,
+		"Currencies you receive.",
+		"Währungen, die du erhältst.",
+	},
+	["lootTicker.mergeRepeats"] = {
+		nil,
+		nil,
+		"Looting more of something still listed adds to its line.",
+		"Mehr von etwas, das noch in der Liste steht, zählt zu seiner Zeile dazu.",
+	},
+	["lootTicker.maxRows"] = {
+		nil,
+		nil,
+		"Once all rows are taken, the oldest line drops out.",
+		"Sind alle Zeilen belegt, fällt die älteste heraus.",
+	},
+	["lootTicker.width"] = { nil, nil, "Width of the list.", "Breite der Liste." },
+	["lootTicker.iconSize"] = { nil, nil, "Item icons.", "Gegenstandssymbole." },
+	["lootTicker.fontSize"] = { nil, nil, "Text of the lines.", "Text der Zeilen." },
+	["lootTicker.rowGap"] = {
+		nil,
+		nil,
+		"Space between the lines of the list.",
+		"Platz zwischen den Zeilen der Beuteliste.",
+	},
+	["lootTicker.holdTime"] = { nil, nil, "How long a line stays.", "Wie lange eine Zeile bleibt." },
+	["lootTicker.fadeOutTime"] = { nil, nil, "How long it fades out.", "Wie lange sie ausblendet." },
+
+	-- Smaller modules
+	["questRewards.coinSize"] = {
+		nil,
+		nil,
+		"The coin on the reward with the highest vendor value.",
+		"Die Münze auf der Belohnung mit dem höchsten Händlerwert.",
+	},
+	["minimap.gapToTarget"] = {
+		nil,
+		nil,
+		"The map fills the space right of the target frame, minus this gap.",
+		"Die Karte füllt den Platz rechts vom Zielfenster, abzüglich dieses Abstands.",
+	},
+	["minimap.iconScale"] = {
+		nil,
+		nil,
+		"Size of the icons on the map (tracking, mail, …).",
+		"Größe der Symbole auf der Karte (Verfolgung, Post, …).",
+	},
+	["minimap.showZone"] = { nil, nil, "Zone name along the top edge.", "Zonenname an der Oberkante." },
+	["minimap.showClock"] = { nil, nil, "The time along the top edge.", "Uhrzeit an der Oberkante." },
+	["tracker.height"] = {
+		nil,
+		nil,
+		"Height of the quest list (Blizzard allows 400 to 1000).",
+		"Höhe der Questliste (Blizzard erlaubt 400 bis 1000).",
+	},
+	["tracker.shownOnLogin"] = {
+		nil,
+		nil,
+		"Open the quest list at login; otherwise it waits for the edge badge or its key.",
+		"Questliste beim Login öffnen; sonst wartet sie auf die Randmarke oder ihre Taste.",
+	},
+	["taxi.width"] = { nil, nil, "Width of the destination list.", "Breite der Zielliste." },
+	["taxi.rowHeight"] = { nil, nil, "Height of one destination.", "Höhe eines Ziels." },
+	["taxi.padding"] = { nil, nil, "Space inside the list's edge.", "Platz innerhalb des Listenrands." },
+	["settings.consoleKey"] = {
+		nil,
+		nil,
+		"Key that opens the console (the default ^ doesn't work on a German keyboard).",
+		"Taste, die die Konsole öffnet (das übliche ^ geht auf deutscher Tastatur nicht).",
+	},
+
+	-- Style
+	["style.fontSize"] = {
+		nil,
+		nil,
+		"Base size of stevio-ui's own texts.",
+		"Grundgröße der eigenen Texte von stevio-ui.",
+	},
+	["style.borderColor"] = { nil, nil, "The thin frame of every panel.", "Der dünne Rahmen jedes Panels." },
+	["style.deadColor"] = { nil, nil, "Health bars of the dead.", "Lebensbalken von Toten." },
+	["style.offlineColor"] = { nil, nil, "Health bars of disconnected players.", "Lebensbalken getrennter Spieler." },
+	["style.tappedColor"] = {
+		nil,
+		nil,
+		"Enemies someone else has tagged.",
+		"Gegner, die jemand anderes angegriffen hat.",
+	},
+	["style.fallbackHealthColor"] = {
+		nil,
+		nil,
+		"When neither class nor reaction is known.",
+		"Wenn weder Klasse noch Reaktion bekannt sind.",
+	},
+	["style.badge.width"] = {
+		nil,
+		nil,
+		"Thickness of the badges at the screen edge.",
+		"Stärke der Marken am Bildschirmrand.",
+	},
+	["style.badge.height"] = { nil, nil, "Length of the badges.", "Länge der Marken." },
+	["style.badge.hiddenColor"] = {
+		nil,
+		nil,
+		"While their element (chat, quest list) is hidden.",
+		"Solange ihr Element (Chat, Questliste) versteckt ist.",
+	},
+	["style.badge.shownColor"] = { nil, nil, "While their element is shown.", "Solange ihr Element sichtbar ist." },
+	["style.themes.*.panel"] = {
+		nil,
+		nil,
+		"Background of panels and windows.",
+		"Hintergrund von Panels und Fenstern.",
+	},
+	["style.themes.*.cell"] = {
+		nil,
+		nil,
+		"Background of the group cells.",
+		"Hintergrund der Gruppenzellen.",
+	},
+	["style.themes.*.shadow"] = { nil, nil, "The soft shadow around panels.", "Der weiche Schatten um Panels." },
+	["style.themes.*.text"] = { nil, nil, "Normal text.", "Normaler Text." },
+	["style.themes.*.selected"] = {
+		nil,
+		nil,
+		"Background of the selected row in lists.",
+		"Hintergrund der gewählten Zeile in Listen.",
+	},
+	["style.themes.*.pill"] = {
+		nil,
+		nil,
+		"Background of small counters (unread messages, changes).",
+		"Hintergrund kleiner Zähler (ungelesene Nachrichten, Änderungen).",
+	},
+	["style.themes.*.pillText"] = { nil, nil, "Text of those counters.", "Text dieser Zähler." },
+	["style.themes.*.xpFrom"] = {
+		nil,
+		nil,
+		"The XP bar fades from this colour …",
+		"Der EP-Balken verläuft von dieser Farbe …",
+	},
+	["style.themes.*.xpTo"] = { nil, nil, "… to this one.", "… zu dieser." },
+
+	-- Positions
+	["layout.player"] = {
+		nil,
+		nil,
+		"Left of the group grid, above the action bars.",
+		"Links neben dem Gruppenraster, über den Aktionsleisten.",
+	},
+	["layout.target"] = {
+		nil,
+		nil,
+		"Right of the group grid, above the action bars.",
+		"Rechts neben dem Gruppenraster, über den Aktionsleisten.",
+	},
+	["layout.focus"] = {
+		nil,
+		nil,
+		"Left of the group grid; x counts from the grid's edge.",
+		"Links am Gruppenraster; X zählt ab dessen Rand.",
+	},
+	["layout.targetAuras"] = {
+		nil,
+		nil,
+		"Right of the group grid; x counts from the grid's edge.",
+		"Rechts am Gruppenraster; X zählt ab dessen Rand.",
+	},
+	["layout.group"] = {
+		nil,
+		nil,
+		"The grid sits centred above the action bars. Offsets are UI points from the anchor.",
+		"Das Raster sitzt mittig über den Aktionsleisten. Der Versatz zählt in UI-Punkten vom Anker aus.",
+	},
+	["layout.actionBars.*"] = {
+		nil,
+		nil,
+		"Where this Edit Mode bar sits.",
+		"Wo diese Leiste des Bearbeitungsmodus sitzt.",
+	},
+	["layout.actionSets"] = {
+		nil,
+		nil,
+		"The set button left of the bars.",
+		"Der Set-Knopf links neben den Leisten.",
+	},
+	["layout.stanceBar"] = { nil, nil, "Stances and forms.", "Haltungen und Gestalten." },
+	["layout.petBar"] = { nil, nil, "Your pet's actions.", "Die Aktionen deines Begleiters." },
+	["layout.menubar"] = { nil, nil, "Blizzard's micro menu.", "Blizzards Mikromenü." },
+	["layout.bags"] = { nil, nil, "The bag buttons.", "Die Taschenknöpfe." },
+	["layout.buffs"] = { nil, nil, "Your buffs.", "Deine Buffs." },
+	["layout.debuffs"] = { nil, nil, "Your debuffs, below the buffs.", "Deine Debuffs, unter den Buffs." },
+	["layout.chat"] = { nil, nil, "The chat window.", "Das Chatfenster." },
+	["layout.chatBadge"] = {
+		nil,
+		nil,
+		"The badge that shows and hides the chat.",
+		"Die Marke, die den Chat ein- und ausblendet.",
+	},
+	["layout.marks"] = {
+		nil,
+		nil,
+		"Relative to the minimap's top edge.",
+		"Bezogen auf die Oberkante der Minikarte.",
+	},
+	["layout.lootTicker"] = { nil, nil, "The loot list.", "Die Beuteliste." },
+	["layout.minimap"] = { nil, nil, "The map's corner.", "Die Ecke der Karte." },
+	["layout.tracker"] = { nil, nil, "The quest list.", "Die Questliste." },
+	["layout.trackerBadge"] = {
+		nil,
+		nil,
+		"The badge that shows and hides the quest list.",
+		"Die Marke, die die Questliste ein- und ausblendet.",
+	},
+}
+
+-- Label and help of the setting at metadata key `exact` (or `wildcard`), else
+-- of its key `key`. A path entry without help takes the key's.
+function ns.ConfigPathLabel(exact, wildcard, key)
+	local entry = pathLabels[exact] or pathLabels[wildcard]
+	local keyLabel, keyHelp = ns.ConfigLabel(key)
+	if not entry then
+		return keyLabel, keyHelp
+	end
+	if ns.isGerman then
+		return entry[2] or keyLabel, entry[4] or keyHelp
+	end
+	return entry[1] or keyLabel, entry[3] or keyHelp
+end
+
+function ns.HasConfigPathLabel(exact)
+	return pathLabels[exact] ~= nil
 end
 
 -- Whether `key` has an entry above (tests/settings_labels_test.lua checks every config key has one).
