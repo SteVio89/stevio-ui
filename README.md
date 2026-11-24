@@ -21,7 +21,7 @@ until it is needed, and as much as possible can be done from the keyboard.
 ## Features
 
 - **Look** – two color themes with the same shapes, picked with `theme` in the
-  style options (`/reload` after a change): **Night violet** (`violet`, the
+  settings window's start or appearance page (`/reload` after a change): **Night violet** (`violet`, the
   default: violet tinted black, a muted dark violet accent) and **Dusk**
   (`dusk`: blue-grey tinted black, old gold accent). Panels have a black border, a faint glass edge (not
   on the chat and the mark bar) and a soft shadow, text a drop shadow instead of an outline, bars a light shade
@@ -232,7 +232,7 @@ until it is needed, and as much as possible can be done from the keyboard.
 ## Assumptions
 
 stevio-ui is built for one setup; its defaults in code are the author's, and
-the options panel (see Configuration) changes them for yours:
+the settings window (see Configuration) changes them for yours:
 
 - **German keyboard layout** – some keys are chosen for it (`Y`/`Z` are
   swapped compared to US).
@@ -277,14 +277,15 @@ first login.
 | `/sui chat` | List the chat channels with message and unread counts |
 | `/sui notch` | Show the notch geometry (for checking the island's placement) |
 | `/sui errors` | Show stevio-ui's logged Lua errors, kept across sessions (`/sui errors clear` empties the log) |
-| `/sui config` | Open the options panel |
+| `/sui config` | Open the settings window (so does `/sui` alone) |
 | `/sui reset` | Reset all options to the defaults in code |
 | `/sui export` | Export your current bindings and settings as a profile (also saved to `StevioUIExport` in the WTF folder) |
 | `/sui apply` | Re-apply the profile |
 | `/sui restore` | Restore the settings from before stevio-ui and disable it |
 
-`/sui` alone lists all commands. `config`, `reset`, `export`, `apply` and
-`restore` only exist once you have accepted the first-login dialog. `test`,
+`/sui` alone opens the settings window, whose start page lists all commands;
+an unknown command lists them in the chat. `config`, `reset`, `export`,
+`apply` and `restore` only exist once you have accepted the first-login dialog. `test`,
 `loot`, `rolls`, `roll`, `qj` and `notch` say so when their module is turned off.
 
 ## Configuration
@@ -295,14 +296,24 @@ turns it off), the global look lives in `Core/Config.lua`, all positions in
 entry of `actionBars` names its Edit Mode bar) and the keybindings and graphics settings in
 `Modules/Settings/Profile.lua`.
 
-The options panel (Options → AddOns → stevio-ui, or `/sui config`) changes
-them account-wide without touching the code: a page per module generated from
-its config (every value, including lists, which can grow and shrink) followed
-by the positions it places, a General page with the modules, style and any
-remaining positions, and pages for keybindings and graphics settings. Changed values are highlighted and take effect after
-`Reload UI`. Keybindings and settings changed in Blizzard's own menus are kept
-as well instead of being reverted at the next login. `/sui reset` (or "Reset
-all options") goes back to the code.
+The settings window (`/sui config`, `/sui` alone, the gear in the notch
+island, or the button in Options → AddOns → stevio-ui) changes them
+account-wide without touching the code. Every setting explains itself: name,
+a help text and a control (switch, slider, dropdown, colour, list, position);
+changed values carry a dot, their default and a reset. Module pages are
+grouped by category with sections, a live preview of the group grid and test
+buttons; technical values are folded under "Advanced". A search finds
+settings by name, explanation and value. System pages edit the keybindings
+(with key capture and conflict hints), the graphics and game settings (with
+readable names, and the raid variants following the normal values unless
+switched off) and the profile: when it was applied, the backup with a
+restore, all your deviations, sharing your settings as text with another
+character, and resetting everything. Option changes take effect after a
+reload (a bar at the bottom counts them); keys and game settings at once.
+Keybindings and settings changed in Blizzard's own menus are kept as well
+instead of being reverted at the next login. `/sui reset` goes back to the
+code. See [docs/settings.md](docs/settings.md) for how the window is built
+and how a module adds its settings.
 
 ## Development
 
