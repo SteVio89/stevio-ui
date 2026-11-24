@@ -25,6 +25,7 @@ Pages.MODULES = {
 	{ "rolls" },
 	{ "notch" },
 	{ "questRewards" },
+	{ "fastLoot" },
 	{ "taxi" },
 	{ "players" },
 	{ "notes" },
